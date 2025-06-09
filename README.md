@@ -115,7 +115,7 @@ Edit the `.env` file to set up your WhatsApp session and other configurations.
 
 ## 🙋 Support & Reporting Issues
 
-Found an error or need help? [Contact the maintainer directly on WhatsApp.](https://wa.me/255693629079?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20RAHMANI-XMD)
+Found an error or need help? [Contact the maintainer directly on WhatsApp.](https://wa.me/255767435108?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20RAHMANI-XMD)
 
 Or open an issue on the [GitHub Issues page](https://github.com/Qartde/RAHMANI-XMD/issues).
 
