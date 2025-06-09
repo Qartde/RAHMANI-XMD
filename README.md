@@ -27,11 +27,11 @@ _____________
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Qartde/RAHMANI-XMD)
 
 _____________
-[![Report Issue / Contact Maintainer](https://img.shields.io/badge/Contact%20Maintainer-Report%20Error-green?logo=whatsapp)](https://wa.me/255693629079?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20RAHMANI-XMD)
+[![Report Issue / Contact Maintainer](https://img.shields.io/badge/Contact%20Maintainer-Report%20Error-green?logo=whatsapp)](https://wa.me/255767435108?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20×͜×Çhäm-BöT모🤖)
 
 ---
 <p align="center">
-  <a href="https://whatsapp.com/channel/0029VatokI45EjxufALmY32X" target="_blank" rel="noopener">
+  <a href="" target="_blank" rel="noopener">
     <img src="https://img.shields.io/badge/Follow%20on-WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="Follow our WhatsApp Channel" />
   </a>
 </p>
@@ -115,7 +115,7 @@ Edit the `.env` file to set up your WhatsApp session and other configurations.
 
 ## 🙋 Support & Reporting Issues
 
-Found an error or need help? [Contact the maintainer directly on WhatsApp.](https://wa.me/255767435108?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20RAHMANI-XMD)
+Found an error or need help? [Contact the maintainer directly on WhatsApp.](https://wa.me/255767435108?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20×͜×Çhäm-BöT모🤖)
 
 Or open an issue on the [GitHub Issues page](https://github.com/Qartde/RAHMANI-XMD/issues).
 
@@ -129,14 +129,11 @@ This project is licensed under the MIT License.
 
 ## 📣 Credits
 
-- [Baileys WhatsApp library](https://github.com/adiwajshing/Baileys)
-- [Qartde](https://github.com/Qartde) and contributors
-
----
+- 
 
 **Happy Botting!**
 
 ```
 **Note:**  
-- Replace `your-number-here` in all WhatsApp links with your actual WhatsApp number in international format (e.g., `1234567890`).
+- Replace `your-number-here` in all WhatsApp links with your actual WhatsApp number in international format (e.g., `255767435108`).
 - You can further customize the documentation, features, and instructions as needed.
