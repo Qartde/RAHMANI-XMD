@@ -27,14 +27,10 @@ _____________
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Qartde/RAHMANI-XMD)
 
 _____________
-[![Report Issue / Contact Maintainer](https://img.shields.io/badge/Contact%20Maintainer-Report%20Error-green?logo=whatsapp)](https://wa.me/255693629079?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20RAHMANI-XMD)
+[![Report Issue / Contact Maintainer](https://img.shields.io/badge/Contact%20Maintainer-Report%20Error-green?logo=whatsapp)](https://wa.me/255767435108?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20×͜×Çhäm-ᵇᵒʸ모🤖-XMD)
 
 ---
 <p align="center">
-  <a href="https://whatsapp.com/channel/0029VatokI45EjxufALmY32X" target="_blank" rel="noopener">
-    <img src="https://img.shields.io/badge/Follow%20on-WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="Follow our WhatsApp Channel" />
-  </a>
-</p>
 
 ---
 
@@ -55,7 +51,7 @@ Deploy the bot easily using the buttons below:
   <a href="https://railway.app/new/template?template=https://github.com/Qartde/RAHMANI-XMD">
     <img src="https://railway.app/button.svg" alt="Deploy on Railway"/>
   </a>
-  <a href="https://heroku.com/deploy?template=https://github.com/Qartde/RAHMANI-XMD">
+  <a href="https://heroku.com/deploy?template=https://github.com/Qartde/×͜×Çhäm-ᵇᵒʸ모🤖-XMD">
     <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku"/>
   </a>
 </p>
@@ -78,7 +74,7 @@ Deploy the bot easily using the buttons below:
 
 - Node.js 16.x or higher
 - A WhatsApp number
-- [Baileys](https://github.com/adiwajshing/Baileys) library dependencies
+- [Baileys]() library dependencies
 
 ---
 
@@ -115,9 +111,9 @@ Edit the `.env` file to set up your WhatsApp session and other configurations.
 
 ## 🙋 Support & Reporting Issues
 
-Found an error or need help? [Contact the maintainer directly on WhatsApp.](https://wa.me/255693629079?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20RAHMANI-XMD)
+Found an error or need help? [Contact the maintainer directly on WhatsApp.](https://wa.me/255767435108?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20×͜×Çhäm-BöT모🤖-XMD)
 
-Or open an issue on the [GitHub Issues page](https://github.com/Qartde/RAHMANI-XMD/issues).
+Or open an issue on the [GitHub Issues page]().
 
 ---
 
@@ -129,10 +125,7 @@ This project is licensed under the MIT License.
 
 ## 📣 Credits
 
-- [Baileys WhatsApp library](https://github.com/adiwajshing/Baileys)
-- [Qartde](https://github.com/Qartde) and contributors
 
----
 
 **Happy Botting!**
 
