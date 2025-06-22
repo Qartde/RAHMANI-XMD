@@ -1,5 +1,5 @@
 {
-  "name":"RAHMANI-XMD",
+  "name":"×͜×Çhäm-BöT모🤖",
   "description":"Best whatsapp bot💥 developed by   Qartde ",
   "keywords":["bot","node","baileys","whatsapp"],
   "logo":"https://files.catbox.moe/aktbgo.jpg",
@@ -58,7 +58,7 @@
     "BOT_NAME" : {
        
       "description":"put A name for your bot",
-      "value":"RAHMANI-XMD",
+      "value":"×͜×Çhäm-BöT모🤖",
       "required":false
 
     } ,
@@ -97,14 +97,14 @@
     
     "desc": "Your name",
     "required": false,
-    "value": "RAHMANI-XMD"
+    "value": "×͜×Çhäm-BöT모🤖"
   },
     "NUMERO_OWNER":
   {
     
     "desc": "Your number , dont put '+' and put you area code(exemple of kenya '254')",
     "required":true,
-    "value": "255693629079"
+    "value": "255767435108"
   },
     "WARN_COUNT":
   {
@@ -125,7 +125,7 @@
   },
   "ANTI_DELETE_MESSAGE" : {
     "description": "if you want to enable anti delete message put yes else put no",
-    "value": "yes",
+    "value": "no",
         "required": true
   }
   },
