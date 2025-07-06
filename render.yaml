@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: my-web-service
+    env: node
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
