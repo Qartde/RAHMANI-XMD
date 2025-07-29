@@ -18,9 +18,9 @@
     "Rahmani-Md",
     "whatsapp",
     "whatsapp-bot",
-    "rahmanixmd"
+    "Rahmanixmd"
   ],
-  "author": "Rahmani xmd",
+  "author": "RAHMANI-XMD",
   "license": "ISC",
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
@@ -130,4 +130,4 @@
     "wa-sticker-formatter": "^4.4.4",
     "wikipedia": "^2.1.2"
   }
-  }
+}
