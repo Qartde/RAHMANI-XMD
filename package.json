@@ -2,14 +2,14 @@
   "name": "RAHMANI-XMD",
   "version": "2.0.0",
   "description": "",
-  "main": "pkdriller.js",
+  "main": "rahmani.js",
   "type": "commonjs",
   "engines": {
     "node": "20.19.2",
     "npm": "10.8.2"
   },
   "scripts": {
-    "start": "node pkdriller.js",
+    "start": "node rahmani.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
