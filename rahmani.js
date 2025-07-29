@@ -1412,7 +1412,7 @@ setTimeout(() => {
         console.log(" rahmani is connecting...");
       } else {
         if (_0x52925b === 'open') {
-          console.log("✅ Rahmani Connected to WhatsApp! ☺️");
+          console.log("✅ rahmani Connected to WhatsApp! ☺️");
           console.log('--');
           0x0;
           await baileys_1.delay(0xc8);
