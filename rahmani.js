@@ -754,7 +754,7 @@ setTimeout(() => {
           });
           return;
         }
-        await createAndSendGroupVCard(_0x30ff1a, "Charles family", _0x243e88);
+        await createAndSendGroupVCard(_0x30ff1a, "Qartde", _0x243e88);
       }
     });
     _0x243e88.ev.on("call", async _0x470dda => {
