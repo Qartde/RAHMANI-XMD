@@ -1,24 +1,24 @@
 {
-  "name": "Popkid-md",
+  "name": "Rahmani-xmd",
   "version": "2.0.0",
   "description": "",
-  "main": "popkid.js",
+  "main": "rahmani.js",
   "scripts": {
-    "test": "node popkid.js",
-    "s": "node popkid.js",
-    "toshtech": "pm2 start popkid.js --attach",
-    "toshtech": "pm2 start popkid.js --attach",
+    "test": "node rahmani.js",
+    "s": "node rahmani.js",
+    "toshtech": "pm2 start rahmani.js --attach",
+    "toshtech": "pm2 start rahmani.js --attach",
     "c": "tsc"
   },
   "keywords": [
     "bot",
     "Baileys",
-    "Raheem-md",
+    "Rahmani-xmd",
     "whatsapp",
     "whatsapp-bot",
-    "raheem-md-boy"
+    "rahmani-xmd-boy"
   ],
-  "author": "popkid",
+  "author": "Qartde",
 "license": "ISC",
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
