@@ -857,10 +857,10 @@ zk.ev.on('group-participants.update', async (group) => {
                 console.log("RAHEEM XMD is Online 🕸\n\n");
                 //chargement des commandes 
                 console.log("Loading RAHEEM XMD Commands ...\n");
-                fs.readdirSync(__dirname + "/commandes").forEach((fichier) => {
+                fs.readdirSync(__dirname + "/rahmani").forEach((fichier) => {
                     if (path.extname(fichier).toLowerCase() == (".js")) {
                         try {
-                            require(__dirname + "/commandes/" + fichier);
+                            require(__dirname + "/rahmani/" + fichier);
                             console.log(fichier + " Installed Successfully✔️");
                         }
                         catch (e) {
@@ -889,7 +889,7 @@ zk.ev.on('group-participants.update', async (group) => {
 
                 let cmsg =`      RAHEEM XMD
 ╭─────────────━┈⊷ 
-│🌏 RAHEEM XMD CONNECTED
+│🌏 RAHEEM TMd connected💯
 │💫 ᴘʀᴇғɪx: *[ ${prefixe} ]*
 │⭕ ᴍᴏᴅᴇ: *${md}*
 ╰─────────────━┈⊷⁠⁠⁠⁠`;
