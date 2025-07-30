@@ -1,2 +1,1 @@
-
-web: node rahmani.js && node rahmani.js
+web: node index.js
