@@ -1,2 +1,2 @@
 
-web: node rahmani.js && node rahmani.js
+web: node popkid.js && node popkid.js
