@@ -250,7 +250,7 @@ async function getAIResponse(query) {
     }
 }
 
-if (conf.CHATBOT === "yes" || conf.AUDIO_CHABOT === "yes") {
+if (conf.CHATBOT === "no" || conf.AUDIO_CHABOT === "yes") {
     zk.ev.on("messages.upsert", async ({ messages }) => {
         try {
             const msg = messages[0];
