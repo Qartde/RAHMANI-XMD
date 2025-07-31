@@ -10,7 +10,7 @@ RUN apt-get update && \
   rm -rf /var/lib/apt/lists/*
   
 RUN  git clone https://github.com/Qartde/RAHMANI-XMD  /root/Rahaman_BOt
-WORKDIR /root/Rahman_Bot/
+WORKDIR /root/Rahmani_Bot/
 
 
 
@@ -22,4 +22,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["node", "rahman.js"]
+CMD ["node", "rahmani.js"]
