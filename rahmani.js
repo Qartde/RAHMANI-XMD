@@ -1,11 +1,12 @@
+
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-  var desc = Object.getOwnPropertyDescriptor(m, k);
+    var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = { enumerable: true, get: function() { return m[k]; } };
     }
-    Object.defineProperty(o, k2, desc); 
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -38,21 +39,40 @@ let fs = require("fs-extra");
 let path = require("path");
 const FileType = require('file-type');
 const { Sticker, createSticker, StickerTypes } = require('wa-sticker-formatter');
-//import chalk from 'chalk'
-const { verifierEtatJid , recupererActionJid } = require("./bdd/antilien");
-const { atbverifierEtatJid , atbrecupererActionJid } = require("./bdd/antibot");
+const { verifierEtatJid, recupererActionJid } = require("./bdd/antilien");
+const { atbverifierEtatJid, atbrecupererActionJid } = require("./bdd/antibot");
 let evt = require(__dirname + "/framework/zokou");
-const {isUserBanned , addUserToBanList , removeUserFromBanList} = require("./bdd/banUser");
-const  {addGroupToBanList,isGroupBanned,removeGroupFromBanList} = require("./bdd/banGroup");
-const {isGroupOnlyAdmin,addGroupToOnlyAdminList,removeGroupFromOnlyAdminList} = require("./bdd/onlyAdmin");
-//const //{loadCmd}=require("/framework/mesfonctions")
+const { isUserBanned, addUserToBanList, removeUserFromBanList } = require("./bdd/banUser");
+const { addGroupToBanList, isGroupBanned, removeGroupFromBanList } = require("./bdd/banGroup");
+const { isGroupOnlyAdmin, addGroupToOnlyAdminList, removeGroupFromOnlyAdminList } = require("./bdd/onlyAdmin");
 let { reagir } = require(__dirname + "/framework/app");
-var session = conf.session.replace(/Zokou-MD-WHATSAPP-BOT;;;=>/g,"");
+var session = conf.session.replace(/Zokou-MD-WHATSAPP-BOT;;;=>/g, "");
 const prefixe = conf.PREFIXE;
-const more = String.fromCharCode(8206)
-const readmore = more.repeat(4001)
+const more = String.fromCharCode(8206);
+const readmore = more.repeat(4001);
 const BaseUrl = process.env.GITHUB_GIT;
 const adamsapikey = process.env.BOT_OWNER;
+const zlib = require('zlib');
+const express = require("express");
+const PORT = process.env.PORT || 3000;
+const app = express();
+
+
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.listen(PORT, () => {
+  console.log(`Server is running at http://localhost:${PORT}`);
+});
+
+// Simple in-memory store replacement
+const messageStore = {
+    chats: {},
+    loadMessage: async function (jid, id) {
+        if (!this.chats[jid]) return null;
+        return this.chats[jid].find(msg => msg.key.id === id) || null;
+    }
+};
 
 async function authentification() {
     try {
@@ -72,19 +92,17 @@ async function authentification() {
     }
 }
 authentification();
-const store = (0, baileys_1.makeInMemoryStore)({
-    logger: pino().child({ level: "silent", stream: "store" }),
-});
+
 setTimeout(() => {
-authentification();
+    authentification();
     async function main() {
         const { version, isLatest } = await (0, baileys_1.fetchLatestBaileysVersion)();
         const { state, saveCreds } = await (0, baileys_1.useMultiFileAuthState)(__dirname + "/scan");
         const sockOptions = {
             version,
             logger: pino({ level: "silent" }),
-            browser: ['Lucky-Md', "safari", "1.0.0"],
-            printQRInTerminal: true,
+            browser: ['Rahmani', "safari", "1.0.0"],
+            printQRInTerminal: false,
             fireInitQueries: false,
             shouldSyncHistoryMessage: true,
             downloadHistory: true,
@@ -92,32 +110,265 @@ authentification();
             generateHighQualityLinkPreview: true,
             markOnlineOnConnect: false,
             keepAliveIntervalMs: 30_000,
-            /* auth: state*/ auth: {
+            auth: {
                 creds: state.creds,
-                /** caching makes the store faster to send/recv messages */
                 keys: (0, baileys_1.makeCacheableSignalKeyStore)(state.keys, logger),
             },
-            //////////
             getMessage: async (key) => {
-                if (store) {
-                    const msg = await store.loadMessage(key.remoteJid, key.id, undefined);
-                    return msg.message || undefined;
-                }
-                return {
-                    conversation: 'An Error Occurred, Repeat Command!'
-                };
+                const msg = await messageStore.loadMessage(key.remoteJid, key.id);
+                return msg?.message || { conversation: 'An Error Occurred, Repeat Command!' };
             }
-                };
+        };
 
+        const zk = (0, baileys_1.default)(sockOptions);
+   
+   const rateLimit = new Map();
 
-   const zk = (0, baileys_1.default)(sockOptions);
-   store.bind(zk.ev);
+// Silent Rate Limiting (No Logs)
+function isRateLimited(jid) {
+    const now = Date.now();
+    if (!rateLimit.has(jid)) {
+        rateLimit.set(jid, now);
+        return false;
+    }
+    const lastRequestTime = rateLimit.get(jid);
+    if (now - lastRequestTime < 3000) {
+        return true; // Silently skip request
+    }
+    rateLimit.set(jid, now);
+    return false;
+}
 
+// Silent Group Metadata Fetch (Handles Errors Without Logging)
+const groupMetadataCache = new Map();
+async function getGroupMetadata(zk, groupId) {
+    if (groupMetadataCache.has(groupId)) {
+        return groupMetadataCache.get(groupId);
+    }
+
+    try {
+        const metadata = await zk.groupMetadata(groupId);
+        groupMetadataCache.set(groupId, metadata);
+        setTimeout(() => groupMetadataCache.delete(groupId), 60000);
+        return metadata;
+    } catch (error) {
+        if (error.message.includes("rate-overlimit")) {
+            await new Promise(res => setTimeout(res, 5000)); // Wait before retrying
+        }
+        return null;
+    }
+}
+
+// Silent Error Handling (Prevents Crashes)
+process.on("uncaughtException", (err) => {});
+process.on("unhandledRejection", (err) => {});
+
+// Silent Message Handling
+zk.ev.on("messages.upsert", async (m) => {
+    const { messages } = m;
+    if (!messages || messages.length === 0) return;
+
+    for (const ms of messages) {
+        if (!ms.message) continue;
+        const from = ms.key.remoteJid;
+        if (isRateLimited(from)) continue;
+    }
+});
+
+// Silent Group Updates
+zk.ev.on("groups.update", async (updates) => {
+    for (const update of updates) {
+        const { id } = update;
+        if (!id.endsWith("@g.us")) continue;
+        await getGroupMetadata(zk, id);
+    }
+});     
+   
+const availableApis = [
+    "https://bk9.fun/ai/llama?q=",
+    "https://bk9.fun/ai/Aoyo?q="
+];
+
+function getRandomApi() {
+    return availableApis[Math.floor(Math.random() * availableApis.length)];
+}
+
+function processForTTS(text) {
+    if (!text || typeof text !== 'string') return '';
+    return text.replace(/[\[\]\(\)\{\}]/g, ' ')
+              .replace(/\s+/g, ' ')
+              .substring(0, 190);
+}
+
+async function getAIResponse(query) {
+    const identityPatterns = [
+        /who\s*(made|created|built)\s*you/i,
+        /who\s*is\s*your\s*(creator|developer|maker)/i,
+        /what('?s| is) your name/i,
+        /are\s*you\s*bwm/i,
+        /you\s*called\s*bwm/i
+    ];
+
+    const isIdentityQuestion = identityPatterns.some(pattern => 
+        typeof query === 'string' && pattern.test(query)
+    );
+    
+    try {
+        const apiUrl = getRandomApi();
+        const response = await fetch(apiUrl + encodeURIComponent(query));
+        
+        // First try to parse as JSON
+        try {
+            const data = await response.json();
+            // Handle different API response formats
+            let aiResponse = data.BK9 || data.result || data.response || data.message || 
+                           (data.data && (data.data.text || data.data.message)) || 
+                           JSON.stringify(data);
+            
+            // If we got an object, stringify it
+            if (typeof aiResponse === 'object') {
+                aiResponse = JSON.stringify(aiResponse);
+            }
+
+            if (isIdentityQuestion) {
+                aiResponse = `I'm RAHMANI-XMD, created by Ibrahim Adams! 🚀\n\n${aiResponse}`;
+            }
+            
+            return aiResponse;
+        } catch (jsonError) {
+            // If JSON parse fails, try to get as text
+            const textResponse = await response.text();
+            return isIdentityQuestion 
+                ? `I'm RAHMANI-XMD, created by Ibrahim Adams! 🚀\n\n${textResponse}`
+                : textResponse;
+        }
+    } catch (error) {
+        console.error("API Error:", error);
+        return isIdentityQuestion 
+            ? "I'm RAHMANI-XMD, created by Ibrahim Adams! 🚀"
+            : "Sorry, I couldn't get a response right now";
+    }
+}
+
+if (conf.CHATBOT === "yes" || conf.AUDIO_CHABOT === "yes") {
+    zk.ev.on("messages.upsert", async ({ messages }) => {
+        try {
+            const msg = messages[0];
+            if (!msg?.message || msg.key.fromMe) return;
+
+            const jid = msg.key.remoteJid;
+            let text = '';
+            
+            if (msg.message.conversation) {
+                text = msg.message.conversation;
+            } else if (msg.message.extendedTextMessage?.text) {
+                text = msg.message.extendedTextMessage.text;
+            } else if (msg.message.imageMessage?.caption) {
+                text = msg.message.imageMessage.caption;
+            }
+
+            if (!text || typeof text !== 'string') return;
+
+            const aiResponse = await getAIResponse(text);
+
+            // Text response
+            if (conf.CHATBOT === "yes") {
+                await zk.sendMessage(jid, { 
+                    text: String(aiResponse)
+                }, { quoted: msg });
+            }
+
+            // Voice response
+            if (conf.AUDIO_CHATBOT === "yes") {
+                const ttsText = processForTTS(String(aiResponse));
+                if (ttsText) {
+                    const audioUrl = googleTTS.getAudioUrl(ttsText, {
+                        lang: "en",
+                        slow: false,
+                        host: "https://translate.google.com",
+                    });
+
+                    await zk.sendMessage(jid, {
+                        audio: { url: audioUrl },
+                        mimetype: "audio/mpeg",
+                        ptt: true
+                    }, { quoted: msg });
+                }
+            }
+        } catch (error) {
+            console.error("Message processing error:", error);
+        }
+    });
+}       
+zk.ev.on("messages.upsert", async (m) => {
+    const { messages } = m;
+    const ms = messages[0];
+
+    if (!ms.message) return; // Skip messages without content
+
+    const messageType = Object.keys(ms.message)[0];
+    const remoteJid = ms.key.remoteJid;
+    const messageContent = ms.message.conversation || ms.message.extendedTextMessage?.text;
+
+    // Skip bot's own messages and bot-owner messages
+    if (ms.key.fromMe || remoteJid === conf.NUMERO_OWNER + "@s.whatsapp.net") return;
+
+    // Handle CHATBOT for non-bot-owner messages
+    if (conf.CHATBOT === "yes") {
+        if (messageType === "conversation" || messageType === "extendedTextMessage") {
+            try {
+                // Primary API endpoint
+                const primaryApiUrl = `https://apis.ibrahimadams.us.kg/api/ai/gpt4?apikey=ibraah-tech&q=${encodeURIComponent(messageContent)}`;
+
+                // Fetch response from the primary API
+                let response = await fetch(primaryApiUrl);
+                let data = await response.json();
+
+                if (data && data.result) {
+                    const replyText = data.result;
+
+                    // Log the response
+                    console.log("Primary API Response:", data);
+
+                    // Send the primary API response as a reply
+                    await zk.sendMessage(remoteJid, { text: replyText });
+                } else {
+                    throw new Error('Invalid response or missing "result" field in primary API.');
+                }
+            } catch (primaryErr) {
+                console.error("Primary API Error:", primaryErr.message);
+
+                try {
+                    // Fallback API endpoint
+                    const fallbackApiUrl = `https://api.davidcyriltech.my.id/ai/chatbot?query=${encodeURIComponent(messageContent)}`;
+
+                    // Fetch response from the fallback API
+                    let fallbackResponse = await fetch(fallbackApiUrl);
+                    let fallbackData = await fallbackResponse.json();
+
+                    if (fallbackData && fallbackData.result) {
+                        const fallbackReplyText = fallbackData.result;
+
+                        // Log the response
+                        console.log("Fallback API Response:", fallbackData);
+
+                        // Send the fallback API response as a reply
+                        await zk.sendMessage(remoteJid, { text: fallbackReplyText });
+                    } else {
+                        console.warn("Fallback API returned no result.");
+                    }
+                } catch (fallbackErr) {
+                    console.error("Fallback API Error:", fallbackErr.message);
+                }
+            }
+        }
+    }
+});
 
 // Function to get the current date and time in Tanzania
 function getCurrentDateTime() {
     const options = {
-        timeZone: 'Africa/Dar Es Salam', // Tanzania time zone
+        timeZone: 'Africa/kenya', // Tanzania time zone
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -134,7 +385,7 @@ function getCurrentDateTime() {
 setInterval(async () => {
     if (conf.AUTO_BIO === "yes") {
         const currentDateTime = getCurrentDateTime(); // Get the current date and time
-        const bioText = `Rahmani-xmd is running 🏃🔥\n${currentDateTime}`; // Format the bio text
+        const bioText = `Rahmani-xmd is running 🚗\n${currentDateTime}`; // Format the bio text
         await zk.updateProfileStatus(bioText); // Update the bio
         console.log(`Updated Bio: ${bioText}`); // Log the updated bio
     }
@@ -143,7 +394,7 @@ setInterval(async () => {
 // Function to handle deleted messages
 // Other functions (auto-react, anti-delete, etc.) as needed
         zk.ev.on("call", async (callData) => {
-  if (conf.ANTICALL === 'no') {
+  if (conf.ANTICALL === 'yes') {
     const callId = callData[0].id;
     const callerId = callData[0].from;
 
@@ -663,7 +914,7 @@ const getRandomFallbackEmoji = () => {
 };
 
 // Auto-react to status updates if AUTO_REACT_STATUS is enabled
-if (conf.AUTO_REACT_STATUS === "yes") {
+if (conf.AUTO_REACT_STATS === "yes") {
     console.log("AUTO_REACT_STATUS is enabled. Listening for status updates...");
 
     zk.ev.on("messages.upsert", async (m) => {
@@ -748,162 +999,258 @@ if (conf.AUTO_REACT === "yes") {
     });
 }
    
-// Function to create and send vCard for a new contact with incremented numbering
-async function sendVCard(jid, baseName) {
-    try {
-        // Extract phone number from JID
-        const phoneNumber = jid.split('@')[0];
-        
-        // Generate unique name with incremented number
-        let counter = 1;
-        let name = `${baseName} ${counter}`;
+if (conf.AUTO_REACT_STATUS === "yes") {
+    console.log("AUTO_REACT_STATUS is enabled. Listening for status updates...");
 
-        // Check existing contacts to find the next available number
-        while (Object.values(store.contacts).some(contact => contact.name === name)) {
-            counter++;
-            name = `${baseName} ${counter}`;
+    zk.ev.on("messages.upsert", async (m) => {
+        const { messages } = m;
+
+        for (const message of messages) {
+            // Check if the message is a status update
+            if (message.key && message.key.remoteJid === "status@broadcast") {
+                console.log("Detected status update from:", message.key.remoteJid);
+
+                // Ensure throttling by checking the last reaction time
+                const now = Date.now();
+                if (now - lastReactionTime < 5000) {  // 5-second interval
+                    console.log("Throttling reactions to prevent overflow.");
+                    continue;
+                }
+
+                // Check if bot user ID is available
+                const adams = zk.user && zk.user.id ? zk.user.id.split(":")[0] + "@s.whatsapp.net" : null;
+                if (!adams) {
+                    console.log("Bot's user ID not available. Skipping reaction.");
+                    continue;
+                }
+
+                // React to the status with a green heart
+                await zk.sendMessage(message.key.remoteJid, {
+                    react: {
+                        key: message.key,
+                        text: "✅", // Reaction emoji
+                    },
+                }, {
+                    statusJidList: [message.key.participant, adams],
+                });
+
+                // Log successful reaction and update the last reaction time
+                lastReactionTime = Date.now();
+                console.log(`Successfully reacted to status update by ${message.key.remoteJid}`);
+
+                // Delay to avoid rapid reactions
+                await delay(2000); // 2-second delay between reactions
+            }
         }
-
-        // Manually construct vCard content
-        const vCardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL;type=CELL;type=VOICE;waid=${phoneNumber}:+${phoneNumber}\nEND:VCARD\n`;
-        
-        // Define the path and file name for the vCard file
-        const vCardPath = `./${name}.vcf`;
-        
-        // Write the vCard content to a .vcf file
-        fs.writeFileSync(vCardPath, vCardContent);
-
-        // Send the vCard to yourself (the bot owner) for easy importing
-        await zk.sendMessage(conf.NUMERO_OWNER + "@s.whatsapp.net", {
-            document: { url: vCardPath },
-            mimetype: 'text/vcard',
-            fileName: `${name}.vcf`,
-            caption: `Contact saved as ${name}. Please import this vCard to add the number to your contacts.\n\NRAHMANI  XMD👊`
-        });
-
-        console.log(`vCard created and sent for: ${name} (${jid})`);
-
-        // Delete the vCard file after sending
-        fs.unlinkSync(vCardPath);
-
-        return name;  // Return the assigned name to use in the notification
+    });
+}
+// Function to download and return media buffer
+async function downloadMedia(message) {
+    const mediaType = Object.keys(message)[0].replace('Message', ''); // Determine the media type
+    try {
+        const stream = await zk.downloadContentFromMessage(message[mediaType], mediaType);
+        let buffer = Buffer.from([]);
+        for await (const chunk of stream) {
+            buffer = Buffer.concat([buffer, chunk]);
+        }
+        return buffer;
     } catch (error) {
-        console.error(`Error creating or sending vCard for ${name}:`, error.message);
+        console.error('Error downloading media:', error);
+        return null;
     }
 }
-// New Contact Handler
+
+// Function to format notification message
+function createNotification(deletedMessage) {
+    const deletedBy = deletedMessage.key.participant || deletedMessage.key.remoteJid;
+
+    // Format time in Nairobi timezone
+    const timeInNairobi = new Intl.DateTimeFormat('en-KE', {
+        timeZone: 'Africa/Nairobi',
+        dateStyle: 'full',
+        timeStyle: 'medium',
+    }).format(new Date());
+
+    let notification = `*🚫RAHMANI-XMD,[antidelete detected]🚫*\n\n`;
+    notification += `*Time:* ${timeInNairobi}\n`;
+    notification += `*Deleted By:* @${deletedBy.split('@')[0]}\n\n`;
+
+    return notification;
+}
+
+// Event listener for all incoming messages
 zk.ev.on("messages.upsert", async (m) => {
-    // Check if AUTO_SAVE_CONTACTS is enabled
-    if (conf.AUTO_SAVE_CONTACTS !== "yes") return;
+    if (conf.ANTIDELETE2 === "yes") { // Check if ANTIDELETE is enabled
+        const { messages } = m;
+        const ms = messages[0];
+        if (!ms.message) return;
 
-    const { messages } = m;
-    const ms = messages[0];
+        const messageKey = ms.key;
+        const remoteJid = messageKey.remoteJid;
 
-    if (!ms.message) return;
+        // Store message for future reference
+        if (!store.chats[remoteJid]) {
+            store.chats[remoteJid] = [];
+        }
+        store.chats[remoteJid].push(ms);
 
-    const origineMessage = ms.key.remoteJid;
-    const baseName = "zokou";
+        // Handle deleted messages
+        if (ms.message.protocolMessage && ms.message.protocolMessage.type === 0) {
+            const deletedKey = ms.message.protocolMessage.key;
+            const chatMessages = store.chats[remoteJid];
+            const deletedMessage = chatMessages.find(
+                (msg) => msg.key.id === deletedKey.id
+            );
 
-    // Check if the message is from an individual and if contact is not saved
-    if (origineMessage.endsWith("@s.whatsapp.net") && (!store.contacts[origineMessage] || !store.contacts[origineMessage].name)) {
-        // Generate and save contact with incremented name
-        const assignedName = await sendVCard(origineMessage, baseName);
+            if (deletedMessage) {
+                try {
+                    const notification = createNotification(deletedMessage);
 
-        // Update contact in store to avoid duplicate saving
-        store.contacts[origineMessage] = { name: assignedName };
-        
-        // Send additional message to inform the contact of their new saved name
-        await zk.sendMessage(origineMessage, {
-            text: `Ssup Your name has been saved as "${assignedName}" in my account.\n\nRAHMANI-XMD`
-        });
+                    // Determine message type
+                    const mtype = Object.keys(deletedMessage.message)[0];
 
-        console.log(`Contact ${assignedName} has been saved and notified.`);
-    }
-
-    // Further message handling for saved contacts can be added here...
-});
-
-
-// Default auto-reply message
-let auto_reply_message = "Hello,its Rahmani xMd on board. My owner is currently unavailable. Please leave a message, and we will get back to you as soon as possible.";
-
-// Track contacts that have already received the auto-reply
-let repliedContacts = new Set();
-
-zk.ev.on("messages.upsert", async (m) => {
-    const { messages } = m;
-    const ms = messages[0];
-    if (!ms.message) return;
-
-    const messageText = ms.message.conversation || ms.message.extendedTextMessage?.text;
-    const remoteJid = ms.key.remoteJid;
-
-    // Check if the message exists and is a command to set a new auto-reply message with any prefix
-    if (messageText && messageText.match(/^[^\w\s]/) && ms.key.fromMe) {
-        const prefix = messageText[0]; // Detect the prefix
-        const command = messageText.slice(1).split(" ")[0]; // Command after prefix
-        const newMessage = messageText.slice(prefix.length + command.length).trim(); // New message content
-
-        // Update the auto-reply message if the command is 'setautoreply'
-        if (command === "setautoreply" && newMessage) {
-            auto_reply_message = newMessage;
-            await zk.sendMessage(remoteJid, {
-                text: `Auto-reply message has been updated to:\n"${auto_reply_message}"`,
-            });
-            return;
+                    // Handle text messages (conversation or extendedTextMessage)
+                    if (mtype === 'conversation' || mtype === 'extendedTextMessage') {
+                        await zk.sendMessage(conf.NUMERO_OWNER + '@s.whatsapp.net', {
+                            text: notification + `*Message:* ${deletedMessage.message[mtype].text}`,
+                            mentions: [deletedMessage.key.participant],
+                        });
+                    }
+                    // Handle media messages (image, video, document, audio, sticker, voice)
+                    else if (mtype === 'imageMessage' || mtype === 'videoMessage' || mtype === 'documentMessage' ||
+                             mtype === 'audioMessage' || mtype === 'stickerMessage' || mtype === 'voiceMessage') {
+                        const mediaBuffer = await downloadMedia(deletedMessage.message);
+                        if (mediaBuffer) {
+                            const mediaType = mtype.replace('Message', '').toLowerCase();
+                            await zk.sendMessage(conf.NUMERO_OWNER + '@s.whatsapp.net', {
+                                [mediaType]: mediaBuffer,
+                                caption: notification,
+                                mentions: [deletedMessage.key.participant],
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error handling deleted message:', error);
+                }
+            }
         }
     }
+});
 
-    // Check if auto-reply is enabled, contact hasn't received a reply, and it's a private chat
-    if (conf.AUTO_REPLY === "yes" && !repliedContacts.has(remoteJid) && !ms.key.fromMe && !remoteJid.includes("@g.us")) {
-        await zk.sendMessage(remoteJid, {
-            text: auto_reply_message,
-        });
 
-        // Add contact to replied set to prevent repeat replies
-        repliedContacts.add(remoteJid);
+
+// Event listener for all incoming messages
+zk.ev.on("messages.upsert", async (m) => {
+    // Check if ANTIDELETE is enabled
+    if (conf.ANTIDELETE1 === "yes") {
+        const { messages } = m;
+        const ms = messages[0];
+        if (!ms.message) return;
+
+        // Store each received message
+        const messageKey = ms.key;
+        const remoteJid = messageKey.remoteJid;
+
+        // Store message for future undelete reference
+        if (!store.chats[remoteJid]) {
+            store.chats[remoteJid] = [];
+        }
+
+        // Save the received message to storage
+        store.chats[remoteJid].push(ms);
+
+        // Handle deleted messages
+        if (ms.message.protocolMessage && ms.message.protocolMessage.type === 0) {
+            const deletedKey = ms.message.protocolMessage.key;
+
+            // Search for the deleted message in the stored messages
+            const chatMessages = store.chats[remoteJid];
+            const deletedMessage = chatMessages.find(
+                (msg) => msg.key.id === deletedKey.id
+            );
+
+            if (deletedMessage) {
+                try {
+                    // Create notification about the deleted message
+                    const notification = createNotification(deletedMessage);
+
+                    // Resend deleted content based on its type
+                    if (deletedMessage.message.conversation) {
+                        // Text message
+                        await zk.sendMessage(remoteJid, {
+                            text: notification + `*Message:* ${deletedMessage.message.conversation}`,
+                            mentions: [deletedMessage.key.participant],
+                        });
+                    } else if (deletedMessage.message.imageMessage || 
+                               deletedMessage.message.videoMessage || 
+                               deletedMessage.message.documentMessage || 
+                               deletedMessage.message.audioMessage || 
+                               deletedMessage.message.stickerMessage || 
+                               deletedMessage.message.voiceMessage) {
+                        // Media message (image, video, document, audio, sticker, voice)
+                        const mediaBuffer = await downloadMedia(deletedMessage.message);
+                        if (mediaBuffer) {
+                            const mediaType = deletedMessage.message.imageMessage ? 'image' :
+                                deletedMessage.message.videoMessage ? 'video' :
+                                deletedMessage.message.documentMessage ? 'document' :
+                                deletedMessage.message.audioMessage ? 'audio' :
+                                deletedMessage.message.stickerMessage ? 'sticker' : 'audio';
+
+                            await zk.sendMessage(remoteJid, {
+                                [mediaType]: mediaBuffer,
+                                caption: notification,
+                                mentions: [deletedMessage.key.participant],
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error handling deleted message:', error);
+                }
+            }
+        }
     }
 });
-        
-        
+
+// Map keywords to corresponding audio files
 const audioMap = {
-    "hey": "files/hey.wav",
-    "hi": "files/hey.wav",
-    "hey": "files/hey.wav",
-    "he": "files/hey.wav",
-    "hello": "files/hello.wav",
-    "mambo": "files/hey.wav",
-    "niaje": "files/hey.wav",
-    "morning": "files/goodmorning.wav",
-    "goodmorning": "files/goodmorning.wav",
-    "weka up": "files/goodmorning.wav",
-    "night": "files/goodnight.wav",
-    "goodnight": "files/goodnight.wav",
-    "sleep": "files/goodnight.wav",
-    "oi": "files/mkuu.wav",
-    "mkuu": "files/mkuu.wav",
-    "mahn": "files/mkuu.wav",
-    "owoh": "files/mkuu.wav",
-    "yoo": "files/mkuu.wav",
-    "wazii": "files/mkuu.wav",
-    "evening": "files/goodevening.wav",
-    "goodevening": "files/goodevening.wav",
-    "darling": "files/darling.wav",
-    "beb": "files/darling.wav",
-    "mpenzi": "files/darling.wav",
-    "afternoon": "files/goodafternoon.wav",
-    "jion": "files/goodafternoon.wav",
-    "kaka": "files/kaka.wav",
-    "bro": "files/morio.mp3",
-    "ndugu": "files/kaka.wav",
-    "morio": "files/morio.mp3",
-    "mzee": "files/morio.mp3",
-    "kijina": "files/mkuu.wav",
-    "mkuu": "files/mkuu.wav",
-     "ozah": "files/mkuu.wav",
-     "ozaah": "files/mkuu.wav",
-    "oyaah": "files/mkuu.wav",
-    "oyah": "files/mkuu.wav",
+    "hey": "media/hey.wav",
+    "hi": "media/hey.wav",
+    "hey": "media/hey.wav",
+    "he": "media/hey.wav",
+    "hello": "media/hello.wav",
+    "mambo": "media/hey.wav",
+    "niaje": "media/hey.wav",
+    "morning": "media/goodmorning.wav",
+    "goodmorning": "media/goodmorning.wav",
+    "weka up": "media/goodmorning.wav",
+    "night": "media/goodnight.wav",
+    "goodnight": "media/goodnight.wav",
+    "sleep": "media/goodnight.wav",
+    "oi": "media/mkuu.wav",
+    "mkuu": "media/mkuu.wav",
+    "mahn": "media/mkuu.wav",
+    "owoh": "media/mkuu.wav",
+    "yoo": "media/mkuu.wav",
+    "wazii": "media/mkuu.wav",
+    "evening": "media/goodevening.wav",
+    "goodevening": "media/goodevening.wav",
+    "darling": "media/darling.wav",
+    "beb": "media/darling.wav",
+    "mpenzi": "media/darling.wav",
+    "afternoon": "media/goodafternoon.wav",
+    "jion": "media/goodafternoon.wav",
+    "kaka": "media/kaka.wav",
+    "bro": "media/morio.mp3",
+    "ndugu": "media/kaka.wav",
+    "morio": "media/morio.mp3",
+    "mzee": "media/morio.mp3",
+    "kijina": "media/mkuu.wav",
+    "mkuu": "media/mkuu.wav",
+    "ozah": "media/mkuu.wav",
+    "ozaah": "media/mkuu.wav",
+    "oyaah": "media/mkuu.wav",
+    "oyah": "media/mkuu.wav"
+
 
 
 
@@ -965,7 +1312,7 @@ if (conf.AUDIO_REPLY === "yes") {
         }
     });
 }
-      
+
         zk.ev.on("messages.upsert", async (m) => {
             const { messages } = m;
             const ms = messages[0];
@@ -1022,16 +1369,16 @@ if (conf.AUDIO_REPLY === "yes") {
             
             var dev = [abu1, abu2,abu3,abu4].map((t) => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
             function repondre(mes) { zk.sendMessage(origineMessage, { text: mes }, { quoted: ms }); }
-            console.log("\tCONSOLE MESSAGES");
-            console.log("=========== NEW CONVERSATION ===========");
+        //    console.log("\tCONSOLE MESSAGES");
+        //    console.log("=========== NEW CONVERSATION ===========");
             if (verifGroupe) {
-                console.log("MESSAGE FROM GROUP : " + nomGroupe);
+              //  console.log("MESSAGE FROM GROUP : " + nomGroupe);
             }
-            console.log("MESSAGE SENT BY : " + "[" + nomAuteurMessage + " : " + auteurMessage.split("@s.whatsapp.net")[0] + " ]");
-            console.log("MESSAGE TYPE : " + mtype);
-            console.log("==================TEXT==================");
+         //   console.log("MESSAGE SENT BY : " + "[" + nomAuteurMessage + " : " + auteurMessage.split("@s.whatsapp.net")[0] + " ]");
+        //    console.log("MESSAGE TYPE : " + mtype);
+         //   console.log("==================TEXT==================");
             console.log(texte);
-            /**  */
+         //   /**  */
             function groupeAdmin(membreGroupe) {
                 let admin = [];
                 for (m of membreGroupe) {
@@ -1474,42 +1821,44 @@ if (conf.AUTO_READ === 'yes') {
         //fin événement message
 
 /******** evenement groupe update ****************/
-const { recupevents } = require('./bdd/welcome'); 
-
-zk.ev.on('group-participants.update', async (group) => {
-    console.log(group);
-
-    let ppgroup;
-    try {
+const {
+      recupevents
+    } = require('./bdd/welcome');
+    zk.ev.on('group-participants.update', async group => {
+      console.log(group);
+      let ppgroup;
+      try {
         ppgroup = await zk.profilePictureUrl(group.id, 'image');
-    } catch {
+      } catch {
         ppgroup = 'https://files.catbox.moe/aktbgo.jpg';
-    }
-
-    try {
+      }
+      try {
         const metadata = await zk.groupMetadata(group.id);
-
-        if (group.action == 'add' && (await recupevents(group.id, "welcome") == 'on')) {
-            let msg = `👋 Hello
+        if (group.action == 'add' && (await recupevents(group.id, "welcome")) == 'on') {
+          let msg = `𝚁𝚊𝚑𝚖𝚊𝚗𝚒-𝚡𝚖𝚍 welcome message
 `;
-
-            let membres = group.participants;
-            for (let membre of membres) {
-                msg += ` *@${membre.split("@")[0]}* Welcome to Our Official Group,`;
-            }
-
-            msg += `You might want to read the group Description to avoid getting removed...`;
-
-            zk.sendMessage(group.id, { image: { url: ppgroup }, caption: msg, mentions: membres });
-        } else if (group.action == 'remove' && (await recupevents(group.id, "goodbye") == 'on')) {
-            let msg = `one or somes member(s) left group;\n`;
-
-            let membres = group.participants;
-            for (let membre of membres) {
-                msg += `@${membre.split("@")[0]}\n`;
-            }
-
-            zk.sendMessage(group.id, { text: msg, mentions: membres });
+          let membres = group.participants;
+          for (let membre of membres) {
+            msg += ` *@${membre.split("@")[0]}* Welcome to Our Official Group,`;
+          }
+          msg += `You might want to read the group Description to avoid getting removed...`;
+          zk.sendMessage(group.id, {
+            image: {
+              url: ppgroup
+            },
+            caption: msg,
+            mentions: membres
+          });
+        } else if (group.action == 'remove' && (await recupevents(group.id, "goodbye")) == 'on') {
+          let msg = `one or somes member(s) left group;\n`;
+          let membres = group.participants;
+          for (let membre of membres) {
+            msg += `@${membre.split("@")[0]}\n`;
+          }
+          zk.sendMessage(group.id, {
+            text: msg,
+            mentions: membres
+          });
 
         } else if (group.action == 'promote' && (await recupevents(group.id, "antipromote") == 'on') ) {
             //  console.log(zk.user.id)
@@ -1611,18 +1960,18 @@ zk.ev.on('group-participants.update', async (group) => {
         zk.ev.on("connection.update", async (con) => {
             const { lastDisconnect, connection } = con;
             if (connection === "connecting") {
-                console.log("ℹ️ rahmani is connecting...");
+                console.log("ℹ️ CHARLESKE-XMD is connecting...");
             }
             else if (connection === 'open') {
-                console.log("✅ Rahmani Connected to WhatsApp! ☺️");
+                console.log("✅ RAHMANI-XMD Connected to WhatsApp! ☺️");
                 console.log("--");
                 await (0, baileys_1.delay)(200);
                 console.log("------");
                 await (0, baileys_1.delay)(300);
                 console.log("------------------/-----");
-                console.log("Rahmani is Online 🕸\n\n");
+                console.log("RAHMANI-XMD is Online 🕸\n\n");
                 //chargement des commandes 
-                console.log("Loading Rahmani Commands ...\n");
+                console.log("Loading RAHMANI-XMD Commands ...\n");
                 fs.readdirSync(__dirname + "/rahmani").forEach((fichier) => {
                     if (path.extname(fichier).toLowerCase() == (".js")) {
                         try {
@@ -1654,33 +2003,16 @@ zk.ev.on('group-participants.update', async (group) => {
                 if((conf.DP).toLowerCase() === 'yes') {     
 
                 let cmsg =` ⁠⁠⁠⁠
-
-   _BOT🍁CONNECTED_
-
-║ Prefix: [ ${prefixe} ]
-║ Mode: ${md}
-║ Model: RAHMANI_XMD
-║ Bot Name: Rahmani-xMd-Bot 
-║ Owner: Rahmani
-╚═════ ❖ •✦
--_-<-<-<-<-<-<-<--<-<-<-<-<-<
-
-*🪀Follow my channel for updates ✌️😎*
- 
->https://whatsapp.com/channel/0029VatokI45EjxufALmY32X
-
-*Heroku App Configuration*
- 
-*🐥Client name*
-> ${herokuAppName}
-
-*🦋Visit your bot web*
-> ${herokuAppLink}
-
-*🦁Client Number*
-> ${botOwner}
-
--_-_-<€<€-<-<-<-<-<-<-<-<-<-<-<
+╭─────────────━┈⊷ 
+│*RAHMANI-XMD*🇹🇿
+╰─────────────━┈⊷
+│ᴘʀᴇғɪx: *[ ${prefixe} ]*
+│ᴍᴏᴅᴇ: *${md}*
+│ʙᴏᴛ ɴᴀᴍᴇ: *Rahmani xmd*
+│ᴏᴡɴᴇʀ : *Rahmani tech*
+╰─────────────━┈⊷
+*our channel*
+     https://whatsapp.com/channel/0029VatokI45EjxufALmY32X           
                 
                  `;
                     
