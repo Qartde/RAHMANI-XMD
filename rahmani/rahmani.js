@@ -1,70 +1,127 @@
-//RAHMAN XMD OBT
-// GOOD BYE 👋👋 
-// REMOTE CONTROL 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+const util = require('util');
+const fs = require('fs-extra');
+const { zokou } = require(__dirname + "/../framework/zokou");
+const { format } = require(__dirname + "/../framework/mesfonctions");
+const os = require("os");
+const moment = require("moment-timezone");
+const s = require(__dirname + "/../set");
+const more = String.fromCharCode(8206)
+const readmore = more.repeat(4001)
+
+zokou({ nomCom: "menu", categorie: "General" }, async (dest, zk, commandeOptions) => {
+    let { ms, repondre ,prefixe,nomAuteurMessage,mybotpic} = commandeOptions;
+    let { cm } = require(__dirname + "/../framework//zokou");
+    var coms = {};
+    var mode = "public";
+
+    if ((s.MODE).toLocaleLowerCase() != "yes") {
+        mode = "private";
+    }
+
+
+
+
+    cm.map(async (com, index) => {
+        if (!coms[com.categorie])
+            coms[com.categorie] = [];
+        coms[com.categorie].push(com.nomCom);
+    });
+
+    moment.tz.setDefault('Etc/GMT');
+
+// Créer une date et une heure en GMT
+const temps = moment().format('HH:mm:ss');
+const date = moment().format('DD/MM/YYYY');
+
+  let infoMsg =  `
+╭──────────────────────╮  
+│        *𝐑𝐀𝐇𝐌𝐀𝐍𝐈-𝐗𝐌𝐃*       │  
+│        ⫸⫸⫸𝐁𝐎𝐓⫷⫷⫷ │  
+╰──────────────────────╯  
+
+╭━━━━━❰ *AVAILABLE MENUS* ❱━━━╮  
+┃ ❒  📜 ▸ *MENU*                    
+┃ ❒  📄 ▸ *MENU2*                  
+┃ ❒  🐞 ▸ *BUGMENU*  
+┃ =======================
+┃ ❒  🔌 ▸ *PLUGINS*  : ${cm.length}   
+┃ ❒  💾 ▸ *RAM*      : ${format(os.totalmem() - os.freemem())}/${format(os.totalmem())}    
+┃ ❒  🖥️  ▸ *SAVER*    : ${os.platform()}         
+┃ ❒  🎨 ▸ *THEME*   :  R
+╰━━━━━━━━━━━━━━━━━━━━━━━━╯ 
+
+📌 _*Type the command to proceed.*_  
+════════════════════════  
+💡 WE ARE FAMILY
+════════════════════════\n`;
+
+let menuMsg = `
+
+ *COMMANDS*${readmore}
+`;
+
+    for (const cat in coms) {
+        menuMsg += ` ╭────────❒*${cat}* ✣`;
+        for (const cmd of coms[cat]) {
+            menuMsg += `
+││▸ ${cmd}`;
+        }
+        menuMsg += `
+╰────────────···▸▸ \n`
+    }
+
+    menuMsg += `> 𝚩𝚯𝚻 𝐂𝚪𝚵𝚫𝚻𝚵𝐃 𝚩𝐘 𝐑𝐀𝐇𝐌𝐀𝐍𝐈
+`;
+
+var _0x5c0ca0 = _0x1f21eb();
+  if (_0x5c0ca0.match(/\.(mp4|gif)$/i)) {
+    try {
+      _0x1dcce7.sendMessage(_0x4a15e2, {
+        'text': _0x27d95e + _0x43bd3c,
+        'contextInfo': {
+          'forwardingScore': 0x3e7,
+          'isForwarded': true,
+          'forwardedNewsletterMessageInfo': {
+            'newsletterJid': "120363353854480831@newsletter",
+            'newsletterName': "\"ʀᴀʜᴍᴀɴɪ",
+            'serverMessageId': 0x8f
+          },
+          'externalAdReply': {
+            'title': "ʀᴀʜᴍᴀɴɪ",
+            'body': "Follow my channel for more updates",
+            'thumbnailUrl': "https://files.catbox.moe/aktbgo.jpg",
+            'sourceUrl': conf.GURL,
+            'mediaType': 0x1,
+            'renderLargerThumbnail': true,
+            'showAdAttribution': false
+          }
+        }
+      }, {
+        'quoted': _0x455c6b
+      });
+    } catch (_0x288f7f) {
+        console.log("🥵🥵 Menu erreur " + e);
+        repondre("🥵🥵 Menu erreur " + e);
+    }
+} 
+// Vérification pour .jpeg ou .png
+else if (lien.match(/\.(jpeg|png|jpg)$/i)) {
+    try {
+        zk.sendMessage(dest, { image: { url: lien }, caption:infoMsg + menuMsg, footer: "𝐑𝐀𝐇𝐌𝐀𝐍𝐈-𝐗𝐌𝐃*, déveloper Rahmani" }, { quoted: ms });
+    }
+    catch (e) {
+        console.log("🥵🥵 Menu erreur " + e);
+        repondre("🥵🥵 Menu erreur " + e);
+    }
+} 
+else {
+
+    repondre(infoMsg + menuMsg);
+
+}
+
+});
 
 
 
