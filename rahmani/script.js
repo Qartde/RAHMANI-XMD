@@ -38,10 +38,10 @@ const date = moment().format('DD/MM/YYYY');
    *RAHMANI-MD IMPORTANT INFO* 
 ❒═════════════════❒
 *GITHUB LINK*
-> https://github.com/deshallos1/RAMN-XMD
+> https://github.com/Qartde/RAHMANI-XMD
 
 *WHATSAPP CHANNEL*
-> https://whatsapp.com/channel/0029VavShWD1iUxb6kjV6K2T
+> https://whatsapp.com/channel/0029VatokI45EjxufALmY32X
 ⁠
 ╭══════════════════⊷❍
 │❒⁠⁠⁠⁠ *RAM* : ${format(os.totalmem() - os.freemem())}/${format(os.totalmem())}
@@ -51,7 +51,7 @@ const date = moment().format('DD/MM/YYYY');
     
 let menuMsg = `
 ❒═══════════❒
-       *RAHMANI-MD*
+       *RAHMANI-XMD*
 ❒═══════════❒`;
 
    var lien = mybotpic();
