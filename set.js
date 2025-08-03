@@ -1,7 +1,4 @@
-
-
-
-
+yes
 
 const fs = require('fs-extra');
 const { Sequelize } = require('sequelize');
@@ -32,7 +29,7 @@ module.exports = { session: process.env.SESSION_ID || '',
     ANTICALL : process.env.ANTICALL || 'no',
                   AUTO_REACT_STATUS : process.env.AUTO_REACT_STATUS || 'yes',
                   AUTO_READ : process.env.AUTO_READ || 'yes',
-                  CHATBOT : process.env.CHATBOT || "yes",
+                  CHATBOT : process.env.CHATBOT || "no",
                   AUTO_BIO : process.env.AUTO_BIO || "yes",
                   AUTO_REACT : process.env.AUTO_REACT || "",
     DATABASE_URL,
