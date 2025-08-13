@@ -88,13 +88,13 @@ zokou({ nomCom: "url", categorie: "General", reaction: "👨🏿‍💻" }, asyn
         // Respond with the URL based on media type
         switch (mediaType) {
             case 'image':
-                repondre(`𝑯𝑬𝑹𝑶𝑲𝑼-𝑩𝑻 url: ${catboxUrl}`);
+                repondre(`𝚁𝙰𝙷𝙼𝙰𝙽𝙸-𝚇𝙼𝙳 url: ${catboxUrl}`);
                 break;
             case 'video':
-                repondre(`𝑯𝑬𝑹𝑶𝑲𝑼-𝑩𝑻 url: ${catboxUrl}`);
+                repondre(`𝚁𝙰𝙷𝙼𝙰𝙽𝙸-𝚇𝙼𝙳 url: ${catboxUrl}`);
                 break;
             case 'audio':
-                repondre(`𝑯𝑬𝑹𝑶𝑲𝑼-𝑩𝑻 url: ${catboxUrl}`);
+                repondre(`𝚁𝙰𝙷𝙼𝙰𝙽𝙸-𝚇𝙼𝙳 url: ${catboxUrl}`);
                 break;
             default:
                 repondre('An unknown error occurred.');
