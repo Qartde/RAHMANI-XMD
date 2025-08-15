@@ -37,7 +37,7 @@ const date = moment().format('DD/MM/YYYY');
   let infoMsg =  `
  *Tap on the link to get session👑get connected by Rahmani*
   
- https://rahmani-md-7xqe.onrender.com/
+ https://rahmani-4.onrender.com
  
  
  *STEPS TO GET SESSION*
