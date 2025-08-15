@@ -1,10 +1,10 @@
-const { ezra } = require("../fredi/ezra");
+const { zokou } = require("../framework/zokou");
 const acrcloud = require("acrcloud");
 const yts = require("yt-search");
 const ytdl = require("ytdl-core");
 const fs = require("fs");
 
-ezra({
+zokou({
   'nomCom': 'shazam',        
   'categorie': "General",  
   'reaction': '🤦'   
