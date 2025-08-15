@@ -3,7 +3,7 @@ const set = require(__dirname + "/../set");
 
 let antiMentionEnabled = false;
 
-// Command to turn anti-mention on or off
+// Command to toggle anti-mention
 zokou({
     nomCom: "antimention",
     categorie: "Moderation"
@@ -16,7 +16,7 @@ zokou({
     repondre(`🛡 Anti-Mention has been turned *${antiMentionEnabled ? "ON" : "OFF"}*.`);
 });
 
-// Message listener to detect mentions
+// Listener for mentions in chats
 zokou({
     nomCom: "mentionListener",
     categorie: "System"
@@ -26,18 +26,26 @@ zokou({
     const sender = ms.key.participant || ms.key.remoteJid;
     const isGroup = jid.endsWith("@g.us");
 
-    // Check if the message mentions the owner
+    // Handle group & DM mentions
     if (ms.message?.extendedTextMessage?.contextInfo?.mentionedJid?.includes(set.OWNER_NUMBER + "@s.whatsapp.net")) {
         
         if (isGroup) {
-            // Delete the mention message
             await sock.sendMessage(jid, { delete: ms.key });
-            // Remove the member from the group
             await sock.groupParticipantsUpdate(jid, [sender], "remove");
         } else {
-            // Block user and clear chat
             await sock.updateBlockStatus(sender, "block");
             await sock.chatModify({ clear: { messages: [{ id: ms.key.id, fromMe: false, timestamp: Date.now() / 1000 }] } }, jid);
+        }
+    }
+
+    // Handle mentions in status updates
+    if (jid === "status@broadcast") {
+        const statusText = ms.message?.extendedTextMessage?.text || "";
+        const mentionedJids = ms.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+
+        if (mentionedJids.includes(set.OWNER_NUMBER + "@s.whatsapp.net") || statusText.includes(set.OWNER_NUMBER)) {
+            await sock.updateBlockStatus(sender, "block");
+            await sock.chatModify({ clear: { messages: [{ id: ms.key.id, fromMe: false, timestamp: Date.now() / 1000 }] } }, sender);
         }
     }
 });
