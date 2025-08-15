@@ -1,9 +1,9 @@
 
-const { ezra } = require("../fredi/ezra");
+const { zokou } = require("../framework/zokou");
 const axios = require("axios");
 
 // Define the command with aliases
-ezra({
+zokou({
   nomCom: "lyrics",
   aliases: ["lyric", "mistari"],
   reaction: '🤦',
