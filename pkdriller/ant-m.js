@@ -3,42 +3,41 @@ const set = require(__dirname + "/../set");
 
 let antiMentionEnabled = false;
 
+// Command to turn anti-mention on or off
 zokou({
     nomCom: "antimention",
     categorie: "Moderation"
-}, async (jid, sock, args) => {
-    let text = args.ms.body.split(" ")[1]; // on/off
-
-    if (!text || !["on", "off"].includes(text.toLowerCase())) {
-        return sock.sendMessage(jid, { text: "✅ Usage: .antimention on / off" });
+}, async (jid, sock, { arg, repondre }) => {
+    if (!arg[0] || !["on", "off"].includes(arg[0].toLowerCase())) {
+        return repondre("✅ Usage: .antimention on / off");
     }
 
-    antiMentionEnabled = text.toLowerCase() === "on";
-    sock.sendMessage(jid, { text: `🛡 Anti-Mention has been turned *${antiMentionEnabled ? "ON" : "OFF"}*.` });
+    antiMentionEnabled = arg[0].toLowerCase() === "on";
+    repondre(`🛡 Anti-Mention has been turned *${antiMentionEnabled ? "ON" : "OFF"}*.`);
 });
 
-// Anti-Mention Handler
+// Message listener to detect mentions
 zokou({
     nomCom: "mentionListener",
     categorie: "System"
-}, async (jid, sock, msg) => {
+}, async (jid, sock, { ms }) => {
     if (!antiMentionEnabled) return;
 
-    const sender = msg.key.participant || msg.key.remoteJid;
+    const sender = ms.key.participant || ms.key.remoteJid;
     const isGroup = jid.endsWith("@g.us");
 
     // Check if the message mentions the owner
-    if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.includes(set.OWNER_NUMBER + "@s.whatsapp.net")) {
+    if (ms.message?.extendedTextMessage?.contextInfo?.mentionedJid?.includes(set.OWNER_NUMBER + "@s.whatsapp.net")) {
         
         if (isGroup) {
             // Delete the mention message
-            await sock.sendMessage(jid, { delete: msg.key });
+            await sock.sendMessage(jid, { delete: ms.key });
             // Remove the member from the group
             await sock.groupParticipantsUpdate(jid, [sender], "remove");
         } else {
-            // Delete chat & block user
+            // Block user and clear chat
             await sock.updateBlockStatus(sender, "block");
-            await sock.chatModify({ clear: { messages: [{ id: msg.key.id, fromMe: false, timestamp: Date.now() / 1000 }] } }, jid);
+            await sock.chatModify({ clear: { messages: [{ id: ms.key.id, fromMe: false, timestamp: Date.now() / 1000 }] } }, jid);
         }
     }
 });
