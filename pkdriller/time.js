@@ -1,7 +1,7 @@
-const { Meta } = require('../lib/');
+const { zokou } = require('../framework/zokou');
 const config = require('../config');
 
-Meta({
+zokou({
     command: 'time',
     category: 'info',
     handler: async (sock, args, message) => {
