@@ -1,8 +1,8 @@
 const axios = require('axios');
-const { cmd, commands } = require('../command');
+const { zokou } = require('..framework/zokou');
 
-cmd({
-    pattern: "dog",
+zokou({
+    nomcom: "dog",
     desc: "Fetch a random dog image.",
     category: "fun",
     react: "🦴",
