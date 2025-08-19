@@ -1,4 +1,4 @@
-const { bmbtz } = require('../framework/zokou');
+const { zokou } = require('../framework/zokou');
 const { addOrUpdateDataInAlive, getDataFromAlive } = require('../command/alive');
 const moment = require("moment-timezone");
 const s = require(__dirname + "/../settings");
