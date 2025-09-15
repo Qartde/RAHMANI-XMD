@@ -10,7 +10,7 @@ zokou({ nomCom: "gpt", reaction: "🤷", categorie: "ai" }, async (dest, zk, com
 
   try {
     if (!arg || arg.length === 0) {
-      return repondre('> Rahmani-md.\n\n What help can I offer you today?');
+      return repondre('\n\n What help can I offer you today?');
     }
 
     // Combine arguments into a single string
@@ -36,7 +36,7 @@ zokou({ nomCom: "gpt", reaction: "🤷", categorie: "ai" }, async (dest, zk, com
                 text: answer
               }),
               footer: proto.Message.InteractiveMessage.Footer.create({
-                text: "> *Rahmani*"
+                text: "> *®Rahmani*"
               }),
               header: proto.Message.InteractiveMessage.Header.create({
                 title: "",
