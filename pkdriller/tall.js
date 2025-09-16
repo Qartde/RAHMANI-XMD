@@ -5,12 +5,12 @@ const fs = require('fs');
 const pkg = require('@whiskeysockets/baileys');
 const { generateWAMessageFromContent, proto } = pkg;
 
-zokou({ nomCom: "gpt", reaction: "🤠", categorie: "ai" }, async (dest, zk, commandeOptions) => {
+zokou({ nomCom: "gpt", reaction: "🪅", categorie: "ai" }, async (dest, zk, commandeOptions) => {
   const { repondre, arg, ms } = commandeOptions;
 
   try {
     if (!arg || arg.length === 0) {
-      return repondre('> ® Rahmani.\n\n What help can I offer you today?');
+      return repondre('Hello 🖐️.\n\n What help can I offer you today?');
     }
 
     // Combine arguments into a single string
@@ -36,7 +36,7 @@ zokou({ nomCom: "gpt", reaction: "🤠", categorie: "ai" }, async (dest, zk, com
                 text: answer
               }),
               footer: proto.Message.InteractiveMessage.Footer.create({
-                text: "> *® Rahmani*"
+                text: "> *RAHMANI-MD*"
               }),
               header: proto.Message.InteractiveMessage.Header.create({
                 title: "",
