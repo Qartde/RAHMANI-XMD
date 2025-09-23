@@ -21,7 +21,6 @@ zokou({ nomCom: "gpt", reaction: "🤠", categorie: "ai" }, async (dest, zk, com
     if (!global.userChats[ms.sender]) global.userChats[ms.sender] = [];
     global.userChats[ms.sender].push(`User: ${text}`);
 
-    // Keep only last 15 messages
     if (global.userChats[ms.sender].length > 15) {
       global.userChats[ms.sender].shift();
     }
@@ -29,7 +28,7 @@ zokou({ nomCom: "gpt", reaction: "🤠", categorie: "ai" }, async (dest, zk, com
     const history = global.userChats[ms.sender].join("\n");
 
     const prompt = `
-You are Rahman Ai surrport by HansTz, a friendly and intelligent WhatsApp bot. Chat naturally without asking repetitive questions, and do not ask, 'How can I assist you?'
+You are Rahman Ai surrport by HansTz, a friendly and intelligent WhatsApp bot. Chat naturally without asking repetitive questions.
 
 ### Chat History:  
 ${history}
@@ -40,19 +39,24 @@ ${history}
       params: { q: text, logic: prompt }
     });
 
-    if (data && data.response) {
-      const botReply = `${data.response}`;
+    console.log("✅ API Raw Response:", data);
 
-      // Save bot response in history
-      global.userChats[ms.sender].push(`Bot: ${data.response}`);
-
-      // Send reply via zk
-      await zk.sendMessage(dest, { text: botReply }, { quoted: ms });
+    let botReply = "";
+    if (typeof data === "string") {
+      botReply = data;
+    } else if (data.response) {
+      botReply = data.response;
+    } else if (data.output) {
+      botReply = data.output;
     } else {
-      throw new Error("Invalid response from API");
+      throw new Error("Unexpected API response format");
     }
+
+    // Direct reply only once
+    await zk.sendMessage(dest, { text: botReply }, { quoted: ms });
+
   } catch (error) {
-    console.error("Error in GPT command:", error.message);
+    console.error("❌ Error in GPT command:", error);
     await zk.sendMessage(dest, { text: "⚠️ Error while fetching AI response. Please try again." }, { quoted: ms });
   }
 });
