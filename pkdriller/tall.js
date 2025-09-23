@@ -1,58 +1,82 @@
 const { zokou } = require('../framework/zokou');
-const traduire = require("../framework/traduction");
 const { default: axios } = require('axios');
-const fs = require('fs');
-const pkg = require('@whiskeysockets/baileys');
-const { generateWAMessageFromContent, proto } = pkg;
 
 if (!global.userChats) global.userChats = {};
 
-zokou({ nomCom: "gpt", reaction: "🤷", categorie: "ai" }, async (dest, zk, commandeOptions) => {
-  const { arg, ms } = commandeOptions;
+zokou({ nomCom: "gpt", reaction: "🤠", categorie: "ai" }, async (dest, zk, commandeOptions) => {
+    const { arg, ms } = commandeOptions;
+    const sender = ms.sender;
+    const from = dest;
 
-  try {
-    if (!arg || arg.length === 0) {
-      return await zk.sendMessage(dest, { text: "❌ Please provide a question or message." }, { quoted: ms });
-    }
+    try {
+        if (!arg || arg.length === 0) {
+            return await zk.sendMessage(from, { text: "❌ Please provide a question or message." }, { quoted: ms });
+        }
 
-    const text = arg.join(" ");
+        const text = arg.join(" ");
 
-    // Store user chat history
-    if (!global.userChats[ms.sender]) global.userChats[ms.sender] = [];
-    global.userChats[ms.sender].push(`User: ${text}`);
+        // Initialize user chat history
+        if (!global.userChats[sender]) global.userChats[sender] = [];
+        global.userChats[sender].push(`User: ${text}`);
 
-    // Keep only last 15 messages
-    if (global.userChats[ms.sender].length > 15) {
-      global.userChats[ms.sender].shift();
-    }
+        // Keep only last 15 messages
+        if (global.userChats[sender].length > 15) global.userChats[sender].shift();
 
-    const history = global.userChats[ms.sender].join("\n");
+        const history = global.userChats[sender].join("\n");
 
-    const prompt = `
-You are Rahman Ai, a friendly and intelligent WhatsApp bot. Chat naturally without asking repetitive questions, and do not ask, 'How can I assist you?'
+        const prompt = `
+You are Rahman Ai, a friendly and intelligent WhatsApp bot. Chat naturally without asking repetitive questions.
 
-### Chat History:  
+### Chat History:
 ${history}
 `;
 
-    // Call your API
-    const { data } = await axios.get("https://mannoffc-x.hf.space/ai/logic", {
-      params: { q: text, logic: prompt }
-    });
+        // Call your API
+        const { data } = await axios.get("https://HansTzTech-api.hf.space/ai/logic", {
+            params: { q: text, logic: prompt }
+        });
 
-    if (data && data.response) {
-      const botReply = `🤖 *Rahman AI*: ${data.response}`;
+        // Extract bot response
+        const botResponse = data?.result || "⚠️ Sorry, I couldn't understand your question.";
 
-      // Save bot response in history
-      global.userChats[ms.sender].push(`Bot: ${data.response}`);
+        // Save bot reply in history
+        global.userChats[sender].push(`Bot: ${botResponse}`);
 
-      // Send reply via zk
-      await zk.sendMessage(dest, { text: botReply }, { quoted: ms });
-    } else {
-      throw new Error("Invalid response from API");
+        // Get user profile pic
+        let profilePic = 'https://files.catbox.moe/di5kdx.jpg';
+        try {
+            profilePic = await zk.profilePictureUrl(sender, 'image');
+        } catch {}
+
+        // Send rich reply
+        await zk.sendMessage(from, {
+            text: `
+👤 *USER:* @${sender.split("@")[0]}
+
+🤖 *RAHMAN-𝐗𝐌𝐃 AI REPLY:*
+
+${botResponse}`,
+            contextInfo: {
+                mentionedJid: [sender],
+                forwardingScore: 5,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterName: "Rahman",
+                    newsletterJid: "120363353854480831@newsletter"
+                },
+                externalAdReply: {
+                    title: "RAHMAN-𝐗𝐌𝐃",
+                    body: "Powered by HansTz",
+                    thumbnailUrl: profilePic,
+                    mediaType: 1,
+                    renderLargerThumbnail: false,
+                    sourceUrl: global.link || "https://HansTzTech-api.hf.space"
+                }
+            }
+        }, { quoted: ms });
+
+    } catch (err) {
+        console.error("❌ GPT Error:", err);
+        await zk.sendMessage(from, { text: "❌ An error occurred: " + err.message }, { quoted: ms });
     }
-  } catch (error) {
-    console.error("Error in GPT command:", error.message);
-    await zk.sendMessage(dest, { text: "⚠️ Error while fetching AI response. Please try again." }, { quoted: ms });
-  }
 });
