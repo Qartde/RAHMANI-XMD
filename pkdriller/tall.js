@@ -1,64 +1,58 @@
 const { zokou } = require('../framework/zokou');
-const traduire = require("../framework/traduction") ;
+const traduire = require("../framework/traduction");
 const { default: axios } = require('axios');
 const fs = require('fs');
 const pkg = require('@whiskeysockets/baileys');
 const { generateWAMessageFromContent, proto } = pkg;
 
-zokou({ nomCom: "gpt", reaction: "🚀", categorie: "ai" }, async (dest, zk, commandeOptions) => {
-  const { repondre, arg, ms } = commandeOptions;
+if (!global.userChats) global.userChats = {};
+
+zokou({ nomCom: "gpt", reaction: "🤠", categorie: "ai" }, async (dest, zk, commandeOptions) => {
+  const { arg, ms } = commandeOptions;
 
   try {
     if (!arg || arg.length === 0) {
-      return repondre('> ®Rahmani.\n\n What help can I offer you today?');
+      return await zk.sendMessage(dest, { text: "❌ Please provide a question or message." }, { quoted: ms });
     }
 
-    // Combine arguments into a single string
-    const prompt = arg.join(' ');
-    const response = await fetch(`https://api.gurusensei.workers.dev/llama?prompt=${prompt}`);
-    const data = await response.json();
+    const text = arg.join(" ");
 
-    if (data && data.response && data.response.response) {
-      const answer = data.response.response;
+    // Store user chat history
+    if (!global.userChats[ms.sender]) global.userChats[ms.sender] = [];
+    global.userChats[ms.sender].push(`User: ${text}`);
 
-      // Check if the answer contains code
-      const codeMatch = answer.match(/```([\s\S]*?)```/);
+    // Keep only last 15 messages
+    if (global.userChats[ms.sender].length > 15) {
+      global.userChats[ms.sender].shift();
+    }
 
-      const msg = generateWAMessageFromContent(dest, {
-        viewOnceMessage: {
-          message: {
-            messageContextInfo: {
-              deviceListMetadata: {},
-              deviceListMetadataVersion: 2
-            },
-            interactiveMessage: proto.Message.InteractiveMessage.create({
-              body: proto.Message.InteractiveMessage.Body.create({
-                text: answer
-              }),
-              footer: proto.Message.InteractiveMessage.Footer.create({
-                text: "> *® Rahmani*"
-              }),
-              header: proto.Message.InteractiveMessage.Header.create({
-                title: "",
-                subtitle: "",
-                hasMediaAttachment: false
-              }),
-              nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
-                buttons: [] // No buttons
-              })
-            })
-          }
-        }
-      }, {});
+    const history = global.userChats[ms.sender].join("\n");
 
-      await zk.relayMessage(dest, msg.message, {
-        messageId: msg.key.id
-      });
+    const prompt = `
+You are Rahman Ai surrport by HansTz, a friendly and intelligent WhatsApp bot. Chat naturally without asking repetitive questions, and do not ask, 'How can I assist you?'
+
+### Chat History:  
+${history}
+`;
+
+    // Call your API
+    const { data } = await axios.get("https://HansTzTech-api.hf.space/ai/logic", {
+      params: { q: text, logic: prompt }
+    });
+
+    if (data && data.response) {
+      const botReply = `${data.response}`;
+
+      // Save bot response in history
+      global.userChats[ms.sender].push(`Bot: ${data.response}`);
+
+      // Send reply via zk
+      await zk.sendMessage(dest, { text: botReply }, { quoted: ms });
     } else {
-      throw new Error('Invalid response from the API.');
+      throw new Error("Invalid response from API");
     }
   } catch (error) {
-    console.error('Error getting response:', error.message);
-    repondre('Error getting response.');
+    console.error("Error in GPT command:", error.message);
+    await zk.sendMessage(dest, { text: "⚠️ Error while fetching AI response. Please try again." }, { quoted: ms });
   }
 });
