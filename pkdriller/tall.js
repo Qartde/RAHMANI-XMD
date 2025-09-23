@@ -42,38 +42,8 @@ ${history}
         // Save bot reply in history
         global.userChats[sender].push(`Bot: ${botResponse}`);
 
-        // Get user profile pic
-        let profilePic = 'https://files.catbox.moe/di5kdx.jpg';
-        try {
-            profilePic = await zk.profilePictureUrl(sender, 'image');
-        } catch {}
-
-        // Send rich reply
-        await zk.sendMessage(from, {
-            text: `
-👤 *USER:* @${sender.split("@")[0]}
-
-🤖 *RAHMAN-𝐗𝐌𝐃 AI REPLY:*
-
-${botResponse}`,
-            contextInfo: {
-                mentionedJid: [sender],
-                forwardingScore: 5,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterName: "Rahman",
-                    newsletterJid: "120363353854480831@newsletter"
-                },
-                externalAdReply: {
-                    title: "RAHMAN-𝐗𝐌𝐃",
-                    body: "Powered by HansTz",
-                    thumbnailUrl: profilePic,
-                    mediaType: 1,
-                    renderLargerThumbnail: false,
-                    sourceUrl: global.link || "https://HansTzTech-api.hf.space"
-                }
-            }
-        }, { quoted: ms });
+        // Send plain reply
+        await zk.sendMessage(from, { text: botResponse }, { quoted: ms });
 
     } catch (err) {
         console.error("❌ GPT Error:", err);
