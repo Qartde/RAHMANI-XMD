@@ -7,7 +7,7 @@ const { generateWAMessageFromContent, proto } = pkg;
 
 if (!global.userChats) global.userChats = {};
 
-zokou({ nomCom: "gpt", reaction: "🤠", categorie: "ai" }, async (dest, zk, commandeOptions) => {
+zokou({ nomCom: "gpt", reaction: "🤷", categorie: "ai" }, async (dest, zk, commandeOptions) => {
   const { arg, ms } = commandeOptions;
 
   try {
@@ -21,6 +21,7 @@ zokou({ nomCom: "gpt", reaction: "🤠", categorie: "ai" }, async (dest, zk, com
     if (!global.userChats[ms.sender]) global.userChats[ms.sender] = [];
     global.userChats[ms.sender].push(`User: ${text}`);
 
+    // Keep only last 15 messages
     if (global.userChats[ms.sender].length > 15) {
       global.userChats[ms.sender].shift();
     }
@@ -28,35 +29,30 @@ zokou({ nomCom: "gpt", reaction: "🤠", categorie: "ai" }, async (dest, zk, com
     const history = global.userChats[ms.sender].join("\n");
 
     const prompt = `
-You are Rahman Ai surrport by HansTz, a friendly and intelligent WhatsApp bot. Chat naturally without asking repetitive questions.
+You are Rahman Ai, a friendly and intelligent WhatsApp bot. Chat naturally without asking repetitive questions, and do not ask, 'How can I assist you?'
 
 ### Chat History:  
 ${history}
 `;
 
     // Call your API
-    const { data } = await axios.get("https://HansTzTech-api.hf.space/ai/logic", {
+    const { data } = await axios.get("https://mannoffc-x.hf.space/ai/logic", {
       params: { q: text, logic: prompt }
     });
 
-    console.log("✅ API Raw Response:", data);
+    if (data && data.response) {
+      const botReply = `🤖 *Rahman AI*: ${data.response}`;
 
-    let botReply = "";
-    if (typeof data === "string") {
-      botReply = data;
-    } else if (data.response) {
-      botReply = data.response;
-    } else if (data.output) {
-      botReply = data.output;
+      // Save bot response in history
+      global.userChats[ms.sender].push(`Bot: ${data.response}`);
+
+      // Send reply via zk
+      await zk.sendMessage(dest, { text: botReply }, { quoted: ms });
     } else {
-      throw new Error("Unexpected API response format");
+      throw new Error("Invalid response from API");
     }
-
-    // Direct reply only once
-    await zk.sendMessage(dest, { text: botReply }, { quoted: ms });
-
   } catch (error) {
-    console.error("❌ Error in GPT command:", error);
+    console.error("Error in GPT command:", error.message);
     await zk.sendMessage(dest, { text: "⚠️ Error while fetching AI response. Please try again." }, { quoted: ms });
   }
 });
