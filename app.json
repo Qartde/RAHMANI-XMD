@@ -120,7 +120,7 @@
   },
   "PRESENCE":{
     "description":"Mark your presence: 1 online. 2 typing a message. 3 recording . Or leave the field blank to indicate your real state.",
-    "value":"2",
+    "value":"1",
     "required": false
   },
   "ANTI_DELETE_MESSAGE" : {
