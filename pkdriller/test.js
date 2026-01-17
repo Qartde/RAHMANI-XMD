@@ -7,7 +7,7 @@ zokou({ nomCom: "test", reaction: "📎", nomFichier: __filename }, async (dest,
     let d = ' by *𝑹𝑨𝑯𝑴𝑨𝑵𝑰*';
     let varmess = z + d;
     var mp4 = 'https://files.catbox.moe/4bepay.mp4';
-    await zk.sendMessage(dest, { image: { url: img }, caption: varmess });
+    await zk.sendMessage(dest, { video: { url: mp4 }, caption: varmess });
     //console.log("montest")
 });
 console.log("mon test");
