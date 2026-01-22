@@ -37,9 +37,8 @@ ${history}
         });
 
       
-        const botResponse = data?.result?.text || "⚠️ Sorry, I couldn't understand your question."; 
-        
-        image: { url: image },
+        const botResponse = data?.result?.text || "⚠️ Sorry, I couldn't understand your question.";
+        const image: { url: image },
 //     gifPlayback: true,
      caption: teks,
      buttons: buttons,
