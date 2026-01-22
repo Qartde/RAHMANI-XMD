@@ -3,7 +3,7 @@ const { default: axios } = require('axios');
 
 if (!global.userChats) global.userChats = {};
 
-zokou({ nomCom: "gpt", reaction: "🤖", categorie: "ai" }, async (dest, zk, commandeOptions) => {
+zokou({ nomCom: "chat", reaction: "🤖", categorie: "ai" }, async (dest, zk, commandeOptions) => {
     const { arg, ms } = commandeOptions;
     const sender = ms.sender;
     const from = dest;
@@ -37,20 +37,9 @@ ${history}
         });
 
       
-        const botResponse = data?.result?.text || "⚠️ Sorry, I couldn't understand your question.";
-
-        // Save bot reply in history
-        global.userChats[sender].push(`Bot: ${botResponse}`);
-
-        // Send plain reply
-        await zk.sendMessage(from, { text: botResponse }, { quoted: ms });
-
-    } catch (err) {
-        console.error("❌ GPT Error:", err);
-        await zk.sendMessage(from, { text: "❌ An error occurred: " + err.message }, { quoted: ms });
-    }
-});
-image: { url: image },
+        const botResponse = data?.result?.text || "⚠️ Sorry, I couldn't understand your question."; 
+        
+        image: { url: image },
 //     gifPlayback: true,
      caption: teks,
      buttons: buttons,
@@ -66,3 +55,14 @@ image: { url: image },
         viewOnce: true,
         headerType: 6
    }
+        // Save bot reply in history
+        global.userChats[sender].push(`Bot: ${botResponse}`);
+
+        // Send plain reply
+        await zk.sendMessage(from, { text: botResponse }, { quoted: ms });
+
+    } catch (err) {
+        console.error("❌ GPT Error:", err);
+        await zk.sendMessage(from, { text: "❌ An error occurred: " + err.message }, { quoted: ms });
+    }
+});
