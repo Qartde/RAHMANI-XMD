@@ -3,14 +3,14 @@ const { default: axios } = require('axios');
 
 if (!global.userChats) global.userChats = {};
 
-zokou({ nomCom: "chat", reaction: "🤖", categorie: "ai" }, async (dest, zk, commandeOptions) => {
+zokou({ nomCom: "rahman", reaction: "🤖", categorie: "ai" }, async (dest, zk, commandeOptions) => {
     const { arg, ms } = commandeOptions;
     const sender = ms.sender;
     const from = dest;
 
     try {
         if (!arg || arg.length === 0) {
-            return await zk.sendMessage(from, { text: "🚫 Please provide a question or message.🚫" }, { quoted: ms });
+            return await zk.sendMessage(from, { text: "ʏᴇs ʙᴏss ᴀᴍ ʟɪsᴛᴇʀɴɪɴɢ ᴛᴏ ʏᴏᴜ. 🤠" }, { quoted: ms });
         }
 
         const text = arg.join(" ");
@@ -38,22 +38,7 @@ ${history}
 
       
         const botResponse = data?.result?.text || "⚠️ Sorry, I couldn't understand your question.";
-        const image: { url: image },
-//     gifPlayback: true,
-     caption: teks,
-     buttons: buttons,
-     contextInfo: {
-       forwardingScore: 999,
-         isForwarded: true,
-         forwardedNewsletterMessageInfo: {
-           newsletterJid: "120363353854480831@newsletter",
-             newsletterName: "ʀᴀʜᴍᴀɴɪ xᴍᴅ"
-            }
-        },
-        footer: "ʀᴀʜᴍᴀɴɪ",
-        viewOnce: true,
-        headerType: 6
-   }
+
         // Save bot reply in history
         global.userChats[sender].push(`Bot: ${botResponse}`);
 
