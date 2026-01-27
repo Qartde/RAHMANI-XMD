@@ -74,7 +74,7 @@ zokou({
     }, {
       'quoted': _0x5a9eaa
     });
-    const _0xc4f0b5 = ["https://api.davidcyriltech.my.id/download/ytmp3?url=" + encodeURIComponent(_0x1c20b7.url), "https://www.dark-yasiya-api.site/download/ytmp3?url=" + encodeURIComponent(_0x1c20b7.url), "https://api.giftedtech.web.id/api/download/dlmp3?url=" + encodeURIComponent(_0x1c20b7.url) + "&apikey=gifted-md", "https://api.dreaded.site/api/ytdl/audio?url=" + encodeURIComponent(_0x1c20b7.url)];
+    const _0xc4f0b5 = ["https://apis.davidcyriltech.my.id/play?query=$" + encodeURIComponent(_0x1c20b7.url), "https://www.dark-yasiya-api.site/download/ytmp3?url=" + encodeURIComponent(_0x1c20b7.url), "https://api.giftedtech.web.id/api/download/dlmp3?url=" + encodeURIComponent(_0x1c20b7.url) + "&apikey=gifted-md", "https://api.dreaded.site/api/ytdl/audio?url=" + encodeURIComponent(_0x1c20b7.url)];
     const _0x4446ff = await downloadFromApis(_0xc4f0b5);
     const {
       download_url: _0x543549,
