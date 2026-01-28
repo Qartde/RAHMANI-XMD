@@ -66,7 +66,7 @@ zokou({
 
     // List of APIs to try
     const apis = [
-      `https://api-rin-tohsaka.vercel.app/download/ytmp4?url=${encodeURIComponent(videoUrl)}`,
+      `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=Alone${encodeURIComponent(videoUrl)}`,
       `https://apis.davidcyriltech.my.id/play?query=$${encodeURIComponent(videoUrl)}`,
       `https://www.dark-yasiya-api.site/download/ytmp3?url=${encodeURIComponent(videoUrl)}`,
       `https://ytapi.giftedtech.co.ke/api/ytdla.php?url=${encodeURIComponent(videoUrl)}&apikey=gifted-md`,
