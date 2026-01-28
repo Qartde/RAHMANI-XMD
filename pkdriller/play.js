@@ -26,17 +26,16 @@ zokou({ nomCom: "play", reaction: "🎶", categorie: "search" }, async (dest, zk
             return await zk.sendMessage(from, { text: "❌ Song not found." }, { quoted: ms });
         }
 
-        const videoUrl = video.url;
-        // Using your requested David Cyril API
-        const apiUrl = `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=Alone${encodeURIComponent(videoUrl)}`;
+        // Using your requested API with the song name from query
+        const apiUrl = `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent(query)}`;
 
         const { data } = await axios.get(apiUrl);
 
-        if (!data.success || !data.result.download_url) {
+        if (!data.status || !data.result.downloadUrl) {
             return await zk.sendMessage(from, { text: "❌ Error fetching audio from the server." }, { quoted: ms });
         }
 
-        const downloadUrl = data.result.download_url;
+        const downloadUrl = data.result.downloadUrl;
 
         // Send Audio with Channel JID Context (Baileys)
         await zk.sendMessage(from, {
@@ -52,7 +51,7 @@ zokou({ nomCom: "play", reaction: "🎶", categorie: "search" }, async (dest, zk
                     newsletterName: "ʀᴀʜᴍᴀɴ-ᴀɪ ᴍᴜsɪᴄ",
                 },
                 externalAdReply: {
-                    title: video.title,
+                    title: data.result.title || video.title,
                     body: "Tap to follow our channel for more music",
                     thumbnailUrl: imageUrl, // Your catbox image
                     mediaType: 1,
