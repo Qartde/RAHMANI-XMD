@@ -58,7 +58,7 @@ ___________________
 RAHMANI-XMD is a powerful WhatsApp bot with multiple features to automate tasks, moderate groups, and provide entertainment. Deploy it effortlessly to your favorite cloud hosting platform.
 ___________________
 
-<a href="https://wa.me/+255693629079-INFO"><img title="CONTACT-Elon" src="https://img.shields.io/badge/CONTACT-Rahmani-md?color=black&style=for-the-badge&logo=audi" width="240" height="45.45"/></a></p>
+<a href="https://wa.me/+255760164530-INFO"><img title="CONTACT-Elon" src="https://img.shields.io/badge/CONTACT-Rahmani-md?color=black&style=for-the-badge&logo=audi" width="240" height="45.45"/></a></p>
 
 ____________________
 
@@ -145,7 +145,7 @@ Edit the `.env` file to set up your WhatsApp session and other configurations.
 
 ## 🙋 Support & Reporting Issues
 
-Found an error or need help? [Contact the maintainer directly on WhatsApp.](https://wa.me/255693629079?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20RAHMANI-XMD)
+Found an error or need help? [Contact the maintainer directly on WhatsApp.](https://wa.me/255760164530?text=Hi%2C%20I%20want%20to%20report%20an%20issue%20with%20RAHMANI-XMD)
 
 Or open an issue on the [GitHub Issues page](https://github.com/Qartde/RAHMANI-XMD/issues).
 
