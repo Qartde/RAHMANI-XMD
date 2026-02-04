@@ -134,7 +134,7 @@ zokou({ nomCom: "remove", categorie: 'Group', reaction: "👨🏿‍💼" }, asy
       if (msgRepondu) {
         if (zkad) {
           if (isMember) {
-            const gifLink = "https://raw.githubusercontent.com/djalega8000/Zokou-MD/main/media/remover.gif"
+            const gifLink = "https://github.com/novaxmd/BMB-XMD-DATA/raw/refs/heads/main/remover.gif"
             var sticker = new Sticker(gifLink, {
               pack: 'Zokou-Md',
               author: nomAuteurMessage,
