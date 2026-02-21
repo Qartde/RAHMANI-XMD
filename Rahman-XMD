@@ -1,0 +1,11 @@
+render.yaml
+services:
+  - type: web
+    name: rahmani-bot
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js
+    branch: main
+    autoDeploy: true
+``` 
