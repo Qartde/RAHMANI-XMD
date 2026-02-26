@@ -131,7 +131,7 @@
     "@vitalets/google-translate-api": "^9.2.0",
     "@xct007/tiktok-scraper": "^1.0.2",  
     "@hapi/boom": "^10.0.1",
-    "@types/node": "^18.0.6",
+    "@types/node": "^18.0.6", 
     "@whiskeysockets/baileys": "npm:angularsockets",
     "ytdl-core": "npm:@distube/ytdl-core",
     "@google/generative-ai": "^0.1.3",
