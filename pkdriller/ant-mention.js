@@ -2,7 +2,7 @@ const { zokou } = require("../framework/zokou");
 
 let deleteTagActive = false; // Hali ya kipengele
 let ownerNumber = "255693629079@s.whatsapp.net"; // 🔴 BADILI HII NA NAMBA YAKO!
-
+ 
 zokou({
   nomCom: "deletetag",
   categorie: "Usimamizi",
