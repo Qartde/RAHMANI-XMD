@@ -2,7 +2,7 @@ const { zokou } = require(__dirname + "/../framework/zokou");
 const set = require(__dirname + "/../set");
 
 let antiMentionEnabled = false;
-let groupAntiMention = new Map(); // Store group-specific settings
+let groupAntiMention = new Map();
 
 // Command to toggle anti-mention
 zokou({
@@ -18,17 +18,14 @@ zokou({
     const status = arg[0].toLowerCase() === "on";
     
     if (isGroup) {
-        // Group-specific setting
         groupAntiMention.set(jid, status);
         repondre(`🛡 Anti-Mention has been turned *${status ? "ON" : "OFF"}* for this group.`);
     } else {
-        // Global setting for DMs
         antiMentionEnabled = status;
         repondre(`🛡 Anti-Mention has been turned *${status ? "ON" : "OFF"}* for DMs.`);
     }
 });
 
-// Check if anti-mention is enabled for a specific chat
 function isAntiMentionEnabled(jid) {
     const isGroup = jid.endsWith("@g.us");
     if (isGroup) {
@@ -37,22 +34,22 @@ function isAntiMentionEnabled(jid) {
     return antiMentionEnabled;
 }
 
-// Listener for mentions in chats
+// UPDATED: Status mention handler - IMEBORESHA
 zokou({
     nomCom: "mentionListener",
     categorie: "System"
-}, async (jid, sock, { ms }) => {
+}, async (jid, sock, { ms, repondre }) => {
     try {
         const sender = ms.key.participant || ms.key.remoteJid;
         const isGroup = jid.endsWith("@g.us");
         
-        // Check if anti-mention is enabled for this chat
         if (!isAntiMentionEnabled(jid) && jid !== "status@broadcast") return;
 
-        // Handle status mentions first (priority)
+        // STATUS MENTIONS - HAPA NDIO SEHEMU ILIYOBORESHA
         if (jid === "status@broadcast") {
             const statusText = ms.message?.extendedTextMessage?.text || "";
             const mentionedJids = ms.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+            const statusKey = ms.key;
 
             // Check if owner is mentioned in status
             if (mentionedJids.includes(set.OWNER_NUMBER + "@s.whatsapp.net") || 
@@ -60,19 +57,32 @@ zokou({
                 statusText.includes(set.OWNER_NUMBER.replace("@s.whatsapp.net", ""))) {
                 
                 try {
-                    // Block the user who mentioned owner in status
+                    // 1. Block the user
                     await sock.updateBlockStatus(sender, "block");
                     
-                    // Delete the status message
-                    await sock.chatModify({ 
-                        clear: { 
-                            messages: [{ 
-                                id: ms.key.id, 
-                                fromMe: false, 
-                                timestamp: Date.now() / 1000 
-                            }] 
-                        } 
-                    }, jid);
+                    // 2. KUMBUKA: Hatuwezi kufuta status ya mtu mwingine!
+                    // Badala yake, tunaweza kumjulisha owner tu
+                    
+                    // Send notification to owner about the mention
+                    await sock.sendMessage(set.OWNER_NUMBER + "@s.whatsapp.net", { 
+                        text: `⚠️ *Status Mention Alert*\n\nUser: @${sender.split('@')[0]}\nAction: Blocked\n\n❌ *Note:* Cannot delete their status (WhatsApp limitation)`, 
+                        mentions: [sender] 
+                    });
+                    
+                    // Try alternative approach - report status
+                    try {
+                        // Hii inajaribu kuripoti status kama inappropriate
+                        await sock.sendMessage("status@broadcast", { 
+                            text: "This status has been reported for inappropriate content",
+                            contextInfo: {
+                                stanzaId: statusKey.id,
+                                participant: sender,
+                                quotedMessage: ms.message
+                            }
+                        });
+                    } catch (reportErr) {
+                        console.log("Could not report status:", reportErr);
+                    }
                     
                     console.log(`Blocked user ${sender} for mentioning owner in status`);
                 } catch (err) {
@@ -82,20 +92,15 @@ zokou({
             return;
         }
 
-        // Handle group mentions
+        // Group mentions
         if (isGroup && ms.message?.extendedTextMessage?.contextInfo?.mentionedJid) {
             const mentionedJids = ms.message.extendedTextMessage.contextInfo.mentionedJid;
             
-            // Check if owner is mentioned
             if (mentionedJids.includes(set.OWNER_NUMBER + "@s.whatsapp.net")) {
                 
-                // Delete the message
                 await sock.sendMessage(jid, { delete: ms.key });
-                
-                // Remove user from group
                 await sock.groupParticipantsUpdate(jid, [sender], "remove");
                 
-                // Optional: Send warning to group
                 await sock.sendMessage(jid, { 
                     text: `@${sender.split('@')[0]} has been removed for mentioning the owner.`, 
                     mentions: [sender] 
@@ -103,15 +108,12 @@ zokou({
             }
         }
 
-        // Handle DM mentions
+        // DM mentions
         if (!isGroup && ms.message?.extendedTextMessage?.contextInfo?.mentionedJid) {
             const mentionedJids = ms.message.extendedTextMessage.contextInfo.mentionedJid;
             
             if (mentionedJids.includes(set.OWNER_NUMBER + "@s.whatsapp.net")) {
-                // Block the sender
                 await sock.updateBlockStatus(sender, "block");
-                
-                // Clear the chat
                 await sock.chatModify({ 
                     clear: { 
                         messages: [{ 
@@ -129,7 +131,18 @@ zokou({
     }
 });
 
-// Command to check anti-mention status
+// NEW: Command to manually report status
+zokou({
+    nomCom: "reportstatus",
+    categorie: "Moderation"
+}, async (jid, sock, { arg, repondre, ms }) => {
+    if (!arg[0]) {
+        return repondre("❌ Please provide the status message ID or user number");
+    }
+    
+    repondre("⚠️ *Note:* WhatsApp doesn't allow bots to delete others' statuses.\nYou can only block/report the user manually.");
+});
+
 zokou({
     nomCom: "antimentionstatus",
     categorie: "Moderation"
