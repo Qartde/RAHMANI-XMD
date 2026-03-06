@@ -6,7 +6,7 @@
 <p align="center">  
 
 
-# RAHMANI-XMD BOT 🚀✅ 
+# RAHMANI-XMD BOT UNDER MANTAINANCE ⚒️⚒️⚒️ 
 
 </p>
 <p align="center"> 
