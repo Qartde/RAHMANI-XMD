@@ -1,2 +1,2 @@
 
-worker: node --max-old-space-size=512 index.js
+web: node index.js && node index.js
