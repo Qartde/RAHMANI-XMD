@@ -1,268 +1,228 @@
 const { zokou } = require("../framework/zokou");
 
-// ==================== CLEAR CHAT ====================
+// ==================== GET PRIVACY SETTINGS ====================
 zokou({
-    nomCom: 'clear',
-    categorie: 'Whatsapp',
-    reaction: '🧹'
+    nomCom: "privacy",
+    aliases: ["getprivacy", "privacysettings"],
+    reaction: "🔒",
+    categorie: "Settings"
 }, async (dest, zk, commandeOptions) => {
     const { ms, repondre, auteurMessage } = commandeOptions;
     
     try {
-        await zk.chatModify({
-            delete: true,
-            lastMessages: [{
-                key: ms.key,
-                messageTimestamp: ms.messageTimestamp
-            }]
-        }, dest);
+        const privacy = await zk.fetchPrivacySettings(true);
+        
+        const msg = `🔒 *WHATSAPP PRIVACY SETTINGS*\n\n` +
+                    `👤 *Profile:* ${privacy.profile || 'all'}\n` +
+                    `📝 *Status:* ${privacy.status || 'all'}\n` +
+                    `👁️ *Last Seen:* ${privacy.last || 'all'}\n` +
+                    `✅ *Read Receipts:* ${privacy.readreceipts || 'all'}\n` +
+                    `🌐 *Online:* ${privacy.online || 'all'}\n` +
+                    `👥 *Group Add:* ${privacy.groupadd || 'all'}\n` +
+                    `📞 *Calls:* ${privacy.calladd || 'all'}`;
 
-        await zk.sendMessage(dest, { 
-            text: '✅ *Chat cleared successfully!*' 
-        }, { quoted: ms });
+        await zk.sendMessage(dest, { text: msg }, { quoted: ms });
         
     } catch (e) {
-        console.error("Clear error:", e);
-        await repondre('❌ Error: ' + e.message);
+        console.error("Privacy error:", e);
+        await repondre("❌ Error: " + e.message);
     }
 });
 
-// ==================== ARCHIVE CHAT ====================
+// ==================== LAST SEEN PRIVACY ====================
 zokou({
-    nomCom: 'archive',
-    categorie: 'Whatsapp',
-    reaction: '📦'
-}, async (dest, zk, commandeOptions) => {
-    const { ms, repondre } = commandeOptions;
-    
-    try {
-        await zk.chatModify({
-            archive: true,
-            lastMessages: [{
-                key: ms.key,
-                messageTimestamp: ms.messageTimestamp
-            }]
-        }, dest);
-
-        await zk.sendMessage(dest, { 
-            text: '✅ *Chat archived successfully!*' 
-        }, { quoted: ms });
-        
-    } catch (e) {
-        console.error("Archive error:", e);
-        await repondre('❌ Error: ' + e.message);
-    }
-});
-
-// ==================== UNARCHIVE CHAT ====================
-zokou({
-    nomCom: 'unarchive',
-    categorie: 'Whatsapp',
-    reaction: '📭'
-}, async (dest, zk, commandeOptions) => {
-    const { ms, repondre } = commandeOptions;
-    
-    try {
-        await zk.chatModify({
-            archive: false,
-            lastMessages: [{
-                key: ms.key,
-                messageTimestamp: ms.messageTimestamp
-            }]
-        }, dest);
-
-        await zk.sendMessage(dest, { 
-            text: '✅ *Chat unarchived successfully!*' 
-        }, { quoted: ms });
-        
-    } catch (e) {
-        console.error("Unarchive error:", e);
-        await repondre('❌ Error: ' + e.message);
-    }
-});
-
-// ==================== PIN CHAT ====================
-zokou({
-    nomCom: 'pin',
-    aliases: ['pinchat', 'chatpin'],
-    categorie: 'Whatsapp',
-    reaction: '📌'
-}, async (dest, zk, commandeOptions) => {
-    const { ms, repondre } = commandeOptions;
-    
-    try {
-        await zk.chatModify({
-            pin: true
-        }, dest);
-
-        await zk.sendMessage(dest, { 
-            text: '✅ *Chat pinned successfully!*' 
-        }, { quoted: ms });
-        
-    } catch (e) {
-        console.error("Pin error:", e);
-        await repondre('❌ Error: ' + e.message);
-    }
-});
-
-// ==================== UNPIN CHAT ====================
-zokou({
-    nomCom: 'unpin',
-    aliases: ['unpinchat', 'chatunpin'],
-    categorie: 'Whatsapp',
-    reaction: '📌'
-}, async (dest, zk, commandeOptions) => {
-    const { ms, repondre } = commandeOptions;
-    
-    try {
-        await zk.chatModify({
-            pin: false
-        }, dest);
-
-        await zk.sendMessage(dest, { 
-            text: '✅ *Chat unpinned successfully!*' 
-        }, { quoted: ms });
-        
-    } catch (e) {
-        console.error("Unpin error:", e);
-        await repondre('❌ Error: ' + e.message);
-    }
-});
-
-// ==================== MARK AS READ ====================
-zokou({
-    nomCom: 'read',
-    aliases: ['markread'],
-    categorie: 'Whatsapp',
-    reaction: '👁️'
-}, async (dest, zk, commandeOptions) => {
-    const { ms, repondre } = commandeOptions;
-    
-    try {
-        await zk.chatModify({
-            markRead: true,
-            lastMessages: [{
-                key: ms.key,
-                messageTimestamp: ms.messageTimestamp
-            }]
-        }, dest);
-
-        await zk.sendMessage(dest, { 
-            text: '✅ *Marked as read!*' 
-        }, { quoted: ms });
-        
-    } catch (e) {
-        console.error("Mark read error:", e);
-        await repondre('❌ Error: ' + e.message);
-    }
-});
-
-// ==================== MARK AS UNREAD ====================
-zokou({
-    nomCom: 'unread',
-    aliases: ['markunread'],
-    categorie: 'Whatsapp',
-    reaction: '👁️‍🗨️'
-}, async (dest, zk, commandeOptions) => {
-    const { ms, repondre } = commandeOptions;
-    
-    try {
-        await zk.chatModify({
-            markRead: false,
-            lastMessages: [{
-                key: ms.key,
-                messageTimestamp: ms.messageTimestamp
-            }]
-        }, dest);
-
-        await zk.sendMessage(dest, { 
-            text: '✅ *Marked as unread!*' 
-        }, { quoted: ms });
-        
-    } catch (e) {
-        console.error("Mark unread error:", e);
-        await repondre('❌ Error: ' + e.message);
-    }
-});
-
-// ==================== MUTE CHAT ====================
-zokou({
-    nomCom: 'mute',
-    aliases: ['mutechat'],
-    categorie: 'Whatsapp',
-    reaction: '🔇'
+    nomCom: "lastseen",
+    reaction: "👁️",
+    categorie: "Settings"
 }, async (dest, zk, commandeOptions) => {
     const { ms, repondre, arg } = commandeOptions;
     
     try {
-        // Mute kwa muda: 1h, 8h, 1w, always
-        let muteDuration = '1h'; // default
-        if (arg[0]) {
-            if (arg[0] === '8h') muteDuration = '8h';
-            else if (arg[0] === '1w') muteDuration = '1w';
-            else if (arg[0] === 'always') muteDuration = 'always';
+        const setting = arg[0];
+        if (!setting) {
+            return await repondre("❌ *Usage:* .lastseen [all/contacts/none]\nExample: .lastseen none");
         }
-
-        await zk.chatModify({
-            mute: muteDuration
-        }, dest);
-
-        await zk.sendMessage(dest, { 
-            text: `✅ *Chat muted for ${muteDuration}!*` 
-        }, { quoted: ms });
+        
+        const valid = ['all', 'contacts', 'contact_blacklist', 'none'];
+        if (!valid.includes(setting)) {
+            return await repondre("❌ Invalid! Use: all/contacts/none");
+        }
+        
+        await zk.updateLastSeenPrivacy(setting);
+        await repondre(`✅ Last seen privacy set to: *${setting}*`);
         
     } catch (e) {
-        console.error("Mute error:", e);
-        await repondre('❌ Error: ' + e.message);
+        console.error("Lastseen error:", e);
+        await repondre("❌ Error: " + e.message);
     }
 });
 
-// ==================== UNMUTE CHAT ====================
+// ==================== PROFILE PICTURE PRIVACY ====================
 zokou({
-    nomCom: 'unmute',
-    aliases: ['unmutechat'],
-    categorie: 'Whatsapp',
-    reaction: '🔊'
+    nomCom: "profilepic",
+    aliases: ["pprivacy", "mypp"],
+    reaction: "🖼️",
+    categorie: "Settings"
 }, async (dest, zk, commandeOptions) => {
-    const { ms, repondre } = commandeOptions;
+    const { ms, repondre, arg } = commandeOptions;
     
     try {
-        await zk.chatModify({
-            mute: null
-        }, dest);
-
-        await zk.sendMessage(dest, { 
-            text: '✅ *Chat unmuted successfully!*' 
-        }, { quoted: ms });
+        const setting = arg[0];
+        if (!setting) {
+            return await repondre("❌ *Usage:* .profilepic [all/contacts/none]\nExample: .profilepic contacts");
+        }
+        
+        const valid = ['all', 'contacts', 'contact_blacklist', 'none'];
+        if (!valid.includes(setting)) {
+            return await repondre("❌ Invalid! Use: all/contacts/none");
+        }
+        
+        await zk.updateProfilePicturePrivacy(setting);
+        await repondre(`✅ Profile picture privacy set to: *${setting}*`);
         
     } catch (e) {
-        console.error("Unmute error:", e);
-        await repondre('❌ Error: ' + e.message);
+        console.error("Profilepic error:", e);
+        await repondre("❌ Error: " + e.message);
+    }
+});
+
+// ==================== STATUS PRIVACY ====================
+zokou({
+    nomCom: "statusprivacy",
+    aliases: ["statuspriv", "mystatus"],
+    reaction: "📝",
+    categorie: "Settings"
+}, async (dest, zk, commandeOptions) => {
+    const { ms, repondre, arg } = commandeOptions;
+    
+    try {
+        const setting = arg[0];
+        if (!setting) {
+            return await repondre("❌ *Usage:* .statusprivacy [all/contacts/none]\nExample: .statusprivacy all");
+        }
+        
+        const valid = ['all', 'contacts', 'contact_blacklist', 'none'];
+        if (!valid.includes(setting)) {
+            return await repondre("❌ Invalid! Use: all/contacts/none");
+        }
+        
+        await zk.updateStatusPrivacy(setting);
+        await repondre(`✅ Status privacy set to: *${setting}*`);
+        
+    } catch (e) {
+        console.error("Statusprivacy error:", e);
+        await repondre("❌ Error: " + e.message);
+    }
+});
+
+// ==================== READ RECEIPTS PRIVACY ====================
+zokou({
+    nomCom: "readreceipts",
+    aliases: ["read", "recipts"],
+    reaction: "✅",
+    categorie: "Settings"
+}, async (dest, zk, commandeOptions) => {
+    const { ms, repondre, arg } = commandeOptions;
+    
+    try {
+        const setting = arg[0];
+        if (!setting) {
+            return await repondre("❌ *Usage:* .readreceipts [all/none]\nExample: .readreceipts none");
+        }
+        
+        const valid = ['all', 'none'];
+        if (!valid.includes(setting)) {
+            return await repondre("❌ Invalid! Use: all/none");
+        }
+        
+        await zk.updateReadReceiptsPrivacy(setting);
+        await repondre(`✅ Read receipts set to: *${setting}*`);
+        
+    } catch (e) {
+        console.error("Readreceipts error:", e);
+        await repondre("❌ Error: " + e.message);
+    }
+});
+
+// ==================== GROUP ADD PRIVACY ====================
+zokou({
+    nomCom: "groupadd",
+    aliases: ["addprivacy"],
+    reaction: "👥",
+    categorie: "Settings"
+}, async (dest, zk, commandeOptions) => {
+    const { ms, repondre, arg } = commandeOptions;
+    
+    try {
+        const setting = arg[0];
+        if (!setting) {
+            return await repondre("❌ *Usage:* .groupadd [all/contacts/none]\nExample: .groupadd contacts");
+        }
+        
+        const valid = ['all', 'contacts', 'contact_blacklist', 'none'];
+        if (!valid.includes(setting)) {
+            return await repondre("❌ Invalid! Use: all/contacts/none");
+        }
+        
+        await zk.updateGroupsAddPrivacy(setting);
+        await repondre(`✅ Group add privacy set to: *${setting}*`);
+        
+    } catch (e) {
+        console.error("Groupadd error:", e);
+        await repondre("❌ Error: " + e.message);
+    }
+});
+
+// ==================== ONLINE PRIVACY ====================
+zokou({
+    nomCom: "onlineprivacy",
+    aliases: ["online"],
+    reaction: "🌐",
+    categorie: "Settings"
+}, async (dest, zk, commandeOptions) => {
+    const { ms, repondre, arg } = commandeOptions;
+    
+    try {
+        const setting = arg[0];
+        if (!setting) {
+            return await repondre("❌ *Usage:* .onlineprivacy [all/lastseen]\nExample: .onlineprivacy all");
+        }
+        
+        const valid = ['all', 'match_last_seen', 'lastseen'];
+        if (!valid.includes(setting)) {
+            return await repondre("❌ Invalid! Use: all/lastseen");
+        }
+        
+        const value = setting === 'lastseen' ? 'match_last_seen' : setting;
+        await zk.updateOnlinePrivacy(value);
+        await repondre(`✅ Online privacy set to: *${setting}*`);
+        
+    } catch (e) {
+        console.error("Online error:", e);
+        await repondre("❌ Error: " + e.message);
     }
 });
 
 // ==================== PROFILE NAME ====================
 zokou({
-    nomCom: 'setname',
-    aliases: ['profilename', 'changename'],
-    categorie: 'Whatsapp',
-    reaction: '✏️'
+    nomCom: "setname",
+    aliases: ["profilename"],
+    reaction: "✏️",
+    categorie: "Settings"
 }, async (dest, zk, commandeOptions) => {
     const { ms, repondre, arg } = commandeOptions;
     
     try {
-        const newName = arg.join(' ');
-        if (!newName) {
-            return await repondre('❌ Please provide a name!\nExample: `.setname Rahman Xmd`');
+        const name = arg.join(" ");
+        if (!name) {
+            return await repondre("❌ *Usage:* .setname Your Name\nExample: .setname Rahman Xmd");
         }
-
-        await zk.updateProfileName(newName);
-        await zk.sendMessage(dest, { 
-            text: `✅ *Profile name updated to:*\n${newName}` 
-        }, { quoted: ms });
+        
+        await zk.updateProfileName(name);
+        await repondre(`✅ Profile name updated to: *${name}*`);
         
     } catch (e) {
         console.error("Setname error:", e);
-        await repondre('❌ Error: ' + e.message);
+        await repondre("❌ Error: " + e.message);
     }
 });
