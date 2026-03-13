@@ -1,24 +1,42 @@
 const { zokou } = require("../framework/zokou");
 const axios = require("axios");
-const fs = require("fs-extra");
 const yts = require("yt-search");
 
-// Base URL for your API
-const BASE_URL = "https://api.siputzx.my.id"; // Badilisha na BASE_URL yako
-
 zokou({
-    nomCom: "play",
-    aliases: ["music", "song", "ytmp3", "audio"],
-    reaction: "🎵",
+    nomCom: "song",
+    aliases: ["play", "music", "mp3", "ytmp3"],
+    reaction: "🎧",
     categorie: "Download"
 }, async (dest, zk, commandeOptions) => {
     const { repondre, arg, ms } = commandeOptions;
 
+    if (!arg || arg.length === 0) {
+        return await repondre("*Usage:* .play [song name]\n*Example:* .play nikuone");
+    }
+
+    const query = arg.join(" ");
+    
     try {
-        // Check if song name is provided
-        if (!arg || arg.length === 0) {
+        await repondre(`🔍 *Searching:* ${query}`);
+
+        // Search YouTube
+        const search = await yts(query);
+        const video = search.videos[0];
+        
+        if (!video) return repondre("❌ No results found");
+
+        // Download audio using your API
+        const apiURL = `https://api.siputzx.my.id/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
+        
+        const response = await axios.get(apiURL);
+        
+        if (response.data?.download) {
+            // Send audio with context info
             await zk.sendMessage(dest, {
-                text: "🎵 *MUSIC DOWNLOADER*\n\nPlease provide a song name.\n\nExample: `.play nikuone`\n\n⚡ *RAHMANI-XMD*",
+                audio: { url: response.data.download },
+                mimetype: "audio/mp4",
+                fileName: `${video.title}.mp3`,
+                caption: `🎧 *${video.title}*\n⏱️ ${video.timestamp}\n\n⚡ RAHMANI-XMD`,
                 contextInfo: {
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
@@ -26,131 +44,20 @@ zokou({
                         newsletterName: 'RAHMANI XMD',
                         serverMessageId: 143
                     },
-                    forwardingScore: 999,
                     externalAdReply: {
-                        title: 'RAHMANI-XMD',
-                        body: '🎵 Enter song name to download',
-                        thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
-                        mediaType: 1,
-                        renderSmallThumbnail: true
+                        title: video.title.substring(0, 30),
+                        body: `Duration: ${video.timestamp}`,
+                        thumbnailUrl: video.thumbnail,
+                        mediaType: 1
                     }
                 }
             }, { quoted: ms });
-            return;
+        } else {
+            repondre("❌ Failed to get audio");
         }
-
-        const songName = arg.join(" ");
         
-        // Send searching message
-        await zk.sendMessage(dest, {
-            text: `🔍 *Searching for:* ${songName}\n\n⏳ Please wait...\n\n⚡ *RAHMANI-XMD*`,
-            contextInfo: {
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363353854480831@newsletter',
-                    newsletterName: 'RAHMANI XMD',
-                    serverMessageId: 143
-                },
-                forwardingScore: 999,
-                externalAdReply: {
-                    title: 'RAHMANI-XMD',
-                    body: `🔍 Searching: ${songName.substring(0, 20)}`,
-                    thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
-                    mediaType: 1,
-                    renderSmallThumbnail: true
-                }
-            }
-        }, { quoted: ms });
-
-        // Search for the song on YouTube
-        const searchResults = await yts(songName);
-        const videos = searchResults.videos;
-        
-        if (!videos || videos.length === 0) {
-            return await repondre("❌ No results found for that song.");
-        }
-
-        // Get the first video
-        const video = videos[0];
-        
-        // Prepare API URL for MP3 download
-        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
-        
-        // Send found message
-        await zk.sendMessage(dest, {
-            text: `✅ *SONG FOUND*\n\n*Title:* ${video.title}\n*Duration:* ${video.timestamp}\n*Uploaded:* ${video.ago}\n\n⏳ *Downloading audio...*`,
-            contextInfo: {
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363353854480831@newsletter',
-                    newsletterName: 'RAHMANI XMD',
-                    serverMessageId: 143
-                },
-                forwardingScore: 999,
-                externalAdReply: {
-                    title: 'RAHMANI-XMD',
-                    body: `🎵 ${video.title.substring(0, 25)}`,
-                    thumbnailUrl: video.thumbnail || 'https://files.catbox.moe/aktbgo.jpg',
-                    mediaType: 1,
-                    renderSmallThumbnail: true
-                }
-            }
-        }, { quoted: ms });
-
-        // Download from API
-        const response = await axios.get(apiURL, { timeout: 60000 });
-        
-        if (!response.data || !response.data.download) {
-            return await repondre("❌ Failed to get download link.");
-        }
-
-        const audioUrl = response.data.download;
-        
-        // Send the audio file
-        await zk.sendMessage(dest, {
-            audio: { url: audioUrl },
-            mimetype: "audio/mp4",
-            fileName: `${video.title}.mp3`,
-            contextInfo: {
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363353854480831@newsletter',
-                    newsletterName: 'RAHMANI XMD',
-                    serverMessageId: 143
-                },
-                forwardingScore: 999,
-                externalAdReply: {
-                    title: 'RAHMANI-XMD',
-                    body: `🎵 ${video.title.substring(0, 25)}`,
-                    thumbnailUrl: video.thumbnail || 'https://files.catbox.moe/aktbgo.jpg',
-                    mediaType: 1,
-                    renderSmallThumbnail: true,
-                    sourceUrl: audioUrl
-                }
-            }
-        }, { quoted: ms });
-
     } catch (error) {
-        console.error("Music download error:", error.message);
-        
-        await zk.sendMessage(dest, {
-            text: "❌ *Error downloading music.*\nPlease try again later.\n\n⚡ *RAHMANI-XMD*",
-            contextInfo: {
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363353854480831@newsletter',
-                    newsletterName: 'RAHMANI XMD',
-                    serverMessageId: 143
-                },
-                forwardingScore: 999,
-                externalAdReply: {
-                    title: 'RAHMANI-XMD',
-                    body: '❌ Download Failed',
-                    thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
-                    mediaType: 1,
-                    renderSmallThumbnail: true
-                }
-            }
-        }, { quoted: ms });
+        console.error(error);
+        repondre("❌ Error: " + error.message);
     }
 });
