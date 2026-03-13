@@ -4,194 +4,192 @@ const yts = require("yt-search");
 
 const BASE_URL = "https://noobs-api.top";
 
+// === Command: .play (Audio Play - send as voice) ===
 zokou({
-    nomCom: "play",
-    aliases: ["music", "song", "ytmp3", "audio"],
-    reaction: "🎵",
-    categorie: "Download"
-}, async (dest, zk, commandeOptions) => {
-    const { repondre, arg, ms } = commandeOptions;
+  nomCom: "play",
+  alias: ["music"],
+  categorie: "Search",
+  reaction: "🎵",
+  desc: "Search and play MP3 music from YouTube (audio only).",
+}, async (dest, zk, { repondre, arg, ms }) => {
+  const query = arg.join(" ");
+  if (!query) return repondre("❌ Please provide a song name or keyword.");
 
-    try {
-        // Check if song name is provided
-        if (!arg || arg.length === 0) {
-            await zk.sendMessage(dest, {
-                text: "🎵 *RAHMANI-XMD MUSIC DOWNLOADER*\n\nPlease provide a song name.\n\nExample: `.play nikuone`\n\n⚡ *RAHMANI-XMD*",
-                contextInfo: {
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363353854480831@newsletter',
-                        newsletterName: 'RAHMANI XMD',
-                        serverMessageId: 143
-                    },
-                    forwardingScore: 999,
-                    externalAdReply: {
-                        title: 'RAHMANI-XMD',
-                        body: '🎵 Enter song name to download',
-                        thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
-                        mediaType: 1,
-                        renderSmallThumbnail: true
-                    }
-                }
-            }, { quoted: ms });
-            return;
+  try {
+    const search = await yts(query);
+    const video = search.videos[0];
+    if (!video) return repondre("❌ No results found.");
+
+    const safeTitle = video.title.replace(/[\\/:*?\"<>|]/g, "");
+    const fileName = `${safeTitle}.mp3`;
+    const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
+
+    const response = await axios.get(apiURL);
+    const data = response.data;
+    if (!data.downloadLink) return repondre("❌ Failed to retrieve MP3 link.");
+
+    // Info message
+    let message = `*DULLAH-XMD|Speed & Quality*\n\n` +
+      `╭───────────────◆\n` +
+      `│⿻ *Title:* ${video.title}\n` +
+      `│⿻ *Duration:* ${video.timestamp}\n` +
+      `│⿻ *Views:* ${video.views.toLocaleString()}\n` +
+      `│⿻ *Uploaded:* ${video.ago}\n` +
+      `│⿻ *Channel:* ${video.author.name}\n` +
+      `╰────────────────◆\n\n` +
+      `🔗 ${video.url}`;
+
+    // Send thumbnail + caption + channel info
+    await zk.sendMessage(dest, {
+      image: { url: video.thumbnail },
+      caption: message,
+      contextInfo: {
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: "120363402252728845@newsletter",
+          newsletterName: "DULLAH-XMD",
+          serverMessageId: -1
         }
+      }
+    }, { quoted: ms });
 
-        const songName = arg.join(" ");
-        
-        // Send searching message
-        await zk.sendMessage(dest, {
-            text: `🔍 *Searching for:* ${songName}\n\n⏳ This may take up to 60 seconds...`,
-            contextInfo: {
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363353854480831@newsletter',
-                    newsletterName: 'RAHMANI XMD',
-                    serverMessageId: 143
-                },
-                forwardingScore: 999,
-                externalAdReply: {
-                    title: 'RAHMANI-XMD',
-                    body: `🔍 Searching: ${songName.substring(0, 20)}`,
-                    thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
-                    mediaType: 1,
-                    renderSmallThumbnail: true
-                }
-            }
-        }, { quoted: ms });
+    // Send Audio
+    await zk.sendMessage(dest, {
+      audio: { url: data.downloadLink },
+      mimetype: "audio/mpeg",
+      fileName,
+      caption: "> Dullahxmd is Speed🔥"
+    }, { quoted: ms });
 
-        // Search for the song on YouTube
-        const searchResults = await yts(songName);
-        const videos = searchResults.videos;
-        
-        if (!videos || videos.length === 0) {
-            return await repondre("❌ No results found for that song.");
+  } catch (err) {
+    console.error("[PLAY] Error:", err);
+    repondre("❌ Error occurred while fetching audio.");
+  }
+});
+
+// === Command: .song (Audio as Document) ===
+zokou({
+  nomCom: "song",
+  alias: ["audiofile", "mp3doc"],
+  categorie: "Search",
+  reaction: "🎶",
+  desc: "Search and send MP3 music as document from YouTube.",
+}, async (dest, zk, { repondre, arg, ms }) => {
+  const query = arg.join(" ");
+  if (!query) return repondre("❌ Please provide a song name or keyword.");
+
+  try {
+    const search = await yts(query);
+    const video = search.videos[0];
+    if (!video) return repondre("❌ No results found.");
+
+    const safeTitle = video.title.replace(/[\\/:*?\"<>|]/g, "");
+    const fileName = `${safeTitle}.mp3`;
+    const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
+
+    const response = await axios.get(apiURL);
+    const data = response.data;
+    if (!data.downloadLink) return repondre("❌ Failed to retrieve MP3 link.");
+
+    let message = `*DULLAH-XMD|Speed & Quality*\n\n` +
+      `╭───────────────◆\n` +
+      `│⿻ *Title:* ${video.title}\n` +
+      `│⿻ *Duration:* ${video.timestamp}\n` +
+      `│⿻ *Views:* ${video.views.toLocaleString()}\n` +
+      `│⿻ *Uploaded:* ${video.ago}\n` +
+      `│⿻ *Channel:* ${video.author.name}\n` +
+      `╰────────────────◆\n\n` +
+      `🔗 ${video.url}`;
+
+    // Send thumbnail + caption + channel info
+    await zk.sendMessage(dest, {
+      image: { url: video.thumbnail },
+      caption: message,
+      contextInfo: {
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: "120363402252728845@newsletter",
+          newsletterName: "DULLAH-XMD",
+          serverMessageId: -1
         }
+      }
+    }, { quoted: ms });
 
-        // Get the first video
-        const video = videos[0];
-        
-        // Send found message with song info
-        await zk.sendMessage(dest, {
-            text: `✅ *SONG FOUND*\n\n*Title:* ${video.title}\n*Duration:* ${video.timestamp}\n*Uploaded:* ${video.ago}\n\n⏳ *Downloading audio (may take 60+ seconds)...*`,
-            contextInfo: {
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363353854480831@newsletter',
-                    newsletterName: 'RAHMANI XMD',
-                    serverMessageId: 143
-                },
-                forwardingScore: 999,
-                externalAdReply: {
-                    title: 'RAHMANI-XMD',
-                    body: `🎵 ${video.title.substring(0, 25)}`,
-                    thumbnailUrl: video.thumbnail || 'https://files.catbox.moe/aktbgo.jpg',
-                    mediaType: 1,
-                    renderSmallThumbnail: true
-                }
-            }
-        }, { quoted: ms });
+    // Send Document
+    await zk.sendMessage(dest, {
+      document: { url: data.downloadLink },
+      mimetype: "audio/mpeg",
+      fileName,
+      caption: "> Dullahxmd is Speed🔥"
+    }, { quoted: ms });
 
-        // USE YOUR API FROM NOOBS-API.TOP - WITH INCREASED TIMEOUT
-        const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
-        
-        console.log("Fetching from your API:", apiURL);
-        
-        // INCREASE TIMEOUT TO 60 SECONDS
-        const response = await axios.get(apiURL, { 
-            timeout: 60000, // Increased from 30000 to 60000
-            headers: { 
-                'Accept': 'application/json',
-                'User-Agent': 'RAHMANI-XMD Bot'
-            } 
-        });
-        
-        console.log("API Response:", response.data);
-        
-        // Check response from your API
-        let audioUrl = null;
-        
-        if (response.data) {
-            // Check different possible formats
-            if (response.data.download) {
-                audioUrl = response.data.download;
-            } else if (response.data.url) {
-                audioUrl = response.data.url;
-            } else if (response.data.link) {
-                audioUrl = response.data.link;
-            } else if (response.data.result && response.data.result.download) {
-                audioUrl = response.data.result.download;
-            } else if (response.data.data && response.data.data.download) {
-                audioUrl = response.data.data.download;
-            } else if (typeof response.data === 'string' && response.data.startsWith('http')) {
-                audioUrl = response.data;
-            } else if (response.data.status && response.data.result) {
-                audioUrl = response.data.result;
-            }
+  } catch (err) {
+    console.error("[SONG] Error:", err);
+    repondre("❌ Error occurred while fetching MP3 document.");
+  }
+});
+
+// === Command: .video (YouTube Video MP4) ===
+zokou({
+  nomCom: "video",
+  alias: ["vid", "mp4", "movie"],
+  categorie: "Search",
+  reaction: "🎥",
+  desc: "Search and send video from YouTube as MP4.",
+}, async (dest, zk, { repondre, arg, ms }) => {
+  const query = arg.join(" ");
+  if (!query) return repondre("❌ Please provide a video name or keyword.");
+
+  try {
+    const search = await yts(query);
+    const video = search.videos[0];
+    if (!video) return repondre("❌ No results found.");
+
+    const safeTitle = video.title.replace(/[\\/:*?\"<>|]/g, "");
+    const fileName = `${safeTitle}.mp4`;
+    const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp4`;
+
+    const response = await axios.get(apiURL);
+    const data = response.data;
+    if (!data.downloadLink) return repondre("❌ Failed to retrieve MP4 link.");
+
+    let message = `*DULLAH-XMD|Speed & Quality*\n\n` +
+      `╭───────────────◆\n` +
+      `│⿻ *Title:* ${video.title}\n` +
+      `│⿻ *Duration:* ${video.timestamp}\n` +
+      `│⿻ *Views:* ${video.views.toLocaleString()}\n` +
+      `│⿻ *Uploaded:* ${video.ago}\n` +
+      `│⿻ *Channel:* ${video.author.name}\n` +
+      `╰────────────────◆\n\n` +
+      `🔗 ${video.url}`;
+
+    // Send thumbnail + caption + channel info
+    await zk.sendMessage(dest, {
+      image: { url: video.thumbnail },
+      caption: message,
+      contextInfo: {
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: "120363402252728845@newsletter",
+          newsletterName: "DULLAH-XMD",
+          serverMessageId: -1
         }
-        
-        // If no audio URL found
-        if (!audioUrl) {
-            console.log("Your API did not return a download link. Response:", JSON.stringify(response.data, null, 2));
-            return await repondre("❌ Your API did not return a download link. Please check the console.");
-        }
+      }
+    }, { quoted: ms });
 
-        // Send the audio file
-        await zk.sendMessage(dest, {
-            audio: { url: audioUrl },
-            mimetype: "audio/mp4",
-            fileName: `${video.title.replace(/[^a-zA-Z0-9]/g, '_')}.mp3`,
-            contextInfo: {
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363353854480831@newsletter',
-                    newsletterName: 'RAHMANI XMD',
-                    serverMessageId: 143
-                },
-                forwardingScore: 999,
-                externalAdReply: {
-                    title: 'RAHMANI-XMD',
-                    body: `🎵 ${video.title.substring(0, 25)}`,
-                    thumbnailUrl: video.thumbnail || 'https://files.catbox.moe/aktbgo.jpg',
-                    mediaType: 1,
-                    renderSmallThumbnail: true,
-                    sourceUrl: audioUrl
-                }
-            }
-        }, { quoted: ms });
+    // Send Video
+    await zk.sendMessage(dest, {
+      video: { url: data.downloadLink },
+      mimetype: "video/mp4",
+      fileName,
+      caption: "> Dullahxmd is Speed🔥"
+    }, { quoted: ms });
 
-    } catch (error) {
-        console.error("Music download error:", error.message);
-        console.error("Full error:", error);
-        
-        let errorMessage = "❌ *Error downloading music.*\n\n";
-        
-        if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-            errorMessage += "The server is taking too long to respond.\n";
-            errorMessage += "This might be because the song is long or the server is busy.\n\n";
-            errorMessage += "Try again later or try a different song.";
-        } else {
-            errorMessage += `${error.message}\n\nPlease try again later.`;
-        }
-        
-        await zk.sendMessage(dest, {
-            text: `${errorMessage}\n\n⚡ *RAHMANI-XMD*`,
-            contextInfo: {
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363353854480831@newsletter',
-                    newsletterName: 'RAHMANI XMD',
-                    serverMessageId: 143
-                },
-                forwardingScore: 999,
-                externalAdReply: {
-                    title: 'RAHMANI-XMD',
-                    body: '❌ Download Failed',
-                    thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
-                    mediaType: 1,
-                    renderSmallThumbnail: true
-                }
-            }
-        }, { quoted: ms });
-    }
+  } catch (err) {
+    console.error("[VIDEO] Error:", err);
+    repondre("❌ Error occurred while fetching video.");
+  }
 });
