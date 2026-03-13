@@ -13,7 +13,7 @@ const THUMBNAIL = "https://files.catbox.moe/aktbgo.jpg";
 
 // ============ PLAY COMMAND (AUDIO) ============
 zokou({
-  nomCom: "play",
+  nomCom: "play4",
   aliases: ["music", "audio", "song", "mp3"],
   reaction: "🎵",
   categorie: "Download"
