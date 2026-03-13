@@ -2,7 +2,6 @@ const { zokou } = require("../framework/zokou");
 const axios = require("axios");
 const yts = require("yt-search");
 
-// YOUR BASE URL - NOOBS API
 const BASE_URL = "https://noobs-api.top";
 
 zokou({
@@ -42,7 +41,7 @@ zokou({
         
         // Send searching message
         await zk.sendMessage(dest, {
-            text: `🔍 *Searching for:* ${songName}\n\n⏳ Please wait...`,
+            text: `🔍 *Searching for:* ${songName}\n\n⏳ This may take up to 60 seconds...`,
             contextInfo: {
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
@@ -74,7 +73,7 @@ zokou({
         
         // Send found message with song info
         await zk.sendMessage(dest, {
-            text: `✅ *SONG FOUND*\n\n*Title:* ${video.title}\n*Duration:* ${video.timestamp}\n*Uploaded:* ${video.ago}\n*Views:* ${video.views.toLocaleString()}\n\n⏳ *Downloading audio...*`,
+            text: `✅ *SONG FOUND*\n\n*Title:* ${video.title}\n*Duration:* ${video.timestamp}\n*Uploaded:* ${video.ago}\n\n⏳ *Downloading audio (may take 60+ seconds)...*`,
             contextInfo: {
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
@@ -93,14 +92,14 @@ zokou({
             }
         }, { quoted: ms });
 
-        // USE YOUR API FROM NOOBS-API.TOP
+        // USE YOUR API FROM NOOBS-API.TOP - WITH INCREASED TIMEOUT
         const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
         
         console.log("Fetching from your API:", apiURL);
         
-        // Download from your Noobs API
+        // INCREASE TIMEOUT TO 60 SECONDS
         const response = await axios.get(apiURL, { 
-            timeout: 30000,
+            timeout: 60000, // Increased from 30000 to 60000
             headers: { 
                 'Accept': 'application/json',
                 'User-Agent': 'RAHMANI-XMD Bot'
@@ -165,8 +164,18 @@ zokou({
         console.error("Music download error:", error.message);
         console.error("Full error:", error);
         
+        let errorMessage = "❌ *Error downloading music.*\n\n";
+        
+        if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+            errorMessage += "The server is taking too long to respond.\n";
+            errorMessage += "This might be because the song is long or the server is busy.\n\n";
+            errorMessage += "Try again later or try a different song.";
+        } else {
+            errorMessage += `${error.message}\n\nPlease try again later.`;
+        }
+        
         await zk.sendMessage(dest, {
-            text: `❌ *Error downloading music.*\n\n${error.message}\n\nPlease try again later.\n\n⚡ *RAHMANI-XMD*`,
+            text: `${errorMessage}\n\n⚡ *RAHMANI-XMD*`,
             contextInfo: {
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
