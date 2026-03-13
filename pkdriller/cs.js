@@ -46,7 +46,7 @@ zokou({
 ┌─── *LINKS* ───┐
 │ 📎 *GitHub:* ${repoUrl}
 │ 👥 *Group:* ${groupUrl}
-│ 📢 *Pair Session:* ${channelUrl}
+│ 📢 *Channel:* ${channelUrl}
 └────────────────┘
 
 > *RAHMANI-XMD* 🚀
@@ -88,7 +88,7 @@ zokou({
 ┌─── *LINKS* ───┐
 │ 📎 GitHub: ${repoUrl}
 │ 👥 Group: ${groupUrl}
-│ 📢 Pair Session: ${channelUrl}
+│ 📢 Channel: ${channelUrl}
 └────────────────┘
 
 *RAHMANI-XMD* 🚀`
