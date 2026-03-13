@@ -31,9 +31,8 @@
 
 <a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
 
-## ⚠️ **BOT UNDER MAINTENANCE** ⚠️
 
-<h2 align="center">⚒️⚒️⚒️ BEING UPDATED ⚒️⚒️⚒️</h2>
+<h2 align="center">ENJOY THE UPDATES 🤠</h2>
 
 <a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
 
