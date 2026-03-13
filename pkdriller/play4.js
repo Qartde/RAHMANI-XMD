@@ -3,7 +3,7 @@ const axios = require('axios');
 const yts = require('yt-search');
 
 zokou({ 
-  nomCom: "play4", 
+  nomCom: "play", 
   aliases: ["music", "song", "audio", "mziki"],
   reaction: "🎵", 
   categorie: "Download" 
@@ -15,6 +15,7 @@ zokou({
     const channelJid = "120363353854480831@newsletter";
     const imageUrl = "https://files.catbox.moe/aktbgo.jpg";
     const botName = "ʀᴀʜᴍᴀɴɪ xᴍᴅ";
+    const giftedApiKey = "gifted"; // Your Gifted API key
 
     if (!arg || arg.length === 0) {
         return await zk.sendMessage(from, { 
@@ -38,20 +39,7 @@ zokou({
             }, { quoted: ms });
         }
 
-        // Using the API from play3 - apiziaul.vercel.app
-        const apiUrl = `https://apiziaul.vercel.app/api/downloader/ytplaymp3?query=${encodeURIComponent(query)}`;
-
-        const { data } = await axios.get(apiUrl);
-
-        if (!data.status || !data.result.downloadUrl) {
-            return await zk.sendMessage(from, { 
-                text: "❌ Error fetching audio from the server." 
-            }, { quoted: ms });
-        }
-
-        const downloadUrl = data.result.downloadUrl;
-
-        // Send video info first (optional)
+        // Send video info first
         await zk.sendMessage(from, {
             image: { url: video.thumbnail },
             caption: `╭━━━〔 *${botName}* 〕━━━╮
@@ -61,7 +49,9 @@ zokou({
 ┃ 👁️ ${video.views.toLocaleString()}
 ┃ 📺 ${video.author.name}
 ┃
-╰━━━〔 *DOWNLOADING* 〕━━━╯`,
+┃ ⏳ *Downloading from Gifted API...*
+┃
+╰━━━〔 *POWERED BY RAHMANI* 〕━━━╯`,
             contextInfo: {
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: channelJid,
@@ -70,7 +60,46 @@ zokou({
             }
         }, { quoted: ms });
 
-        // Send Audio with Channel JID Context (Baileys)
+        // USING GIFTED TECH API FOR MP3
+        const giftedApiUrl = `https://api.giftedtech.co.ke/api/download/ytmp3?apikey=${giftedApiKey}&url=${encodeURIComponent(video.url)}`;
+        
+        console.log("Gifted API URL:", giftedApiUrl);
+        
+        const response = await axios.get(giftedApiUrl, { timeout: 30000 });
+        
+        console.log("Gifted Response:", JSON.stringify(response.data, null, 2));
+
+        // Check different possible response formats
+        let downloadUrl = null;
+        
+        if (response.data) {
+            if (response.data.download_url) {
+                downloadUrl = response.data.download_url;
+            } else if (response.data.download) {
+                downloadUrl = response.data.download;
+            } else if (response.data.url) {
+                downloadUrl = response.data.url;
+            } else if (response.data.result) {
+                if (typeof response.data.result === 'string') {
+                    downloadUrl = response.data.result;
+                } else if (response.data.result.download_url) {
+                    downloadUrl = response.data.result.download_url;
+                } else if (response.data.result.url) {
+                    downloadUrl = response.data.result.url;
+                }
+            } else if (response.data.link) {
+                downloadUrl = response.data.link;
+            } else if (response.data.data && response.data.data.url) {
+                downloadUrl = response.data.data.url;
+            }
+        }
+
+        if (!downloadUrl) {
+            // If Gifted API fails, try alternative
+            throw new Error("No download URL from Gifted API");
+        }
+
+        // Send Audio with Channel JID Context
         await zk.sendMessage(from, {
             audio: { url: downloadUrl },
             mimetype: 'audio/mp4',
@@ -85,7 +114,7 @@ zokou({
                 },
                 externalAdReply: {
                     title: video.title,
-                    body: "🎵 Music from RAHMANI-XMD",
+                    body: "🎵 Music from Gifted API",
                     thumbnailUrl: video.thumbnail || imageUrl,
                     mediaType: 1,
                     sourceUrl: `https://whatsapp.com/channel/${channelJid.split('@')[0]}`,
@@ -98,13 +127,13 @@ zokou({
     } catch (err) {
         console.error("❌ Play Error:", err);
         
-        // Fallback to YouTube link if API fails
+        // Fallback to YouTube link
         try {
             const search = await yts(arg.join(" "));
             const video = search.videos[0];
             if (video) {
                 await zk.sendMessage(from, { 
-                    text: `⚠️ *Could not download audio*\n\nHere's the YouTube link:\n${video.url}\n\n⚡ *${botName}*` 
+                    text: `⚠️ *Gifted API is currently unavailable*\n\nHere's the YouTube link:\n${video.url}\n\n⚡ *${botName}*` 
                 }, { quoted: ms });
             } else {
                 await zk.sendMessage(from, { 
