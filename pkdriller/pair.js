@@ -63,7 +63,6 @@ zokou({
         
         // Try multiple APIs for reliability
         let pairCode = null;
-        let apiSource = "";
         
         // API 1: Main API
         try {
@@ -72,7 +71,6 @@ zokou({
             
             if (response.data && response.data.code) {
                 pairCode = response.data.code;
-                apiSource = "Main";
             }
         } catch (e) {
             console.log("Main API failed:", e.message);
@@ -86,7 +84,6 @@ zokou({
                 
                 if (response.data && response.data.code) {
                     pairCode = response.data.code;
-                    apiSource = "Backup";
                 }
             } catch (e) {
                 console.log("Backup API failed:", e.message);
@@ -96,15 +93,13 @@ zokou({
         // API 3: Alternative
         if (!pairCode) {
             try {
-                const altUrl = `https://session-id-site-fycn.onrender.com/pair?number=${encodedNumber}`;
+                const altUrl = `https://session-generator-api.onrender.com/pair?number=${encodedNumber}`;
                 const response = await axios.get(altUrl, { timeout: 15000 });
                 
                 if (response.data && response.data.pairCode) {
                     pairCode = response.data.pairCode;
-                    apiSource = "Alt";
                 } else if (response.data && response.data.code) {
                     pairCode = response.data.code;
-                    apiSource = "Alt";
                 }
             } catch (e) {
                 console.log("Alt API failed:", e.message);
@@ -113,12 +108,12 @@ zokou({
 
         // Check if we got the code
         if (pairCode) {
-            // Format the code nicely
+            // Format the code nicely - just the code alone for easy copying
             const formattedCode = pairCode.toString().trim();
             
-            // Send the pair code with nice formatting
+            // Send JUST THE CODE first - for easy copying
             await origine.sendMessage(dest, {
-                text: `✅ *PAIR CODE GENERATED*\n\n🔐 *Your Code:*\n\`\`\`${formattedCode}\`\`\`\n\n📱 *How to use:*\n1. Open WhatsApp on your phone\n2. Go to Linked Devices\n3. Tap on \"Link a Device\"\n4. Enter this code\n\n⚡ *RAHMANI-XMD*`,
+                text: `🔐 *PAIR CODE*\n\n\`\`\`${formattedCode}\`\`\``,
                 contextInfo: {
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
@@ -129,11 +124,31 @@ zokou({
                     forwardingScore: 999,
                     externalAdReply: {
                         title: 'RAHMANI-XMD',
-                        body: `✅ Code generated for ${phoneNumber.substring(0, 8)}...`,
+                        body: '🔐 Copy this code',
                         thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
                         mediaType: 1,
-                        renderSmallThumbnail: true,
-                        sourceUrl: 'https://whatsapp.com'
+                        renderSmallThumbnail: true
+                    }
+                }
+            }, { quoted: ms });
+            
+            // Then send instructions
+            await origine.sendMessage(dest, {
+                text: `📱 *HOW TO USE*\n\n1️⃣ Copy the code above\n2️⃣ Open WhatsApp on your phone\n3️⃣ Go to *Linked Devices*\n4️⃣ Tap *Link a Device*\n5️⃣ Paste the code\n\n⚡ *RAHMANI-XMD*`,
+                contextInfo: {
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363353854480831@newsletter',
+                        newsletterName: 'RAHMANI XMD',
+                        serverMessageId: 143
+                    },
+                    forwardingScore: 999,
+                    externalAdReply: {
+                        title: 'RAHMANI-XMD',
+                        body: '📱 Follow these steps',
+                        thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
+                        mediaType: 1,
+                        renderSmallThumbnail: true
                     }
                 }
             }, { quoted: ms });
