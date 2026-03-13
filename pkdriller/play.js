@@ -3,8 +3,6 @@ const axios = require("axios");
 const yts = require("yt-search");
 
 const BASE_URL = "https://noobs-api.top";
-
-// Newsletter Info
 const NEWSLETTER_JID = "120363353854480831@newsletter";
 const NEWSLETTER_NAME = "RAHMANI XMD";
 const BOT_NAME = "RAHMANI-XMD";
@@ -16,322 +14,105 @@ zokou({
   aliases: ["music", "audio"],
   categorie: "Download",
   reaction: "🎵",
-  desc: "Search and play MP3 music from YouTube (audio only).",
 }, async (dest, zk, { repondre, arg, ms }) => {
   const query = arg.join(" ");
   if (!query) {
-    await zk.sendMessage(dest, {
-      text: `🎵 *${BOT_NAME} MUSIC DOWNLOADER*\n\nPlease provide a song name.\n\nExample: \`.play nikuone\`\n\n⚡ *${BOT_NAME}*`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: '🎵 Enter song name to download',
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
-        }
-      }
-    }, { quoted: ms });
-    return;
+    return repondre(`🎵 *${BOT_NAME} MUSIC DOWNLOADER*\n\nExample: .play nikuone`);
   }
 
   try {
-    // Send searching message
-    await zk.sendMessage(dest, {
-      text: `🔍 *Searching for:* ${query}\n\n⏳ Please wait...`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: `🔍 Searching: ${query.substring(0, 20)}`,
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
-        }
-      }
-    }, { quoted: ms });
+    await repondre(`🔍 Searching for: ${query}`);
 
     const search = await yts(query);
     const video = search.videos[0];
     if (!video) return repondre("❌ No results found.");
 
-    const safeTitle = video.title.replace(/[\\/:*?\"<>|]/g, "");
-    const fileName = `${safeTitle}.mp3`;
-    const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
-
-    console.log("Fetching from API:", apiURL);
-    
-    const response = await axios.get(apiURL, { timeout: 60000 });
-    const data = response.data;
-    
-    console.log("API Response:", data);
-    
-    let downloadLink = null;
-    if (data.downloadLink) downloadLink = data.downloadLink;
-    else if (data.download) downloadLink = data.download;
-    else if (data.url) downloadLink = data.url;
-    else if (data.link) downloadLink = data.link;
-    
-    if (!downloadLink) return repondre("❌ Failed to retrieve MP3 link.");
-
-    // Info message
-    let message = `╭━━━〔 *${BOT_NAME}* 〕━━━╮\n` +
-      `┃\n` +
-      `┃ 🎵 *Title:* ${video.title}\n` +
-      `┃ ⏱️ *Duration:* ${video.timestamp}\n` +
-      `┃ 👁️ *Views:* ${video.views.toLocaleString()}\n` +
-      `┃ 📅 *Uploaded:* ${video.ago}\n` +
-      `┃ 📺 *Channel:* ${video.author.name}\n` +
-      `┃\n` +
-      `┃ 🔗 ${video.url}\n` +
-      `┃\n` +
-      `╰━━━〔 *DOWNLOADING* 〕━━━╯`;
-
-    // Send thumbnail + caption
+    // Send just the YouTube link first (quick response)
     await zk.sendMessage(dest, {
-      image: { url: video.thumbnail },
-      caption: message,
+      text: `🎵 *${video.title}*\n⏱️ ${video.timestamp}\n🔗 ${video.url}\n\n⚡ *${BOT_NAME}*`,
       contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
         externalAdReply: {
-          title: BOT_NAME,
-          body: `🎵 ${video.title.substring(0, 25)}`,
-          thumbnailUrl: video.thumbnail || THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
+          title: video.title.substring(0, 30),
+          body: `Duration: ${video.timestamp}`,
+          thumbnailUrl: video.thumbnail,
+          mediaType: 1
         }
       }
     }, { quoted: ms });
 
-    // Send Audio
-    await zk.sendMessage(dest, {
-      audio: { url: downloadLink },
-      mimetype: "audio/mp4",
-      fileName: fileName,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: `🎵 ${video.title.substring(0, 25)}`,
-          thumbnailUrl: video.thumbnail || THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true,
-          sourceUrl: downloadLink
-        }
+    // Try to download in background (don't wait for response)
+    try {
+      const apiURL = `${BASE_URL}/dipto/ytDl3?link=${video.videoId}&format=mp3`;
+      const response = await axios.get(apiURL, { timeout: 30000 });
+      
+      let downloadLink = response.data?.downloadLink || response.data?.download || response.data?.url;
+      
+      if (downloadLink) {
+        await zk.sendMessage(dest, {
+          audio: { url: downloadLink },
+          mimetype: "audio/mp4",
+        }, { quoted: ms });
       }
-    }, { quoted: ms });
+    } catch (e) {
+      console.log("Background download failed:", e.message);
+      // Don't show error - user already has YouTube link
+    }
 
   } catch (err) {
     console.error("[PLAY] Error:", err);
-    
-    let errorMsg = "❌ *Error downloading music.*\n\n";
-    if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
-      errorMsg += "The server is taking too long to respond.\nTry again later.";
-    } else {
-      errorMsg += err.message;
-    }
-    
-    await zk.sendMessage(dest, {
-      text: `${errorMsg}\n\n⚡ *${BOT_NAME}*`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: '❌ Download Failed',
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
-        }
-      }
-    }, { quoted: ms });
+    repondre(`❌ Error: ${err.message}`);
   }
 });
 
 // === Command: .song (Audio as Document) ===
 zokou({
   nomCom: "song",
-  aliases: ["audiofile", "mp3doc"],
+  aliases: ["mp3"],
   categorie: "Download",
   reaction: "🎶",
-  desc: "Search and send MP3 music as document from YouTube.",
 }, async (dest, zk, { repondre, arg, ms }) => {
   const query = arg.join(" ");
-  if (!query) {
-    await zk.sendMessage(dest, {
-      text: `🎶 *${BOT_NAME} MUSIC DOWNLOADER*\n\nPlease provide a song name.\n\nExample: \`.song nikuone\`\n\n⚡ *${BOT_NAME}*`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: '🎶 Enter song name to download',
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
-        }
-      }
-    }, { quoted: ms });
-    return;
-  }
+  if (!query) return repondre(`🎶 *Example:* .song nikuone`);
 
   try {
-    // Send searching message
-    await zk.sendMessage(dest, {
-      text: `🔍 *Searching for:* ${query}\n\n⏳ Please wait...`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: `🔍 Searching: ${query.substring(0, 20)}`,
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
-        }
-      }
-    }, { quoted: ms });
+    await repondre(`🔍 Searching: ${query}`);
 
     const search = await yts(query);
     const video = search.videos[0];
     if (!video) return repondre("❌ No results found.");
 
-    const safeTitle = video.title.replace(/[\\/:*?\"<>|]/g, "");
-    const fileName = `${safeTitle}.mp3`;
-    const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp3`;
-
-    const response = await axios.get(apiURL, { timeout: 60000 });
-    const data = response.data;
-    
-    let downloadLink = null;
-    if (data.downloadLink) downloadLink = data.downloadLink;
-    else if (data.download) downloadLink = data.download;
-    else if (data.url) downloadLink = data.url;
-    else if (data.link) downloadLink = data.link;
-    
-    if (!downloadLink) return repondre("❌ Failed to retrieve MP3 link.");
-
-    let message = `╭━━━〔 *${BOT_NAME}* 〕━━━╮\n` +
-      `┃\n` +
-      `┃ 🎵 *Title:* ${video.title}\n` +
-      `┃ ⏱️ *Duration:* ${video.timestamp}\n` +
-      `┃ 👁️ *Views:* ${video.views.toLocaleString()}\n` +
-      `┃ 📅 *Uploaded:* ${video.ago}\n` +
-      `┃ 📺 *Channel:* ${video.author.name}\n` +
-      `┃\n` +
-      `┃ 🔗 ${video.url}\n` +
-      `┃\n` +
-      `╰━━━〔 *DOWNLOADING* 〕━━━╯`;
-
-    // Send thumbnail + caption
+    // Send YouTube link first
     await zk.sendMessage(dest, {
-      image: { url: video.thumbnail },
-      caption: message,
+      text: `🎶 *${video.title}*\n⏱️ ${video.timestamp}\n🔗 ${video.url}\n\n⚡ *${BOT_NAME}*`,
       contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
         externalAdReply: {
-          title: BOT_NAME,
-          body: `🎶 ${video.title.substring(0, 25)}`,
-          thumbnailUrl: video.thumbnail || THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
+          title: video.title.substring(0, 30),
+          body: `Duration: ${video.timestamp}`,
+          thumbnailUrl: video.thumbnail,
+          mediaType: 1
         }
       }
     }, { quoted: ms });
 
-    // Send Document
-    await zk.sendMessage(dest, {
-      document: { url: downloadLink },
-      mimetype: "audio/mpeg",
-      fileName: fileName,
-      caption: `⚡ *${BOT_NAME}*`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: `🎶 ${video.title.substring(0, 25)}`,
-          thumbnailUrl: video.thumbnail || THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true,
-          sourceUrl: downloadLink
-        }
+    // Try alternative API for download
+    try {
+      const apiURL = `https://pajansen.com/api/ytdl?url=${video.url}&type=mp3`;
+      const response = await axios.get(apiURL, { timeout: 30000 });
+      
+      if (response.data?.result?.url) {
+        await zk.sendMessage(dest, {
+          document: { url: response.data.result.url },
+          mimetype: "audio/mpeg",
+          fileName: `${video.title}.mp3`,
+        }, { quoted: ms });
       }
-    }, { quoted: ms });
+    } catch (e) {
+      console.log("Download failed:", e.message);
+    }
 
   } catch (err) {
     console.error("[SONG] Error:", err);
-    
-    await zk.sendMessage(dest, {
-      text: `❌ *Error downloading music.*\n\n${err.message}\n\n⚡ *${BOT_NAME}*`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: '❌ Download Failed',
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
-        }
-      }
-    }, { quoted: ms });
+    repondre(`❌ Error: ${err.message}`);
   }
 });
 
@@ -341,153 +122,48 @@ zokou({
   aliases: ["vid", "mp4"],
   categorie: "Download",
   reaction: "🎥",
-  desc: "Search and send video from YouTube as MP4.",
 }, async (dest, zk, { repondre, arg, ms }) => {
   const query = arg.join(" ");
-  if (!query) {
-    await zk.sendMessage(dest, {
-      text: `🎥 *${BOT_NAME} VIDEO DOWNLOADER*\n\nPlease provide a video name.\n\nExample: \`.video nikuone\`\n\n⚡ *${BOT_NAME}*`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: '🎥 Enter video name to download',
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
-        }
-      }
-    }, { quoted: ms });
-    return;
-  }
+  if (!query) return repondre(`🎥 *Example:* .video nikuone`);
 
   try {
-    // Send searching message
-    await zk.sendMessage(dest, {
-      text: `🔍 *Searching for:* ${query}\n\n⏳ Please wait...`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: `🔍 Searching: ${query.substring(0, 20)}`,
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
-        }
-      }
-    }, { quoted: ms });
+    await repondre(`🔍 Searching: ${query}`);
 
     const search = await yts(query);
     const video = search.videos[0];
     if (!video) return repondre("❌ No results found.");
 
-    const safeTitle = video.title.replace(/[\\/:*?\"<>|]/g, "");
-    const fileName = `${safeTitle}.mp4`;
-    const apiURL = `${BASE_URL}/dipto/ytDl3?link=${encodeURIComponent(video.videoId)}&format=mp4`;
-
-    const response = await axios.get(apiURL, { timeout: 60000 });
-    const data = response.data;
-    
-    let downloadLink = null;
-    if (data.downloadLink) downloadLink = data.downloadLink;
-    else if (data.download) downloadLink = data.download;
-    else if (data.url) downloadLink = data.url;
-    else if (data.link) downloadLink = data.link;
-    
-    if (!downloadLink) return repondre("❌ Failed to retrieve MP4 link.");
-
-    let message = `╭━━━〔 *${BOT_NAME}* 〕━━━╮\n` +
-      `┃\n` +
-      `┃ 🎥 *Title:* ${video.title}\n` +
-      `┃ ⏱️ *Duration:* ${video.timestamp}\n` +
-      `┃ 👁️ *Views:* ${video.views.toLocaleString()}\n` +
-      `┃ 📅 *Uploaded:* ${video.ago}\n` +
-      `┃ 📺 *Channel:* ${video.author.name}\n` +
-      `┃\n` +
-      `┃ 🔗 ${video.url}\n` +
-      `┃\n` +
-      `╰━━━〔 *DOWNLOADING* 〕━━━╯`;
-
-    // Send thumbnail + caption
+    // Send YouTube link first
     await zk.sendMessage(dest, {
-      image: { url: video.thumbnail },
-      caption: message,
+      text: `🎥 *${video.title}*\n⏱️ ${video.timestamp}\n🔗 ${video.url}\n\n⚡ *${BOT_NAME}*`,
       contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
         externalAdReply: {
-          title: BOT_NAME,
-          body: `🎥 ${video.title.substring(0, 25)}`,
-          thumbnailUrl: video.thumbnail || THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
+          title: video.title.substring(0, 30),
+          body: `Duration: ${video.timestamp}`,
+          thumbnailUrl: video.thumbnail,
+          mediaType: 1
         }
       }
     }, { quoted: ms });
 
-    // Send Video
-    await zk.sendMessage(dest, {
-      video: { url: downloadLink },
-      mimetype: "video/mp4",
-      fileName: fileName,
-      caption: `⚡ *${BOT_NAME}*`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: `🎥 ${video.title.substring(0, 25)}`,
-          thumbnailUrl: video.thumbnail || THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true,
-          sourceUrl: downloadLink
-        }
+    // Try to download video
+    try {
+      const apiURL = `https://pajansen.com/api/ytdl?url=${video.url}&type=mp4`;
+      const response = await axios.get(apiURL, { timeout: 30000 });
+      
+      if (response.data?.result?.url) {
+        await zk.sendMessage(dest, {
+          video: { url: response.data.result.url },
+          mimetype: "video/mp4",
+          caption: `⚡ *${BOT_NAME}*`,
+        }, { quoted: ms });
       }
-    }, { quoted: ms });
+    } catch (e) {
+      console.log("Video download failed:", e.message);
+    }
 
   } catch (err) {
     console.error("[VIDEO] Error:", err);
-    
-    await zk.sendMessage(dest, {
-      text: `❌ *Error downloading video.*\n\n${err.message}\n\n⚡ *${BOT_NAME}*`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: NEWSLETTER_NAME,
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: '❌ Download Failed',
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
-        }
-      }
-    }, { quoted: ms });
+    repondre(`❌ Error: ${err.message}`);
   }
 });
