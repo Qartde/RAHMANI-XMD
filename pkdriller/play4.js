@@ -3,7 +3,7 @@ const axios = require('axios');
 const yts = require('yt-search');
 
 zokou({ 
-  nomCom: "play", 
+  nomCom: "play4", 
   aliases: ["music", "song", "audio", "mziki"],
   reaction: "🎵", 
   categorie: "Download" 
