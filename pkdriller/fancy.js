@@ -8,14 +8,19 @@ zokou({
     reaction: "💫" 
 }, async (dest, zk, commandeOptions) => {
     const { arg, repondre, prefixe, ms } = commandeOptions;
-    const id = arg[0]?.match(/\d+/)?.join('');
-    const text = arg.slice(1).join(" ");
-
+    
     try {
         // Check if no arguments provided
         if (!arg || arg.length === 0) {
+            // Generate style list
+            let styleList = "*✨ AVAILABLE FANCY STYLES:*\n\n";
+            for (let i = 0; i < fancy.length; i++) {
+                styleList += `*${i + 1}.* ${fancy.apply(fancy[i], "RAHMANI")}\n`;
+            }
+            styleList += `\n*Usage:* ${prefixe}fancy [number] [text]\n*Example:* ${prefixe}fancy 29 RAHMANI-XMD`;
+            
             await zk.sendMessage(dest, {
-                text: `✨ *FANCY TEXT GENERATOR*\n\nUsage: ${prefixe}fancy [number] [text]\nExample: ${prefixe}fancy 10 RAHMANI-XMD\n\n📋 *Available styles:*\n${fancy.list('RAHMANI-XMD', fancy)}`,
+                text: styleList,
                 contextInfo: {
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
@@ -36,10 +41,14 @@ zokou({
             return;
         }
 
-        // Check if id or text is missing
-        if (id === undefined || text === undefined || text === '') {
+        // Extract number and text
+        const id = arg[0];
+        const text = arg.slice(1).join(" ");
+
+        // Check if we have both number and text
+        if (!id || !text) {
             await zk.sendMessage(dest, {
-                text: `❌ *Invalid format!*\n\nUsage: ${prefixe}fancy [number] [text]\nExample: ${prefixe}fancy 10 RAHMANI-XMD\n\n📋 *Available styles:*\n${fancy.list('RAHMANI-XMD', fancy)}`,
+                text: `❌ *Invalid format!*\n\nUsage: ${prefixe}fancy [number] [text]\nExample: ${prefixe}fancy 29 RAHMANI-XMD`,
                 contextInfo: {
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
@@ -60,17 +69,13 @@ zokou({
             return;
         }
 
-        // Convert id to number and check if valid
-        const styleIndex = parseInt(id) - 1;
+        // Convert id to number
+        const styleNumber = parseInt(id);
         
-        // Check if style exists
-        if (styleIndex >= 0 && styleIndex < fancy.length) {
-            const selectedStyle = fancy[styleIndex];
-            const fancyText = fancy.apply(selectedStyle, text);
-            
-            // Send the fancy text
+        // Check if it's a valid number
+        if (isNaN(styleNumber)) {
             await zk.sendMessage(dest, {
-                text: `✨ *Fancy Text Generated*\n\n${fancyText}\n\n⚡ *RAHMANI-XMD*`,
+                text: `❌ *Invalid number!*\n\nPlease use a valid number between 1 and ${fancy.length}.`,
                 contextInfo: {
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
@@ -81,7 +86,46 @@ zokou({
                     forwardingScore: 999,
                     externalAdReply: {
                         title: 'RAHMANI-XMD',
-                        body: `✨ Style #${parseInt(id)}: ${text.substring(0, 20)}`,
+                        body: '❌ Invalid Number',
+                        thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
+                        mediaType: 1,
+                        renderSmallThumbnail: true
+                    }
+                }
+            }, { quoted: ms });
+            return;
+        }
+
+        // Check if style exists (fancy array might be 1-indexed or 0-indexed)
+        let selectedStyle;
+        
+        // Try both possibilities
+        if (styleNumber <= fancy.length && styleNumber >= 1) {
+            // If array is 1-indexed (starts at 1)
+            selectedStyle = fancy[styleNumber];
+        } else if (styleNumber - 1 <= fancy.length && styleNumber - 1 >= 0) {
+            // If array is 0-indexed (starts at 0)
+            selectedStyle = fancy[styleNumber - 1];
+        }
+
+        if (selectedStyle) {
+            // Generate fancy text
+            const fancyText = fancy.apply(selectedStyle, text);
+            
+            // Send the fancy text
+            await zk.sendMessage(dest, {
+                text: `✨ *FANCY TEXT GENERATED*\n\n${fancyText}\n\n⚡ *RAHMANI-XMD*`,
+                contextInfo: {
+                    isForwarded: true,
+                    forwardedNewsletterMessageInfo: {
+                        newsletterJid: '120363353854480831@newsletter',
+                        newsletterName: 'RAHMANI XMD',
+                        serverMessageId: 143
+                    },
+                    forwardingScore: 999,
+                    externalAdReply: {
+                        title: 'RAHMANI-XMD',
+                        body: `✨ Style #${styleNumber}: ${text.substring(0, 20)}`,
                         thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
                         mediaType: 1,
                         renderSmallThumbnail: true
@@ -90,9 +134,15 @@ zokou({
             }, { quoted: ms });
             
         } else {
-            // Style not found
+            // Style not found - show available styles
+            let styleList = "*✨ AVAILABLE FANCY STYLES:*\n\n";
+            for (let i = 0; i < Math.min(fancy.length, 50); i++) {
+                styleList += `*${i + 1}.* ${fancy.apply(fancy[i], "RAHMANI")}\n`;
+            }
+            styleList += `\n*Total styles:* ${fancy.length}`;
+            
             await zk.sendMessage(dest, {
-                text: `❌ *Style #${id} not found!*\n\nPlease use a number between 1 and ${fancy.length}.\n\n📋 *Available styles:*\n${fancy.list('RAHMANI-XMD', fancy)}`,
+                text: `❌ *Style #${styleNumber} not found!*\n\nPlease use a number between 1 and ${fancy.length}.\n\n${styleList}`,
                 contextInfo: {
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
