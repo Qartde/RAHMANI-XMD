@@ -1,171 +1,74 @@
-const { zokou } = require("../framework/zokou");
-const axios = require("axios");
+const { zokou } = require('../framework/zokou');
+const axios = require('axios');
 
-const BOT_NAME = "ʀᴀʜᴍᴀɴɪ xᴍᴅ";
-const NEWSLETTER_JID = "120363353854480831@newsletter";
-const THUMBNAIL_URL = "https://files.catbox.moe/aktbgo.jpg";
-
-zokou({
-  nomCom: "gpt",
+zokou({ 
+  nomCom: "gpt", 
   aliases: ["ai", "chatgpt", "openai", "ask"],
-  reaction: "🧠",
-  categorie: "AI"
+  reaction: "🧠", 
+  categorie: "AI" 
 }, async (dest, zk, commandeOptions) => {
-  const { repondre, arg, ms } = commandeOptions;
-  const question = arg.join(" ");
+    const { arg, ms } = commandeOptions;
+    const from = dest;
 
-  try {
-    // Check if question is provided
-    if (!question) {
-      await zk.sendMessage(dest, {
-        text: `🧠 *${BOT_NAME} AI ASSISTANT*
+    // Your Specific Channel JID and Catbox Image
+    const channelJid = "120363353854480831@newsletter";
+    const imageUrl = "https://files.catbox.moe/aktbgo.jpg";
+    const botName = "ʀᴀʜᴍᴀɴɪ xᴍᴅ";
 
-╭━━━〔 *HOW TO USE* 〕━━━╮
-┃
-┃ Ask me anything!
-┃
-┃ *Examples:*
-┃ • .gpt What is WhatsApp bot?
-┃ • .gpt Who created you?
-┃ • .gpt Tell me a joke
-┃ • .gpt Explain quantum physics
-┃
-╰━━━〔 *POWERED BY RAHMANI* 〕━━━╯
-
-⚡ *${BOT_NAME}*`,
-        contextInfo: {
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: NEWSLETTER_JID,
-            newsletterName: "RAHMANI XMD",
-            serverMessageId: 143
-          },
-          forwardingScore: 999,
-          externalAdReply: {
-            title: BOT_NAME,
-            body: '🧠 Ask me anything',
-            thumbnailUrl: THUMBNAIL_URL,
-            mediaType: 1,
-            renderSmallThumbnail: true
-          }
-        }
-      }, { quoted: ms });
-      return;
+    if (!arg || arg.length === 0) {
+        return await zk.sendMessage(from, { 
+            text: `🧠 *${botName} AI Assistant*\n\nPlease ask me a question.\n\nExample: .gpt What is WhatsApp bot?` 
+        }, { quoted: ms });
     }
 
-    // Send thinking message
-    await zk.sendMessage(dest, {
-      text: `🧠 *${BOT_NAME} is thinking...*
+    try {
+        const question = arg.join(" ");
+        await zk.sendMessage(from, { 
+            text: `🧠 *${botName} is thinking...*\n\nQuestion: ${question}` 
+        }, { quoted: ms });
 
-╭━━━〔 *YOUR QUESTION* 〕━━━╮
-┃
-┃ ${question}
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯
+        // Using API with proper prompt
+        const prompt = `You are a helpful AI assistant. Your name is ${botName}. Your creator and owner is ${botName}. Always respond in a friendly and helpful manner. If someone asks who created you, say you were created by ${botName}. Answer: ${question}`;
+        
+        const apiUrl = `https://api.deline.web.id/ai/openai?text=${encodeURIComponent(question)}&prompt=${encodeURIComponent(prompt)}`;
 
-⏳ Please wait...`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: "RAHMANI XMD",
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: `🤔 ${question.substring(0, 25)}...`,
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
+        const { data } = await axios.get(apiUrl);
+
+        if (!data.status || !data.result) {
+            return await zk.sendMessage(from, { 
+                text: "❌ Error fetching response from AI server." 
+            }, { quoted: ms });
         }
-      }
-    }, { quoted: ms });
 
-    // Prepare prompt with owner recognition
-    const prompt = `You are a helpful, polite AI assistant. Your name is RAHMANI-XMD AI. Your creator and owner is ${BOT_NAME}. Always respond in a friendly manner. If someone asks who created you, say you were created by ${BOT_NAME}. Answer: ${question}`;
-    
-    // Call API
-    const apiUrl = `https://api.deline.web.id/ai/openai?text=${encodeURIComponent(question)}&prompt=${encodeURIComponent(prompt)}`;
-    
-    const response = await axios.get(apiUrl, { timeout: 30000 });
-    
-    if (response.data?.status === true && response.data?.result) {
-      const answer = response.data.result;
-      
-      // Format response nicely
-      const formattedResponse = `🧠 *${BOT_NAME} AI*
+        const answer = data.result;
 
-╭━━━〔 *YOUR QUESTION* 〕━━━╮
-┃
-┃ ${question}
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯
+        // Send Response with Channel JID Context (Baileys)
+        await zk.sendMessage(from, {
+            text: `🧠 *${botName} AI*\n\n*Q:* ${question}\n\n*A:* ${answer}\n\n⚡ *${botName}*`,
+            contextInfo: {
+                forwardingScore: 999,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: channelJid,
+                    serverMessageId: 143,
+                    newsletterName: "RAHMANI XMD",
+                },
+                externalAdReply: {
+                    title: `${botName} AI`,
+                    body: question.substring(0, 50) + (question.length > 50 ? "..." : ""),
+                    thumbnailUrl: imageUrl,
+                    mediaType: 1,
+                    sourceUrl: `https://whatsapp.com/channel/${channelJid.split('@')[0]}`,
+                    renderLargerThumbnail: false,
+                    showAdAttribution: true
+                }
+            }
+        }, { quoted: ms });
 
-╭━━━〔 *AI RESPONSE* 〕━━━╮
-┃
-┃ ${answer}
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯
-
-⚡ *${BOT_NAME}*`;
-
-      await zk.sendMessage(dest, {
-        text: formattedResponse,
-        contextInfo: {
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: NEWSLETTER_JID,
-            newsletterName: "RAHMANI XMD",
-            serverMessageId: 143
-          },
-          forwardingScore: 999,
-          externalAdReply: {
-            title: BOT_NAME,
-            body: `✅ Response generated`,
-            thumbnailUrl: THUMBNAIL_URL,
-            mediaType: 1,
-            renderSmallThumbnail: true
-          }
-        }
-      }, { quoted: ms });
-      
-    } else {
-      throw new Error("Invalid API response");
+    } catch (err) {
+        console.error("❌ GPT Error:", err);
+        await zk.sendMessage(from, { 
+            text: "❌ An error occurred: " + err.message 
+        }, { quoted: ms });
     }
-
-  } catch (error) {
-    console.error("GPT Error:", error.message);
-    
-    // Error message
-    await zk.sendMessage(dest, {
-      text: `❌ *Error*
-
-╭━━━〔 *ERROR DETAILS* 〕━━━╮
-┃
-┃ ${error.message}
-┃
-┃ Please try again later.
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯
-
-⚡ *${BOT_NAME}*`,
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: NEWSLETTER_JID,
-          newsletterName: "RAHMANI XMD",
-          serverMessageId: 143
-        },
-        forwardingScore: 999,
-        externalAdReply: {
-          title: BOT_NAME,
-          body: '❌ Request Failed',
-          thumbnailUrl: THUMBNAIL_URL,
-          mediaType: 1,
-          renderSmallThumbnail: true
-        }
-      }
-    }, { quoted: ms });
-  }
 });
