@@ -5,7 +5,7 @@ const ytSearch = require('yt-search');
 const axios = require('axios');
 
 zokou({
-  'nomCom': "play",
+  'nomCom': "play3",
   'desc': "Download audio from YouTube",
   'categorie': "Download",
   'reaction': '🎵',
