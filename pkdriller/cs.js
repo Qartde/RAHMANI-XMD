@@ -1,159 +1,94 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+const {
+  zokou
+} = require("../framework/zokou");
 
-const { zokou } = require("../framework/zokou");
-const axios = require("axios");
-const conf = require("../set");
-
-zokou(
-  { 
-    nomCom: "repo", 
-    categorie: "General", 
-    reaction: "🌟", 
-    nomFichier: __filename 
-  },
-  async (dest, zk, commandeOptions) => {
-    
+zokou({
+  'nomCom': "repo",
+  'desc': "Show repository information",
+  'categorie': "General",
+  'reaction': '📁',
+  'fromMe': "true"
+}, async (_0x4d1cb2, _0x6e67fd, _0x17c78a) => {
+  
+  const {
+    ms: _0x42d661,
+    arg: _0x32ab8b,
+    repondre: _0x1e9691
+  } = _0x17c78a;
+  
+  try {
     const repoUrl = "https://github.com/Qartde/RAHMANI-XMD";
+    const groupUrl = "https://chat.whatsapp.com/DTnrZzULVtP5r0E9rhoFOj";
     const channelUrl = "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X";
-    const imageUrl = conf.URL || "https://files.catbox.moe/aktbgo.jpg";
-    const botName = conf.BOT || "ʀᴀʜᴍᴀɴɪ xᴍᴅ";
+    const thumbnail = "https://files.catbox.moe/aktbgo.jpg";
     
-    try {
-      const response = await axios.get("https://api.github.com/repos/Qartde/RAHMANI-XMD");
-      const data = response.data;
+    // Get repo stats (optional, kama unataka live data)
+    // const response = await axios.get("https://api.github.com/repos/Qartde/RAHMANI-XMD");
+    // const stars = response.data.stargazers_count || 0;
+    // const forks = response.data.forks_count || 0;
+    
+    const repoMessage = `
+╭━━━━━━━━━━━━━━━━━━━━╮
+┃   📁 *REPO INFO* 📁
+╰━━━━━━━━━━━━━━━━━━━━╯
 
-      const stars = data.stargazers_count || 0;
-      const forks = data.forks_count || 0;
-      const updated = new Date(data.updated_at).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
+┌─── *ABOUT* ───┐
+│ 🤖 *Name:* RAHMANI-XMD
+│ 👤 *Owner:* Qartde
+│ 📝 *Desc:* Powerful WhatsApp Bot
+│ 🔧 *Status:* UNDER MAINTENANCE
+└────────────────┘
 
-      const repoMessage = `
-╭━━━━━━━━━━━━━━━━━━━━━━━━━━━╮
-┃   🌟 *${botName} REPOSITORY* 🌟
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+┌─── *FEATURES* ───┐
+│ • Group Management
+│ • Anti-Link & Anti-Bug
+│ • Media Downloader
+│ • AI Features (GPT, Bard)
+│ • Fun Commands
+│ • Level System
+└──────────────────┘
 
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ ✨ *REPO INFORMATION*
-┃ ═══════════════════════════
-┃
-┃ 📂 *Repo:*RAHMANI-XMD
-┃ 👤 *Owner:* Qartde
-┃ 📅 *Updated:* ${updated}
-┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃
-┃ ⭐ *Stars:* ${stars}  │  🍴 *Forks:* ${forks}
-┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃
-┃ 📝 *Description:*
-┃ ${data.description || "Multi-functional WhatsApp Bot"}
-┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃
-┃ 🔗 *LINKS*
-┃ ═══════════════════════════
-┃ 📎 GitHub: ${repoUrl}
-┃ 📢 Channel: ${channelUrl}
-┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃
-┃ ⚡ *Quick Commands*
-┃ ═══════════════════════════
-┃ ${conf.PREFIXE || '.'}menu  - Bot Menu
-┃ ${conf.PREFIXE || '.'}ping  - Check Speed
-┃ ${conf.PREFIXE || '.'}alive - Bot Status
-┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+┌─── *LINKS* ───┐
+│ 📎 *GitHub:* tap below
+│ 👥 *Group:* tap below
+│ 📢 *Channel:* tap below
+└────────────────┘
 
-╭━━━━━━━━━━━━━━━━━━━━━━━━━━━╮
-┃   ⭐ *Star this repo on GitHub!*
-┃   🚀 *Powered by ${botName}*
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-      `;
+> *RAHMANI-XMD* 🚀
+    `;
 
-      await zk.sendMessage(dest, {
-        image: { url: imageUrl },
-        caption: repoMessage,
-        contextInfo: {
-          externalAdReply: {
-            title: `🌟 ${botName} Repository`,
-            body: `${stars} Stars • ${forks} Forks • Updated ${updated}`,
-            thumbnailUrl: imageUrl,
-            mediaType: 1,
-            sourceUrl: repoUrl,
-            showAdAttribution: true,
-            renderLargerThumbnail: true
-          }
+    await _0x6e67fd.sendMessage(_0x4d1cb2, {
+      'text': repoMessage,
+      'contextInfo': {
+        'forwardingScore': 999,
+        'isForwarded': true,
+        'forwardedNewsletterMessageInfo': {
+          'newsletterJid': "120363353854480831@newsletter",
+          'newsletterName': "RAHMANI-XMD",
+          'serverMessageId': 143
+        },
+        'externalAdReply': {
+          'title': "📁 RAHMANI-XMD REPO",
+          'body': "GitHub • Support Group • Channel",
+          'thumbnailUrl': thumbnail,
+          'sourceUrl': repoUrl,  // Hii ndio CTA URL kuu
+          'mediaType': 1,
+          'renderLargerThumbnail': true,
+          'showAdAttribution': true
         }
-      });
-
-    } catch (error) {
-      // Fallback message if API fails
-      const fallbackMessage = `
-╭━━━━━━━━━━━━━━━━━━━━━━━━━━━╮
-┃   🌟 *${botName} REPOSITORY* 🌟
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ ✨ *REPO INFORMATION*
-┃ ═══════════════════════════
-┃
-┃ 📂 *Repo:* RAHMANI-XMD
-┃ 👤 *Owner:*Qartde
-┃ 📅 *Updated:* March 2025
-┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃
-┃ ⭐ *Stars:* ★★★★★  │  🍴 *Forks:* ∞
-┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃
-┃ 📝 *Description:*
-┃ Multi-functional WhatsApp Bot
-┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃
-┃ 🔗 *LINKS*
-┃ ═══════════════════════════
-┃ 📎 GitHub: ${repoUrl}
-┃ 📢 Channel: ${channelUrl}
-┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃
-┃ ⚡ *Quick Commands*
-┃ ═══════════════════════════
-┃ ${conf.PREFIXE || '.'}menu  - Bot Menu
-┃ ${conf.PREFIXE || '.'}ping  - Check Speed
-┃ ${conf.PREFIXE || '.'}alive - Bot Status
-┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-╭━━━━━━━━━━━━━━━━━━━━━━━━━━━╮
-┃   ⭐ *Star this repo on GitHub!*
-┃   🚀 *Powered by ${botName}*
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-      `;
-
-      await zk.sendMessage(dest, {
-        image: { url: imageUrl },
-        caption: fallbackMessage,
-        contextInfo: {
-          externalAdReply: {
-            title: `🌟 ${botName} Repository`,
-            body: "Click to visit GitHub",
-            thumbnailUrl: imageUrl,
-            mediaType: 1,
-            sourceUrl: repoUrl,
-            showAdAttribution: true,
-            renderLargerThumbnail: true
-          }
-        }
-      });
-    }
+      }
+    }, {
+      'quoted': _0x42d661
+    });
+    
+  } catch (_0x141e7b) {
+    console.log("❌ repo Command Error: " + _0x141e7b);
+    
+    // Fallback bila contextInfo
+    await _0x6e67fd.sendMessage(_0x4d1cb2, {
+      'text': "╭━━━━━━━━━━━━━━╮\n┃   📁 *REPO* 📁\n╰━━━━━━━━━━━━━━╯\n\n📎 GitHub: https://github.com/Qartde/RAHMANI-XMD\n👥 Group: https://chat.whatsapp.com/DTnrZzULVtP5r0E9rhoFOj\n\n*RAHMANI-XMD*"
+    }, {
+      'quoted': _0x42d661
+    });
   }
-);
+});
