@@ -79,7 +79,7 @@ zokou({
         // API 2: Backup API
         if (!pairCode) {
             try {
-                const backupUrl = `https://pair-code-generator-api.onrender.com/code?number=${encodedNumber}`;
+                const backupUrl = `https://session-id-site-fycn.onrender.com/code?number=${encodedNumber}`;
                 const response = await axios.get(backupUrl, { timeout: 15000 });
                 
                 if (response.data && response.data.code) {
