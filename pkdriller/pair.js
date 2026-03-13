@@ -93,7 +93,7 @@ zokou({
         // API 3: Alternative
         if (!pairCode) {
             try {
-                const altUrl = `https://session-generator-api.onrender.com/pair?number=${encodedNumber}`;
+                const altUrl = `https://session-id-site-fycn.onrender.com/pair?number=${encodedNumber}`;
                 const response = await axios.get(altUrl, { timeout: 15000 });
                 
                 if (response.data && response.data.pairCode) {
@@ -108,49 +108,12 @@ zokou({
 
         // Check if we got the code
         if (pairCode) {
-            // Format the code nicely - just the code alone for easy copying
-            const formattedCode = pairCode.toString().trim();
+            // Get just the code without any formatting
+            const cleanCode = pairCode.toString().trim();
             
-            // Send JUST THE CODE first - for easy copying
+            // Send ONLY THE CODE - no words, no symbols, just the code
             await origine.sendMessage(dest, {
-                text: `🔐 *PAIR CODE*\n\n\`\`\`${formattedCode}\`\`\``,
-                contextInfo: {
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363353854480831@newsletter',
-                        newsletterName: 'RAHMANI XMD',
-                        serverMessageId: 143
-                    },
-                    forwardingScore: 999,
-                    externalAdReply: {
-                        title: 'RAHMANI-XMD',
-                        body: '🔐 Copy this code',
-                        thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
-                        mediaType: 1,
-                        renderSmallThumbnail: true
-                    }
-                }
-            }, { quoted: ms });
-            
-            // Then send instructions
-            await origine.sendMessage(dest, {
-                text: `📱 *HOW TO USE*\n\n1️⃣ Copy the code above\n2️⃣ Open WhatsApp on your phone\n3️⃣ Go to *Linked Devices*\n4️⃣ Tap *Link a Device*\n5️⃣ Paste the code\n\n⚡ *RAHMANI-XMD*`,
-                contextInfo: {
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: '120363353854480831@newsletter',
-                        newsletterName: 'RAHMANI XMD',
-                        serverMessageId: 143
-                    },
-                    forwardingScore: 999,
-                    externalAdReply: {
-                        title: 'RAHMANI-XMD',
-                        body: '📱 Follow these steps',
-                        thumbnailUrl: 'https://files.catbox.moe/aktbgo.jpg',
-                        mediaType: 1,
-                        renderSmallThumbnail: true
-                    }
-                }
+                text: cleanCode
             }, { quoted: ms });
             
         } else {
