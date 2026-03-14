@@ -47,7 +47,7 @@ zokou(
         categorie: "Admin"
     },
     async (dest, zk, commandeOptions) => {
-        const { ms: quotedMessage, repondre, args } = commandeOptions;
+        const { ms: quotedMessage, repondre, args, auteurMessage } = commandeOptions;
         const groupId = dest;
         
         // Check if in group
@@ -55,13 +55,17 @@ zokou(
             return repondre("❌ This command only works in groups!");
         }
         
-        // Get sender ID
-        const sender = commandeOptions.superUser || commandeOptions.auteurMessage || commandeOptions.expediteur;
+        // Get sender ID - auteurMessage ndio njia sahihi
+        const sender = auteurMessage;
+        
+        console.log("Sender ID:", sender); // Debug
         
         // Get group metadata and check if sender is admin
         const groupMetadata = await zk.groupMetadata(groupId);
         const participant = groupMetadata.participants.find(p => p.id === sender);
         const isAdmin = participant && (participant.admin === "admin" || participant.admin === "superadmin");
+        
+        console.log("Is Admin:", isAdmin); // Debug
         
         if (!isAdmin) {
             return repondre("❌ Only group admins can use this command!");
@@ -71,7 +75,7 @@ zokou(
         if (!settings[groupId]) {
             settings[groupId] = {
                 enabled: false,
-                action: "warn", // warn, delete, remove
+                action: "warn",
                 maxMentions: 3,
                 warnLimit: 3
             };
@@ -150,7 +154,6 @@ zokou(
     async (dest, zk, commandeOptions) => {
         const { message, isGroup } = commandeOptions;
         
-        // Skip if not group or no message
         if (!isGroup || !message) return;
         
         const groupId = dest;
@@ -158,14 +161,11 @@ zokou(
         const messageContent = message.message?.conversation || 
                               message.message?.extendedTextMessage?.text || "";
         
-        // Skip bot messages
         if (sender.includes("bot") || sender.includes("status")) return;
         
-        // Load settings
         const settings = loadSettings();
         if (!settings[groupId] || !settings[groupId].enabled) return;
         
-        // Count mentions in message
         let mentionCount = 0;
         
         // Check for @mentions in text
@@ -177,19 +177,17 @@ zokou(
             mentionCount += message.message.extendedTextMessage.contextInfo.mentionedJid.length;
         }
         
-        // Check for status broadcasting (@all, @everyone, etc)
+        // Check for status broadcasting
         const broadcastPatterns = ["@all", "@everyone", "@group", "@tagall", "@mention", "mention all", "tag all"];
         const hasBroadcast = broadcastPatterns.some(pattern => 
             messageContent.toLowerCase().includes(pattern.toLowerCase())
         );
         
         if (hasBroadcast) {
-            // Count all group members as mentions
             const groupMetadata = await zk.groupMetadata(groupId);
             mentionCount = groupMetadata.participants.length;
         }
         
-        // If mentions exceed limit, take action
         if (mentionCount > settings[groupId].maxMentions) {
             await handleViolation(groupId, zk, sender, message, mentionCount, settings[groupId]);
         }
@@ -205,21 +203,17 @@ async function handleViolation(groupId, zk, sender, message, mentionCount, setti
     if (!warnings[groupId]) warnings[groupId] = {};
     if (!warnings[groupId][sender]) warnings[groupId][sender] = 0;
     
-    // Increase warning count
     warnings[groupId][sender] += 1;
     const currentWarnings = warnings[groupId][sender];
     
-    // Get group metadata for admin check
     const groupMetadata = await zk.groupMetadata(groupId);
     const botId = zk.user.id.split(":")[0] + "@s.whatsapp.net";
     const isBotAdmin = groupMetadata.participants.some(p => 
         p.id === botId && (p.admin === "admin" || p.admin === "superadmin")
     );
     
-    // Take action based on settings
     switch (settings.action) {
         case "delete":
-            // Delete the message
             if (isBotAdmin) {
                 await zk.sendMessage(groupId, { delete: message.key });
                 await zk.sendMessage(groupId, {
@@ -230,7 +224,6 @@ async function handleViolation(groupId, zk, sender, message, mentionCount, setti
             break;
             
         case "warn":
-            // Delete message and send warning
             if (isBotAdmin) {
                 await zk.sendMessage(groupId, { delete: message.key });
             }
@@ -242,7 +235,6 @@ async function handleViolation(groupId, zk, sender, message, mentionCount, setti
             break;
             
         case "remove":
-            // Remove from group after warning limit reached
             if (currentWarnings >= settings.warnLimit) {
                 if (isBotAdmin) {
                     await zk.groupParticipantsUpdate(groupId, [sender], "remove");
@@ -250,11 +242,9 @@ async function handleViolation(groupId, zk, sender, message, mentionCount, setti
                         text: `🔨 @${sender.split("@")[0]} was removed from group for repeatedly mentioning too many people.`,
                         mentions: [sender]
                     });
-                    // Reset warnings after removal
                     delete warnings[groupId][sender];
                 }
             } else {
-                // Just warn
                 if (isBotAdmin) {
                     await zk.sendMessage(groupId, { delete: message.key });
                 }
@@ -280,7 +270,7 @@ zokou(
         categorie: "Group"
     },
     async (dest, zk, commandeOptions) => {
-        const { repondre } = commandeOptions;
+        const { repondre, auteurMessage } = commandeOptions;
         const groupId = dest;
         
         if (!groupId.endsWith("@g.us")) {
@@ -315,7 +305,7 @@ zokou(
         categorie: "Admin"
     },
     async (dest, zk, commandeOptions) => {
-        const { repondre, args } = commandeOptions;
+        const { repondre, args, auteurMessage } = commandeOptions;
         const groupId = dest;
         
         if (!groupId.endsWith("@g.us")) {
@@ -323,7 +313,7 @@ zokou(
         }
         
         // Get sender ID
-        const sender = commandeOptions.superUser || commandeOptions.auteurMessage || commandeOptions.expediteur;
+        const sender = auteurMessage;
         
         // Check if sender is admin
         const groupMetadata = await zk.groupMetadata(groupId);
@@ -337,7 +327,6 @@ zokou(
         const warnings = loadWarnings();
         
         if (args && args[0]) {
-            // Reset specific user
             const user = args[0].replace("@", "") + "@s.whatsapp.net";
             if (warnings[groupId] && warnings[groupId][user]) {
                 delete warnings[groupId][user];
@@ -346,7 +335,6 @@ zokou(
             }
             return repondre("❌ User has no warnings!");
         } else {
-            // Reset all
             delete warnings[groupId];
             saveWarnings(warnings);
             return repondre("✅ All warnings for this group have been reset!");
