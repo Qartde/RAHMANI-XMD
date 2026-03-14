@@ -4,14 +4,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const { zokou } = require("../framework/zokou");
 const fs = require("fs");
 
-// Database ya warnings na settings
+// Database for warnings and settings
 const WARN_DB = "./data/antimentions.json";
 const SETTINGS_DB = "./data/antimention_settings.json";
 
-// Hakikisha folders zipo
+// Ensure data folder exists
 if (!fs.existsSync("./data")) fs.mkdirSync("./data");
 
-// Load au create database
+// Load or create databases
 function loadWarnings() {
     if (!fs.existsSync(WARN_DB)) {
         fs.writeFileSync(WARN_DB, JSON.stringify({}));
@@ -37,7 +37,7 @@ function saveSettings(data) {
 }
 
 // ----------------------------------------------------------------------
-// COMMAND: KUWASHA/KUZIMA ANTI-MENTION
+// COMMAND: ENABLE/DISABLE ANTI-MENTION
 // ----------------------------------------------------------------------
 zokou(
     { 
@@ -47,22 +47,24 @@ zokou(
         categorie: "Admin"
     },
     async (dest, zk, commandeOptions) => {
-        const { ms: quotedMessage, repondre, args, superUser } = commandeOptions;
+        const { ms: quotedMessage, repondre, args } = commandeOptions;
         const groupId = dest;
         
         // Check if in group
         if (!groupId.endsWith("@g.us")) {
-            return repondre("❌ Command hii inafanya kazi kwenye group pekee!");
+            return repondre("❌ This command only works in groups!");
         }
         
-        // Check if sender is admin
+        // Get sender ID
+        const sender = commandeOptions.superUser || commandeOptions.auteurMessage || commandeOptions.expediteur;
+        
+        // Get group metadata and check if sender is admin
         const groupMetadata = await zk.groupMetadata(groupId);
-        const isAdmin = groupMetadata.participants.some(p => 
-            p.id === superUser && (p.admin === "admin" || p.admin === "superadmin")
-        );
+        const participant = groupMetadata.participants.find(p => p.id === sender);
+        const isAdmin = participant && (participant.admin === "admin" || participant.admin === "superadmin");
         
         if (!isAdmin) {
-            return repondre("❌ Admin pekee ndio anaweza kutumia command hii!");
+            return repondre("❌ Only group admins can use this command!");
         }
         
         const settings = loadSettings();
@@ -76,7 +78,7 @@ zokou(
         }
         
         if (!args || args.length === 0) {
-            const status = settings[groupId].enabled ? "✅ IMEWASHWA" : "❌ IMEZIMWA";
+            const status = settings[groupId].enabled ? "✅ ENABLED" : "❌ DISABLED";
             return repondre(`
 🛡️ *ANTI-MENTION SETTINGS*
 
@@ -86,8 +88,8 @@ Max Mentions: ${settings[groupId].maxMentions}
 Warn Limit: ${settings[groupId].warnLimit}
 
 *Commands:*
-!antimentions on - Washa
-!antimentions off - Zima
+!antimentions on - Enable
+!antimentions off - Disable
 !antimentions action <warn|delete|remove>
 !antimentions limit <number>
 !antimentions warnlimit <number>
@@ -98,45 +100,45 @@ Warn Limit: ${settings[groupId].warnLimit}
             case "on":
                 settings[groupId].enabled = true;
                 saveSettings(settings);
-                return repondre("✅ Anti-mention imewashwa!");
+                return repondre("✅ Anti-mention enabled!");
                 
             case "off":
                 settings[groupId].enabled = false;
                 saveSettings(settings);
-                return repondre("❌ Anti-mention imezimwa!");
+                return repondre("❌ Anti-mention disabled!");
                 
             case "action":
                 if (args[1] && ["warn", "delete", "remove"].includes(args[1].toLowerCase())) {
                     settings[groupId].action = args[1].toLowerCase();
                     saveSettings(settings);
-                    return repondre(`✅ Action imebadilishwa kuwa: ${args[1]}`);
+                    return repondre(`✅ Action changed to: ${args[1]}`);
                 }
-                return repondre("❌ Tafadhali weka: warn, delete, au remove");
+                return repondre("❌ Please specify: warn, delete, or remove");
                 
             case "limit":
                 if (args[1] && !isNaN(args[1])) {
                     settings[groupId].maxMentions = parseInt(args[1]);
                     saveSettings(settings);
-                    return repondre(`✅ Max mentions sasa ni: ${args[1]}`);
+                    return repondre(`✅ Max mentions set to: ${args[1]}`);
                 }
-                return repondre("❌ Tafadhali weka namba halali");
+                return repondre("❌ Please provide a valid number");
                 
             case "warnlimit":
                 if (args[1] && !isNaN(args[1])) {
                     settings[groupId].warnLimit = parseInt(args[1]);
                     saveSettings(settings);
-                    return repondre(`✅ Warn limit sasa ni: ${args[1]}`);
+                    return repondre(`✅ Warn limit set to: ${args[1]}`);
                 }
-                return repondre("❌ Tafadhali weka namba halali");
+                return repondre("❌ Please provide a valid number");
                 
             default:
-                return repondre("❌ Command haitambuliki!");
+                return repondre("❌ Unknown command!");
         }
     }
 );
 
 // ----------------------------------------------------------------------
-// MESSAGE HANDLER - Inafuatilia mentions
+// MESSAGE HANDLER - Monitors mentions
 // ----------------------------------------------------------------------
 zokou(
     { 
@@ -146,7 +148,7 @@ zokou(
         isHandler: true
     },
     async (dest, zk, commandeOptions) => {
-        const { message, superUser, isGroup } = commandeOptions;
+        const { message, isGroup } = commandeOptions;
         
         // Skip if not group or no message
         if (!isGroup || !message) return;
@@ -157,7 +159,7 @@ zokou(
                               message.message?.extendedTextMessage?.text || "";
         
         // Skip bot messages
-        if (sender.includes("bot")) return;
+        if (sender.includes("bot") || sender.includes("status")) return;
         
         // Load settings
         const settings = loadSettings();
@@ -176,7 +178,7 @@ zokou(
         }
         
         // Check for status broadcasting (@all, @everyone, etc)
-        const broadcastPatterns = ["@all", "@everyone", "@group", "@tagall", "@mension", "mention all", "tag all"];
+        const broadcastPatterns = ["@all", "@everyone", "@group", "@tagall", "@mention", "mention all", "tag all"];
         const hasBroadcast = broadcastPatterns.some(pattern => 
             messageContent.toLowerCase().includes(pattern.toLowerCase())
         );
@@ -189,7 +191,7 @@ zokou(
         
         // If mentions exceed limit, take action
         if (mentionCount > settings[groupId].maxMentions) {
-            await handleViolation(dest, zk, sender, message, mentionCount, settings[groupId]);
+            await handleViolation(groupId, zk, sender, message, mentionCount, settings[groupId]);
         }
     }
 );
@@ -209,8 +211,9 @@ async function handleViolation(groupId, zk, sender, message, mentionCount, setti
     
     // Get group metadata for admin check
     const groupMetadata = await zk.groupMetadata(groupId);
+    const botId = zk.user.id.split(":")[0] + "@s.whatsapp.net";
     const isBotAdmin = groupMetadata.participants.some(p => 
-        p.id === zk.user.id && (p.admin === "admin" || p.admin === "superadmin")
+        p.id === botId && (p.admin === "admin" || p.admin === "superadmin")
     );
     
     // Take action based on settings
@@ -220,7 +223,7 @@ async function handleViolation(groupId, zk, sender, message, mentionCount, setti
             if (isBotAdmin) {
                 await zk.sendMessage(groupId, { delete: message.key });
                 await zk.sendMessage(groupId, {
-                    text: `⚠️ @${sender.split("@")[0]} umetaja watu wengi sana (${mentionCount})! Message imefutwa.`,
+                    text: `⚠️ @${sender.split("@")[0]} mentioned too many people (${mentionCount})! Message deleted.`,
                     mentions: [sender]
                 });
             }
@@ -233,7 +236,7 @@ async function handleViolation(groupId, zk, sender, message, mentionCount, setti
             }
             
             await zk.sendMessage(groupId, {
-                text: `⚠️ @${sender.split("@")[0]} ONYO ${currentWarnings}/${settings.warnLimit}\nUmetaja watu ${mentionCount}!`,
+                text: `⚠️ @${sender.split("@")[0]} WARNING ${currentWarnings}/${settings.warnLimit}\nYou mentioned ${mentionCount} people!`,
                 mentions: [sender]
             });
             break;
@@ -244,7 +247,7 @@ async function handleViolation(groupId, zk, sender, message, mentionCount, setti
                 if (isBotAdmin) {
                     await zk.groupParticipantsUpdate(groupId, [sender], "remove");
                     await zk.sendMessage(groupId, {
-                        text: `🔨 @${sender.split("@")[0]} ameondolewa kwenye group kwa kumentiona watu wengi mara kwa mara.`,
+                        text: `🔨 @${sender.split("@")[0]} was removed from group for repeatedly mentioning too many people.`,
                         mentions: [sender]
                     });
                     // Reset warnings after removal
@@ -256,7 +259,7 @@ async function handleViolation(groupId, zk, sender, message, mentionCount, setti
                     await zk.sendMessage(groupId, { delete: message.key });
                 }
                 await zk.sendMessage(groupId, {
-                    text: `⚠️ @${sender.split("@")[0]} ONYO ${currentWarnings}/${settings.warnLimit}\nUmetaja watu ${mentionCount}! Ukifika ${settings.warnLimit}, utaondolewa.`,
+                    text: `⚠️ @${sender.split("@")[0]} WARNING ${currentWarnings}/${settings.warnLimit}\nYou mentioned ${mentionCount} people! Reaching ${settings.warnLimit} will result in removal.`,
                     mentions: [sender]
                 });
             }
@@ -267,26 +270,26 @@ async function handleViolation(groupId, zk, sender, message, mentionCount, setti
 }
 
 // ----------------------------------------------------------------------
-// COMMAND: KUANGALIA WARNINGS
+// COMMAND: CHECK WARNINGS
 // ----------------------------------------------------------------------
 zokou(
     { 
         nomCom: "warnings", 
         reaction: "📋", 
         nomFichier: __filename,
-        categorie: "Admin"
+        categorie: "Group"
     },
     async (dest, zk, commandeOptions) => {
-        const { repondre, superUser } = commandeOptions;
+        const { repondre } = commandeOptions;
         const groupId = dest;
         
         if (!groupId.endsWith("@g.us")) {
-            return repondre("❌ Command hii inafanya kazi kwenye group pekee!");
+            return repondre("❌ This command only works in groups!");
         }
         
         const warnings = loadWarnings();
         if (!warnings[groupId] || Object.keys(warnings[groupId]).length === 0) {
-            return repondre("✅ Hakuna warnings kwenye group hili!");
+            return repondre("✅ No warnings in this group!");
         }
         
         let message = "📋 *WARNINGS LIST*\n\n";
@@ -302,7 +305,7 @@ zokou(
 );
 
 // ----------------------------------------------------------------------
-// COMMAND: KUFUTA WARNINGS
+// COMMAND: RESET WARNINGS
 // ----------------------------------------------------------------------
 zokou(
     { 
@@ -312,21 +315,23 @@ zokou(
         categorie: "Admin"
     },
     async (dest, zk, commandeOptions) => {
-        const { repondre, args, superUser } = commandeOptions;
+        const { repondre, args } = commandeOptions;
         const groupId = dest;
         
         if (!groupId.endsWith("@g.us")) {
-            return repondre("❌ Command hii inafanya kazi kwenye group pekee!");
+            return repondre("❌ This command only works in groups!");
         }
+        
+        // Get sender ID
+        const sender = commandeOptions.superUser || commandeOptions.auteurMessage || commandeOptions.expediteur;
         
         // Check if sender is admin
         const groupMetadata = await zk.groupMetadata(groupId);
-        const isAdmin = groupMetadata.participants.some(p => 
-            p.id === superUser && (p.admin === "admin" || p.admin === "superadmin")
-        );
+        const participant = groupMetadata.participants.find(p => p.id === sender);
+        const isAdmin = participant && (participant.admin === "admin" || participant.admin === "superadmin");
         
         if (!isAdmin) {
-            return repondre("❌ Admin pekee ndio anaweza kutumia command hii!");
+            return repondre("❌ Only group admins can use this command!");
         }
         
         const warnings = loadWarnings();
@@ -337,14 +342,14 @@ zokou(
             if (warnings[groupId] && warnings[groupId][user]) {
                 delete warnings[groupId][user];
                 saveWarnings(warnings);
-                return repondre(`✅ Warnings za @${args[0].replace("@", "")} zimefutwa!`);
+                return repondre(`✅ Warnings for @${args[0].replace("@", "")} have been reset!`);
             }
-            return repondre("❌ Mtumiaji hajawahi kuwa na warnings!");
+            return repondre("❌ User has no warnings!");
         } else {
             // Reset all
             delete warnings[groupId];
             saveWarnings(warnings);
-            return repondre("✅ Warnings zote za group hili zimefutwa!");
+            return repondre("✅ All warnings for this group have been reset!");
         }
     }
 );
