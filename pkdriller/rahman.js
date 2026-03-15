@@ -12,7 +12,7 @@ const readmore = more.repeat(4001);
 zokou(
     { 
         nomCom: "menu", 
-        reaction: "📋", 
+        reaction: "🌍", 
         nomFichier: __filename,
         categorie: "General"
     },
