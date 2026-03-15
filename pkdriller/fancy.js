@@ -1,83 +1,24 @@
 const { zokou } = require("../framework/zokou");
 const fancy = require("../pkdriller/style");
 
-zokou({
-  nomCom: "fancy",
-  categorie: "Fun",
-  reaction: "💫",
-  desc: "Convert text to fancy styles"
-}, async (dest, zk, commandeOptions) => {
-  
-  const { arg, repondre, prefixe, ms } = commandeOptions;
-  const id = arg[0]?.match(/\d+/)?.join('');
-  const text = arg.slice(1).join(" ");
+zokou({ nomCom: "fancy", categorie: "Fun", reaction: "💫" }, async (dest, zk, commandeOptions) => {
+    const { arg, repondre, prefixe } = commandeOptions;
+    const id = arg[0]?.match(/\d+/)?.join('');
+    const text = arg.slice(1).join(" ");
 
-  try {
-    // Show style list if no arguments
-    if (id === undefined || text === undefined) {
-      const styleList = fancy.list('RAHMANI-XMD', fancy);
-      
-      const fancyMenu = `
-╭━━━━━━━━━━━━━━━━━━━━╮
-┃   💫 *FANCY TEXT* 💫
-╰━━━━━━━━━━━━━━━━━━━━╯
+    try {
+        if (id === undefined || text === undefined) {
+            return await repondre(`\nExemple : ${prefixe}fancy 10 RAHMANI-XMD\n` + String.fromCharCode(8206).repeat(4001) + fancy.list('RAHMANI-XMD', fancy));
+        }
 
-┌─── *AVAILABLE STYLES* ───┐
-${styleList.split('\n').map(line => `│ ${line}`).join('\n')}
-└──────────────────────────┘
-
-┌─── *USAGE* ───┐
-│ 📝 *Example:* ${prefixe}fancy 10 RAHMANI-XMD
-│ 🔢 *Styles:* 1-${Object.keys(fancy).length}
-└────────────────┘
-
-> *RAHMANI-XMD* 💫
-      `;
-
-      await zk.sendMessage(dest, {
-        text: fancyMenu
-      }, { quoted: ms });
-      
-      return;
+        const selectedStyle = fancy[parseInt(id) - 1];
+        if (selectedStyle) {
+            return await repondre(fancy.apply(selectedStyle, text));
+        } else {
+            return await repondre('_Style introuvable :(_');
+        }
+    } catch (error) {
+        console.error(error);
+        return await repondre('_Une erreur s\'est produite :(_');
     }
-
-    // Check if style exists
-    const selectedStyle = fancy[parseInt(id) - 1];
-    
-    if (!selectedStyle) {
-      return await repondre(`╭━━━━━━━━━━━━━━╮
-┃   ❌ *ERROR* ❌
-╰━━━━━━━━━━━━━━╯
-
-┌─── *STYLE NOT FOUND* ───┐
-│ Style number ${id} doesn't exist
-│ Use styles 1-${Object.keys(fancy).length}
-└────────────────────────┘
-
-> *RAHMANI-XMD* 💫`);
-    }
-
-    // Apply fancy style
-    const fancyText = fancy.apply(selectedStyle, text);
-    
-    // Send result
-    await repondre(`╭━━━━━━━━━━━━━━╮
-┃   💫 *RESULT* 💫
-╰━━━━━━━━━━━━━━╯
-
-┌─── *FANCY TEXT* ───┐
-│ ${fancyText}
-└────────────────────┘
-
-┌─── *INFO* ───┐
-│ 🎨 *Style:* ${id}
-│ 📝 *Original:* ${text.substring(0, 30)}
-└────────────────┘
-
-> *RAHMANI-XMD* 💫`);
-
-  } catch (error) {
-    console.error("Fancy command error:", error);
-    await repondre(`❌ Error: ${error.message}`);
-  }
 });
