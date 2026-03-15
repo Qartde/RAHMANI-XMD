@@ -15,30 +15,30 @@ zokou({
     const sender = ms.sender;
     const from = dest;
     
-    // Channel info - RAHMANI
+    // Channel info - SAHIHI KABISA
     const channelLink = "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X";
     const channelJid = "120363353854480831@newsletter";
-    const thumbnailUrl = "https://files.catbox.moe/aktbgo.jpg"; // RAHMANI image
+    const thumbnailUrl = "https://files.catbox.moe/aktbgo.jpg";
 
     try {
         // Check if user provided a question
         if (!arg || arg.length === 0) {
-            const welcomeMsg = `🧠 *ʀᴀʜᴍᴀɴɪ-ᴀɪ* 🧠
+            const welcomeMsg = `🧠 *RAHMANI-AI*
 
-ʜᴇʟʟᴏ! ɪ'ᴍ ʏᴏᴜʀ ɪɴᴛᴇʟʟɪɢᴇɴᴛ ᴀɪ ᴀssɪsᴛᴀɴᴛ ᴄʀᴇᴀᴛᴇᴅ ʙʏ *ʀᴀʜᴍᴀɴɪ*.
+HELLO! I'M YOUR INTELLIGENT AI ASSISTANT CREATED BY RAHMANI.
 
-*ʜᴏᴡ ᴛᴏ ᴜsᴇ:*
-• ᴛʏᴘᴇ *ɢᴘᴛ ʏᴏᴜʀ ǫᴜᴇsᴛɪᴏɴ* 
-• ᴇxᴀᴍᴘʟᴇ: *ɢᴘᴛ ᴡʜᴀᴛ ɪs ᴡʜᴀᴛsᴀᴘᴘ ʙᴏᴛ?*
+*HOW TO USE:*
+• TYPE *GPT YOUR QUESTION*
+• EXAMPLE: *GPT WHAT IS WHATSAPP BOT?*
 
-*ғᴇᴀᴛᴜʀᴇs:*
-✅ ʀᴇᴍᴇᴍʙᴇʀs ᴄᴏɴᴠᴇʀsᴀᴛɪᴏɴ ᴄᴏɴᴛᴇxᴛ
-✅ sᴍᴀʀᴛ ʀᴇsᴘᴏɴsᴇs
-✅ 24/7 ᴀᴠᴀɪʟᴀʙʟᴇ
+*FEATURES:*
+✅ REMEMBERS CONVERSATION CONTEXT
+✅ SMART RESPONSES
+✅ 24/7 AVAILABLE
 
-*ᴄʜᴀɴɴᴇʟ:* ${channelLink}
+*CHANNEL:* ${channelLink}
 
-ᴀsᴋ ᴍᴇ ᴀɴʏᴛʜɪɴɢ! 🤖`;
+ASK ME ANYTHING! 😊`;
             
             return await zk.sendMessage(from, { 
                 text: welcomeMsg,
@@ -47,12 +47,12 @@ zokou({
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
                         newsletterJid: channelJid,
-                        newsletterName: "ʀᴀʜᴍᴀɴɪ ᴄʜᴀɴɴᴇʟ",
+                        newsletterName: "RAHMANI CHANNEL",
                         serverMessageId: 143
                     },
                     externalAdReply: {
-                        title: "🧠 ʀᴀʜᴍᴀɴɪ-ᴀɪ",
-                        body: "ʏᴏᴜʀ ɪɴᴛᴇʟʟɪɢᴇɴᴛ ᴀssɪsᴛᴀɴᴛ",
+                        title: "🧠 RAHMANI-AI",
+                        body: "YOUR INTELLIGENT ASSISTANT",
                         thumbnailUrl: thumbnailUrl,
                         sourceUrl: channelLink,
                         mediaType: 1,
@@ -68,64 +68,53 @@ zokou({
         // Send typing indicator
         await zk.sendPresenceUpdate("composing", from);
         
-        // Initialize user chat history if not exists
+        // Initialize user chat history
         if (!global.userChats[sender]) {
             global.userChats[sender] = [];
         }
         
-        // Add user message to history
         global.userChats[sender].push(`User: ${userQuestion}`);
         
-        // Keep only last 10 messages for context
         if (global.userChats[sender].length > 10) {
             global.userChats[sender] = global.userChats[sender].slice(-10);
         }
         
-        // Create conversation history string
         const conversationHistory = global.userChats[sender].join("\n");
         
-        // Encode parameters for API
+        // API call
         const encodedText = encodeURIComponent(userQuestion);
         const prompt = encodeURIComponent(`You are RAHMANI-AI, an intelligent and helpful AI assistant created by RAHMANI. You speak in a friendly, respectful, and knowledgeable manner. You help users with any questions they have. Keep responses concise but informative. Current conversation history:\n${conversationHistory}`);
         
-        // Call the API
         const apiUrl = `https://api.deline.web.id/ai/openai?text=${encodedText}&prompt=${prompt}`;
         
-        // Send "thinking" message
         const thinkingMsg = await zk.sendMessage(from, { 
-            text: "🧠 *ʀᴀʜᴍᴀɴɪ-ᴀɪ ɪs ᴛʜɪɴᴋɪɴɢ...*" 
+            text: "🧠 *RAHMANI-AI IS THINKING...*" 
         }, { quoted: ms });
         
-        // Make API request
         const response = await axios.get(apiUrl);
         
-        // Delete thinking message
         await zk.sendMessage(from, { delete: thinkingMsg.key });
         
-        // Check if API response is valid
         if (response.data && response.data.status === true) {
             const botResponse = response.data.result;
             
-            // Add bot response to history
             global.userChats[sender].push(`Bot: ${botResponse}`);
             
-            // Calculate response time
             const responseTime = Math.floor(Math.random() * 1000) + 500;
             
-            // Send final response with nice formatting
             await zk.sendMessage(from, { 
-                text: `🧠 *ʀᴀʜᴍᴀɴɪ-ᴀɪ*\n\n${botResponse}\n\n⏱️ *ʀᴇsᴘᴏɴsᴇ ᴛɪᴍᴇ:* ${responseTime}ms`,
+                text: `🧠 *RAHMANI-AI*\n\n${botResponse}\n\n⏱️ *RESPONSE TIME:* ${responseTime}ms`,
                 contextInfo: {
                     forwardingScore: 999,
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
                         newsletterJid: channelJid,
-                        newsletterName: "ʀᴀʜᴍᴀɴɪ ᴄʜᴀɴɴᴇʟ",
+                        newsletterName: "RAHMANI CHANNEL",
                         serverMessageId: 143
                     },
                     externalAdReply: {
-                        title: "🧠 ʀᴀʜᴍᴀɴɪ-ᴀɪ",
-                        body: `ǫ: ${userQuestion.substring(0, 30)}...`,
+                        title: "🧠 RAHMANI-AI",
+                        body: `Q: ${userQuestion.substring(0, 30)}...`,
                         thumbnailUrl: thumbnailUrl,
                         sourceUrl: channelLink,
                         mediaType: 1,
@@ -142,14 +131,13 @@ zokou({
     } catch (error) {
         console.error("❌ GPT Error:", error);
         
-        // Error message
-        const errorMsg = `❌ *ᴇʀʀᴏʀ*
+        const errorMsg = `❌ *ERROR*
 
-sᴏʀʀʏ, ᴀɴ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ ᴡʜɪʟᴇ ᴘʀᴏᴄᴇssɪɴɢ ʏᴏᴜʀ ʀᴇǫᴜᴇsᴛ.
+SORRY, AN ERROR OCCURRED WHILE PROCESSING YOUR REQUEST.
 
-ᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ ʟᴀᴛᴇʀ ᴏʀ ᴄᴏɴᴛᴀᴄᴛ sᴜᴘᴘᴏʀᴛ.
+PLEASE TRY AGAIN LATER.
 
-_ᴄʜᴀɴɴᴇʟ:_ ${channelLink}`;
+_CHANNEL:_ ${channelLink}`;
 
         await zk.sendMessage(from, { 
             text: errorMsg,
@@ -158,7 +146,7 @@ _ᴄʜᴀɴɴᴇʟ:_ ${channelLink}`;
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: channelJid,
-                    newsletterName: "ʀᴀʜᴍᴀɴɪ ᴄʜᴀɴɴᴇʟ",
+                    newsletterName: "RAHMANI CHANNEL",
                     serverMessageId: 143
                 }
             }
