@@ -31,7 +31,7 @@ const {
   getBinaryNodeChildren
 } = require("@whiskeysockets/baileys")['default'];
   zokou({
-  'nomCom': 'add',
+  'nomCom': 'add3',
   'categorie': "Group",
   'reaction': '🪄'
 }, async (_0x24f18e, _0x4375b2, _0x500bd4) => {
