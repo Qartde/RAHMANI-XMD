@@ -2,7 +2,7 @@ const { zokou } = require("../framework/zokou");
 const { delay } = require("@whiskeysockets/baileys");
 
 zokou({
-  nomCom: "add2",
+  nomCom: "add",
   aliases: ["addmember", "addparticipant", "invite"],
   reaction: "➕",
   categorie: "Group"
