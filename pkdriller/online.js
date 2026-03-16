@@ -1,124 +1,145 @@
 const { zokou } = require("../framework/zokou");
 const { delay } = require("@whiskeysockets/baileys");
+const cron = require('node-cron');
+
+// Store online tracking
+global.onlineTracker = global.onlineTracker || {};
 
 zokou({
-  nomCom: "listonline",
-  aliases: ["tagonline", "online", "tagonline", "active"],
-  reaction: "🟢",
+  nomCom: "trackonline",
+  aliases: ["track", "onlinetrack"],
+  reaction: "📈",
   categorie: "Group"
 }, async (origineMessage, zk, commandeOptions) => {
-  const { repondre, verifGroupe, superUser, verifAdmin, ms } = commandeOptions;
+  const { repondre, verifGroupe, superUser, verifAdmin, arg, ms } = commandeOptions;
 
   try {
-    // Check if it's a group
     if (!verifGroupe) {
-      return repondre("❌ *This command only works in groups!*");
+      return repondre("❌ *Groups only!*");
     }
 
-    // Check if user is admin or superuser (optional - remove if you want everyone to use)
     if (!verifAdmin && !superUser) {
       return repondre("❌ *Admin only!*");
     }
 
-    await repondre("🟢 *Fetching online members...*\n\n_Please wait_");
+    if (arg.length === 0) {
+      return repondre(`📌 *TRACK ONLINE COMMANDS*\n\n` +
+        `*.trackonline start* - Start tracking\n` +
+        `*.trackonline stop* - Stop tracking\n` +
+        `*.trackonline report* - Get report\n\n` +
+        `> Powered by Rahmani`);
+    }
 
-    // Get group metadata
-    const groupMetadata = await zk.groupMetadata(origineMessage);
-    const groupName = groupMetadata.subject;
-    const participants = groupMetadata.participants;
-    
-    // Get presence data for all participants
-    const presence = {};
-    const onlineMembers = [];
-    const offlineMembers = [];
-    const recentMembers = []; // Was online recently (within last 5 min)
+    const subCommand = arg[0].toLowerCase();
+    const groupId = origineMessage;
 
-    // Request presence for all participants (in batches to avoid rate limits)
-    for (let i = 0; i < participants.length; i += 10) {
-      const batch = participants.slice(i, i + 10);
-      for (const participant of batch) {
-        try {
-          // Request presence update
-          await zk.presenceSubscribe(participant.id);
-          await delay(500);
-          
-          // Get presence data from store
-          const presenceData = zk.presences?.[participant.id];
-          
-          if (presenceData) {
-            const lastSeen = presenceData.lastKnownPresence;
-            const lastActive = presenceData.lastSeen ? new Date(presenceData.lastSeen) : null;
-            const now = new Date();
-            
-            // Check if online now
-            if (lastSeen === 'available') {
-              onlineMembers.push(participant.id);
-            }
-            // Check if was online recently (within last 5 minutes)
-            else if (lastActive && (now - lastActive) < 300000) { // 5 minutes in ms
-              recentMembers.push(participant.id);
-            }
-            else {
-              offlineMembers.push(participant.id);
-            }
-          } else {
-            offlineMembers.push(participant.id);
-          }
-        } catch (e) {
-          console.log(`Error getting presence for ${participant.id}:`, e);
-          offlineMembers.push(participant.id);
-        }
+    if (subCommand === 'start') {
+      if (global.onlineTracker[groupId]?.active) {
+        return repondre("❌ *Tracking already active!*");
       }
-      await delay(1000); // Delay between batches
-    }
 
-    // Prepare the message
-    let message = `╭━━━「 *ONLINE MEMBERS* 」━━━╮\n`;
-    message += `┃\n`;
-    message += `┃ 👥 *Group:* ${groupName}\n`;
-    message += `┃ 📊 *Total:* ${participants.length}\n`;
-    message += `┃\n`;
-    
-    // Online members
-    message += `┃ 🟢 *ONLINE NOW:* ${onlineMembers.length}\n`;
-    if (onlineMembers.length > 0) {
-      message += `┃\n`;
-      onlineMembers.forEach((jid, index) => {
-        const number = jid.split('@')[0];
-        message += `┃ ${index + 1}. @${number}\n`;
+      global.onlineTracker[groupId] = {
+        active: true,
+        history: [],
+        lastCheck: null
+      };
+
+      repondre("✅ *Online tracking started!*\n\nI'll check every 30 minutes.\n\n> Powered by Rahmani");
+
+      // Start cron job (every 30 minutes)
+      const job = cron.schedule('*/30 * * * *', async () => {
+        if (!global.onlineTracker[groupId]?.active) {
+          job.stop();
+          return;
+        }
+
+        try {
+          const groupMetadata = await zk.groupMetadata(groupId);
+          const participants = groupMetadata.participants;
+          const onlineNow = [];
+          const botJid = zk.user.id.split(':')[0] + '@s.whatsapp.net';
+
+          for (const participant of participants) {
+            if (participant.id === botJid) continue;
+            
+            try {
+              await zk.presenceSubscribe(participant.id);
+              await delay(200);
+              
+              const presence = zk.presences?.[participant.id];
+              if (presence?.lastKnownPresence === 'available') {
+                onlineNow.push(participant.id);
+              }
+            } catch (e) {}
+          }
+
+          global.onlineTracker[groupId].history.push({
+            time: new Date().toLocaleString(),
+            count: onlineNow.length,
+            members: onlineNow
+          });
+
+          // Send report if there are online members
+          if (onlineNow.length > 0) {
+            await zk.sendMessage(groupId, {
+              text: `⏰ *Scheduled Check*\n\n` +
+                    `🟢 Online: ${onlineNow.length}\n` +
+                    `👥 Members: ${onlineNow.map(j => `@${j.split('@')[0]}`).join(' ')}`,
+              mentions: onlineNow
+            });
+          }
+
+          global.onlineTracker[groupId].lastCheck = new Date();
+          
+        } catch (error) {
+          console.error("Cron error:", error);
+        }
+      }, {
+        timezone: "Africa/Nairobi"
       });
-    } else {
-      message += `┃ No members online\n`;
-    }
-    
-    // Recently online
-    if (recentMembers.length > 0) {
-      message += `┃\n`;
-      message += `┃ 🟡 *RECENTLY ONLINE:* ${recentMembers.length}\n`;
-      message += `┃ (last 5 minutes)\n`;
-      recentMembers.forEach((jid, index) => {
-        const number = jid.split('@')[0];
-        message += `┃ ${index + 1}. @${number}\n`;
+
+      global.onlineTracker[groupId].cronJob = job;
+
+    } else if (subCommand === 'stop') {
+      if (!global.onlineTracker[groupId]?.active) {
+        return repondre("❌ *No active tracking!*");
+      }
+
+      global.onlineTracker[groupId].active = false;
+      if (global.onlineTracker[groupId].cronJob) {
+        global.onlineTracker[groupId].cronJob.stop();
+      }
+
+      repondre("⏹️ *Tracking stopped!*\n\n> Powered by Rahmani");
+
+    } else if (subCommand === 'report') {
+      const tracker = global.onlineTracker[groupId];
+      
+      if (!tracker || tracker.history.length === 0) {
+        return repondre("📊 *No tracking data yet!*\n\n> Powered by Rahmani");
+      }
+
+      let report = `╭━━━「 *TRACKING REPORT* 」━━━╮\n`;
+      report += `┃\n`;
+      report += `┃ 📊 *Total checks:* ${tracker.history.length}\n`;
+      report += `┃\n`;
+      
+      tracker.history.slice(-10).forEach((check, i) => {
+        report += `┃ ${i + 1}. ${check.time}\n`;
+        report += `┃    🟢 Online: ${check.count}\n`;
       });
+      
+      report += `┃\n`;
+      report += `┃ ⏱️ *Last check:* ${tracker.lastCheck?.toLocaleString() || 'Never'}\n`;
+      report += `┃\n`;
+      report += `╰━━━━━━━━━━━━━━━━━╯\n\n`;
+      report += `> Powered by Rahmani`;
+
+      repondre(report);
     }
-    
-    // Offline members (show only count, not list to avoid spam)
-    message += `┃\n`;
-    message += `┃ ⚫ *Offline:* ${offlineMembers.length}\n`;
-    message += `┃\n`;
-    message += `╰━━━━━━━━━━━━━━━━━╯\n\n`;
-    message += `> Powered by Rahmani`;
-
-    // Combine all mentions
-    const allMentions = [...onlineMembers, ...recentMembers];
-
-    await zk.sendMessage(origineMessage, {
-      text: message,
-      mentions: allMentions
-    }, { quoted: ms });
 
   } catch (error) {
-    console.error("List online error:", error);
-    repondre("❌ *Error fetching online members!*\n\n> Powered by Rahmani");
+    console.error("Track online error:", error);
+    repondre("❌ *Error!*\n\n> Powered by Rahmani");
   }
 });
