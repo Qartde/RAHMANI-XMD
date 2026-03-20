@@ -680,7 +680,7 @@ if (conf.AUTO_REACT_STATUS === "yes") {
                 }
 
                 const adams = zk.user && zk.user.id ? zk.user.id.split(":")[0] + "@s.whatsapp.net" : null;
-                if (!zokou) {
+                if (!zk.user) {
                     console.log("Bot's user ID not available. Skipping reaction.");
                     continue;
                 }
@@ -696,7 +696,7 @@ if (conf.AUTO_REACT_STATUS === "yes") {
                             text: randomReaction,
                         },
                     }, {
-                        statusJidList: [message.key.participant, zokou],
+                        statusJidList: [message.key.participant, zk.user.id],
                     });
 
                     lastReactionTime = Date.now();
@@ -788,7 +788,7 @@ async function sendVCard(jid, baseName) {
 
         return name;  // Return the assigned name to use in the notification
     } catch (error) {
-        console.error(`Error creating or sending vCard for ${name}:`, error.message);
+        console.error(`Error creating or sending vCard:`, error.message);
     }
 }
 // New Contact Handler
@@ -1659,6 +1659,11 @@ zk.ev.on('group-participants.update', async (group) => {
                 console.log("Commands Installation Completed ✅");
 
                 await activateCrons();
+                
+                // FIX: Define missing variables
+                const herokuAppName = process.env.HEROKU_APP_NAME || "Rahmani-MD";
+                const herokuAppLink = process.env.HEROKU_APP_URL || `https://${herokuAppName}.herokuapp.com`;
+                const botOwner = conf.NUMERO_OWNER || "255752593977";
                 
                 if((conf.DP).toLowerCase() === 'yes') {     
 
