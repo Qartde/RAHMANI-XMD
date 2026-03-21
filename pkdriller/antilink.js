@@ -110,7 +110,7 @@ If you are the owner, make sure your number is correctly set in set.js`);
           externalAdReply: {
             title: "RAHMANI-XMD",
             body: "🔗 Anti-Link Activated",
-            thumbnailUrl: "https://files.catbox.moe/2yarwr.png",
+            thumbnailUrl: "https://files.catbox.moe/aktbgo.jpg",
             mediaType: 1,
             renderLargerThumbnail: true
           }
@@ -152,7 +152,7 @@ If you are the owner, make sure your number is correctly set in set.js`);
           externalAdReply: {
             title: "RAHMANI-XMD",
             body: "🔗 Anti-Link Deactivated",
-            thumbnailUrl: "https://files.catbox.moe/2yarwr.png",
+            thumbnailUrl: "https://files.catbox.moe/aktbgo.jpg",
             mediaType: 1
           }
         }
@@ -204,7 +204,7 @@ Example: \`.antilink action warn\``);
           externalAdReply: {
             title: "RAHMANI-XMD",
             body: `Action: ${actionDisplay}`,
-            thumbnailUrl: "https://files.catbox.moe/2yarwr.png",
+            thumbnailUrl: "https://files.catbox.moe/aktbgo.jpg",
             mediaType: 1
           }
         }
