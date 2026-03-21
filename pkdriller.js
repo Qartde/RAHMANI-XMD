@@ -101,6 +101,104 @@ app.use(express['static'](path.join(__dirname, 'public')));
 app.listen(PORT, () => {
   console.log("Server is running at http://localhost:" + PORT);
 });
+
+// ============= IMPROVED ANTI-LINK SYSTEM =============
+// Comprehensive URL detection patterns
+const URL_PATTERNS = [
+  /https?:\/\/[^\s]+/gi,           // http/https links
+  /www\.[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}[^\s]*/gi,  // www links
+  /[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}\/[^\s]*/gi,       // domain.com/path
+  /bit\.ly\/[^\s]+/gi,             // bit.ly short links
+  /tinyurl\.com\/[^\s]+/gi,        // tinyurl links
+  /wa\.me\/[^\s]+/gi,              // WhatsApp links
+  /chat\.whatsapp\.com\/[^\s]+/gi,  // WhatsApp group links
+  /t\.me\/[^\s]+/gi,               // Telegram links
+  /instagram\.com\/[^\s]+/gi,      // Instagram links
+  /facebook\.com\/[^\s]+/gi,       // Facebook links
+  /twitter\.com\/[^\s]+/gi,        // Twitter links
+  /youtube\.com\/[^\s]+/gi,        // YouTube links
+  /youtu\.be\/[^\s]+/gi,           // YouTube short links
+  /discord\.gg\/[^\s]+/gi,         // Discord invites
+  /spotify\.com\/[^\s]+/gi,        // Spotify links
+  /whatsapp\.com\/channel\/[^\s]+/gi, // WhatsApp channel links
+  /[\w\-]+\.[\w\-]+\.[\w\-]+/gi    // Any domain with subdomains
+];
+
+// Function to check if text contains any link
+function containsLink(text) {
+  if (!text) return false;
+  for (const pattern of URL_PATTERNS) {
+    if (pattern.test(text)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Function to extract all links from text
+function extractLinks(text) {
+  if (!text) return [];
+  let links = [];
+  for (const pattern of URL_PATTERNS) {
+    const matches = text.match(pattern);
+    if (matches) {
+      links.push(...matches);
+    }
+  }
+  return [...new Set(links)]; // Remove duplicates
+}
+
+// Function to get warning message based on action
+function getWarningMessage(action, user, links) {
+  const linkCount = links.length;
+  const linkList = links.slice(0, 3).join(', ');
+  const moreLinks = linkCount > 3 ? ` and ${linkCount - 3} more` : '';
+  
+  switch(action) {
+    case 'delete':
+      return `⚠️ *LINK DETECTED!* ⚠️\n\n@${user.split('@')[0]}, your message containing links has been deleted.\n\n📌 *Links found:* ${linkList}${moreLinks}\n\n🚫 *Links are not allowed in this group!*`;
+    case 'warn':
+      return `⚠️ *WARNING!* ⚠️\n\n@${user.split('@')[0]}, links are not allowed in this group!\n\n🔗 *Links:* ${linkList}${moreLinks}\n\n📢 *This is a warning. Repeated violations will result in removal.*`;
+    case 'remove':
+      return `🚨 *USER REMOVED!* 🚨\n\n@${user.split('@')[0]} has been removed from the group for sending links.\n\n🔗 *Links sent:* ${linkList}${moreLinks}\n\n❌ *This group does not allow links!*`;
+    default:
+      return `⚠️ *Link detected!* ⚠️\n\n@${user.split('@')[0]}, please don't share links here.`;
+  }
+}
+
+// Enhanced link detection in messages
+function detectLinksInMessage(message) {
+  let textToCheck = '';
+  
+  // Check conversation text
+  if (message.conversation) {
+    textToCheck = message.conversation;
+  }
+  // Check extended text message
+  else if (message.extendedTextMessage?.text) {
+    textToCheck = message.extendedTextMessage.text;
+  }
+  // Check image caption
+  else if (message.imageMessage?.caption) {
+    textToCheck = message.imageMessage.caption;
+  }
+  // Check video caption
+  else if (message.videoMessage?.caption) {
+    textToCheck = message.videoMessage.caption;
+  }
+  // Check document caption
+  else if (message.documentMessage?.caption) {
+    textToCheck = message.documentMessage.caption;
+  }
+  
+  return {
+    hasLinks: containsLink(textToCheck),
+    links: extractLinks(textToCheck),
+    text: textToCheck
+  };
+}
+// ============= END OF ANTI-LINK SYSTEM =============
+
 async function authentification() {
   try {
     if (!fs.existsSync(__dirname + "/scan/creds.json")) {
@@ -115,26 +213,26 @@ async function authentification() {
   }
 }
 authentification();
-0x0;
+
 const store = baileys_1.makeInMemoryStore({
   'logger': pino().child({
     'level': "silent",
     'stream': "store"
   })
 });
+
 setTimeout(() => {
   async function _0x1b1480() {
-    0x0;
     const {
       version: _0x3729c6,
       isLatest: _0x2bc48f
     } = await baileys_1.fetchLatestBaileysVersion();
-    0x0;
+    
     const {
       state: _0xfe616d,
       saveCreds: _0x43ea6e
     } = await baileys_1.useMultiFileAuthState(__dirname + "/scan");
-    0x0;
+    
     const _0x34e3ed = {
       'version': _0x3729c6,
       'logger': pino({
@@ -163,9 +261,10 @@ setTimeout(() => {
         };
       }
     };
-    0x0;
+    
     const _0x243e88 = baileys_1["default"](_0x34e3ed);
     store.bind(_0x243e88.ev);
+    
     const _0x32404a = new Map();
     function _0x507042(_0x3dc481) {
       const _0x155b79 = Date.now();
@@ -180,6 +279,7 @@ setTimeout(() => {
       _0x32404a.set(_0x3dc481, _0x155b79);
       return false;
     }
+    
     const _0xe9147a = new Map();
     async function _0x29c430(_0x1d4240, _0xd3aa26) {
       if (_0xe9147a.has(_0xd3aa26)) {
@@ -197,8 +297,10 @@ setTimeout(() => {
         return null;
       }
     }
+    
     process.on("uncaughtException", _0x2a166b => {});
     process.on("unhandledRejection", _0x475030 => {});
+    
     _0x243e88.ev.on("messages.upsert", async _0x2223dd => {
       const {
         messages: _0x5c7afd
@@ -216,6 +318,7 @@ setTimeout(() => {
         }
       }
     });
+    
     _0x243e88.ev.on("groups.update", async _0x4faac6 => {
       for (const _0xb576f0 of _0x4faac6) {
         const {
@@ -227,6 +330,7 @@ setTimeout(() => {
         await _0x29c430(_0x243e88, _0x22b220);
       }
     });
+    
     _0x243e88.ev.on("messages.upsert", async _0x43b2d7 => {
       if (conf.ANTIDELETE1 === "yes") {
         const {
@@ -311,8 +415,10 @@ setTimeout(() => {
         }
       }
     });
+    
     const _0xe3bf32 = _0x3c0a4d => new Promise(_0x6b4f98 => setTimeout(_0x6b4f98, _0x3c0a4d));
     let _0x242b59 = 0x0;
+    
     if (conf.AUTO_REACT_STATUS === "yes") {
       console.log("AUTO_REACT_STATUS is enabled. Listening for status updates...");
       _0x243e88.ev.on("messages.upsert", async _0x34d193 => {
@@ -347,6 +453,7 @@ setTimeout(() => {
         }
       });
     }
+    
     const _0x8a5dbb = {
       'hello': ['👋', '🙂', '😊', "🙋‍♂️", "🙋‍♀️"],
       'hi': ['👋', '🙂', '😁', "🙋‍♂️", "🙋‍♀️"],
@@ -398,37 +505,18 @@ setTimeout(() => {
       'mike': ['💪', '🏆', '🔥', '💥', '🚀'],
       'lisa': ['💖', '👑', '🌸', '😍', '🌺'],
       'emily': ['💖', '💃', '👑', '🎉', '🎀'],
-      'happy': ['😁', '😄', '😊', '🙌', '🎉', '🥳', '💃', '🕺', '🔥'],
-      'excited': ['🤩', '🎉', '🥳', '🎊', '😆', '🤗', '💥', '🚀'],
-      'love': ['❤️', '💖', '💘', '💝', '😍', '😘', '💍', '💑', '🌹'],
       'grateful': ['🙏', '💐', '🥰', '❤️', '😊'],
       'thankful': ['🙏', '💖', '💐', '🤗', '😇'],
-      'sad': ['😢', '😭', '😞', '💔', '😔', '😓', '😖'],
-      'angry': ['😡', '😠', '🤬', '💢', '👊', '💥', '⚡'],
       'frustrated': ['😤', '😩', '🤯', '😑', '🌀'],
       'bored': ['😴', '🥱', '🙄', '😑', '😒'],
-      'surprised': ['😲', '😳', '😮', '😯', '😲', '🙀'],
       'shocked': ['😱', '😳', '😯', '💥', '🤯'],
       'wow': ['😲', '😱', '🤩', '🤯', '💥', '🚀'],
-      'crying': ['😭', '😢', '💔', '😞', '😓'],
-      "miss you": ['😭', '💔', '😔', '😢', '❤️'],
       'lonely': ['😔', '😭', '😢', '💔', '🙁'],
-      'help': ['🆘', '❓', '🤔', "🙋‍♂️", "🙋‍♀️", '💡'],
       "need assistance": ['🆘', "💁‍♂️", '💁‍♀️', '❓', '🙏'],
-      'sorry': ['😔', '🙏', '💔', '😓', '🥺', "🙇‍♂️", "🙇‍♀️"],
       'apology': ['😔', '😞', '🙏', '💔', '🙇‍♂️', "🙇‍♀️"],
-      "good job": ['👏', '💯', '🎉', '🌟', '👍', '👏'],
-      "well done": ['👏', '🎉', '🎖️', '💪', '🔥', '🏆'],
       "you can do it": ['💪', '🔥', '💯', '🚀', '🌟'],
-      'congratulations': ['🎉', '🏆', '🎊', '🎁', '👏', '🍾'],
       'cheers': ['🥂', '🍻', '🍾', '🍷', '🥳', '🎉'],
       'goodbye': ['👋', '😢', '💔', "👋🏻", "🚶‍♂️", "🚶‍♀️"],
-      'bye': ['👋', '👋🏻', '🥲', '🚶‍♂️', "🚶‍♀️"],
-      "see you": ['👋', "👋🏻", '🤗', '✌️', "🙋‍♂️", "🙋‍♀️"],
-      'hello': ['👋', '🙂', '😊', "🙋‍♂️", "🙋‍♀️"],
-      'hi': ['👋', '🙂', '😁', '🙋‍♂️', "🙋‍♀️"],
-      'party': ['🎉', '🥳', '🎤', '💃', '🕺', '🍻', '🎶'],
-      'fun': ['🎮', '🎲', '🤣', '🎉', '🃏'],
       'play': ['🎮', '🏀', '⚽', '🎾', '🎱', '🎲', '🏆'],
       'work': ['💻', "🖥️", '💼', '📅', '📝'],
       'school': ['📚', '🏫', '🎒', "👨‍🏫", '👩‍🏫'],
@@ -439,19 +527,11 @@ setTimeout(() => {
       'spring': ['🌸', '🌼', '🌷', '🌱', '🌺'],
       'birthday': ['🎂', '🎉', '🎁', '🎈', '🎊'],
       'anniversary': ['💍', '🎉', '🎁', '🎈', '💑'],
-      'robot': ['🤖', '⚙️', '🔧', '🤖', '🧠'],
-      'bot': ['🤖', '🧠', '⚙️', '💻', "🖥️"],
-      'thanks': ['🙏', '💖', '😊', '❤️', '💐'],
       "good luck": ['🍀', '🍀', '💯', '🍀', '🎯'],
-      'john': ['👑', '🔥', '💥', '😎', '💯'],
-      'mike': ['💪', '🏆', '🔥', '💥', '🚀'],
-      'lisa': ['💖', '👑', '🌸', '😍', '🌺'],
-      'emily': ['💖', '💃', '👑', '🎉', '🎀'],
       'food': ['🍕', '🍔', '🍟', '🍲', '🍣', '🍩'],
       'drink': ['🍺', '🍷', '🥂', '🍾', '🥤'],
       'coffee': ['☕', '🥤', '🍵', '🥶'],
       'tea': ['🍵', '🫖', '🍂', '🍃'],
-      'excited': ['🤩', '🎉', '🥳', '💥', '🚀', '😆', '😜'],
       'nervous': ['😬', '😰', '🤞', '🧠', '👐'],
       'confused': ['🤔', '😕', '🧐', '😵', "🤷‍♂️", '🤷‍♀️'],
       'embarrassed': ['😳', '😳', '🙈', '😳', '😬', '😅'],
@@ -462,7 +542,6 @@ setTimeout(() => {
       'relationship': ['💑', '❤️', '💍', '🥰', '💏', '💌'],
       'couple': ["👩‍❤️‍👨", '👨‍❤️‍👨', "👩‍❤️‍👩", '💍', '💑', '💏'],
       "best friend": ['🤗', '💖', "👯‍♀️", "👯‍♂️", '🙌'],
-      "love you": ['❤️', '😘', '💖', '💘', '💓', '💗'],
       'vacation': ["🏖️", '🌴', '✈️', '🌊', "🛳️", '🏞️', "🏕️"],
       'beach': ["🏖️", '🌊', "🏄‍♀️", '🩴', "🏖️", '🌴', '🦀'],
       "road trip": ['🚗', '🚙', "🛣️", '🌄', '🌟'],
@@ -479,9 +558,6 @@ setTimeout(() => {
       'workout': ["🏋️‍♀️", '💪', "🏃‍♂️", '🏃‍♀️', "🤸‍♀️", "🚴‍♀️", "🏋️‍♂️"],
       "study hard": ['📚', '📝', '📖', '💡', '💼'],
       'focus': ['🔍', '🎯', '💻', '🧠', '🤓'],
-      'food': ['🍕', '🍔', '🍟', '🍖', '🍖', '🥗', '🍣', '🍲'],
-      'drink': ['🍹', '🥤', '🍷', '🍾', '🍸', '🍺', '🥂', '☕'],
-      'coffee': ['☕', '🧃', '🍵', '🥤', '🍫'],
       'cake': ['🍰', '🎂', '🍩', '🍪', '🍫', '🧁'],
       "ice cream": ['🍦', '🍧', '🍨', '🍪'],
       'cat': ['🐱', '😺', '🐈', '🐾'],
@@ -513,181 +589,11 @@ setTimeout(() => {
       'art': ['🎨', "🖌️", '🖼️', '🎭', "🖍️"],
       'photography': ['📷', '📸', '📸', '🖼️', '🎥'],
       'reading': ['📚', '📖', '📚', '📰'],
-      'craft': ['🧵', '🪡', '✂️', '🪢', '🧶'],
-      'hello': ['👋', '🙂', '😊'],
-      'hey': ['👋', '🙂', '😊'],
-      'hi': ['👋', '🙂', '😊'],
-      'bye': ['👋', '😢', '👋'],
-      'goodbye': ['👋', '😢', '🙋‍♂️'],
-      'thanks': ['🙏', '😊', '🌹'],
-      "thank you": ['🙏', '😊', '🌸'],
-      'welcome': ['😊', '😄', '🌷'],
-      'congrats': ['🎉', '👏', '🥳'],
-      'congratulations': ['🎉', '👏', '🥳'],
-      "good job": ['👏', '👍', '🙌'],
-      'great': ['👍', '💪', '😄'],
-      'cool': ['😎', '🤙', '🔥'],
-      'ok': ['👌', '👍', '✅'],
-      'love': ['❤️', '💕', '💖'],
-      'like': ['👍', '❤️', '👌'],
-      'happy': ['😊', '😁', '🙂'],
-      'joy': ['😁', '😆', '😂'],
-      'laugh': ['😂', '🤣', '😁'],
-      'sad': ['😢', '😭', '☹️'],
-      'cry': ['😭', '😢', '😿'],
-      'angry': ['😡', '😠', '💢'],
-      'mad': ['😠', '😡', '😤'],
-      'shocked': ['😲', '😱', '😮'],
-      'scared': ['😱', '😨', '😧'],
-      'sleep': ['😴', '💤', '😌'],
-      'bored': ['😐', '😑', '🙄'],
-      'excited': ['🤩', '🥳', '🎉'],
-      'party': ['🥳', '🎉', '🍾'],
-      'kiss': ['😘', '💋', '😍'],
-      'hug': ['🤗', '❤️', '💕'],
-      'peace': ['✌️', '🕊️', '✌️'],
-      'pizza': ['🍕', '🥖', '🍟'],
-      'coffee': ['☕', '🥤', '🍵'],
-      'water': ['💧', '💦', '🌊'],
-      'wine': ['🍷', '🍸', '🍾'],
-      'hello': ['👋', '🙂', '😊', '😃', '😄'],
-      'hey': ['👋', '😊', '🙋', '😄', '😁'],
-      'hi': ['👋', '😀', '😁', '😃', '🙂'],
-      'bye': ['👋', '😢', "🙋‍♂️", '😞', '😔'],
-      'goodbye': ['👋', '😢', "🙋‍♀️", '😔', '😭'],
-      'thanks': ['🙏', '😊', '🌹', '🤲', '🤗'],
-      "thank you": ['🙏', '💐', '🤲', '🥰', '😌'],
-      'welcome': ['😊', '😄', '🌸', '🙂', '💖'],
-      'congrats': ['🎉', '👏', '🥳', '💐', '🎊'],
-      'congratulations': ['🎉', '👏', '🥳', '🎊', '🍾'],
-      "good job": ['👏', '👍', '🙌', '💪', '🤩'],
-      'great': ['👍', '💪', '😄', '🔥', '✨'],
-      'cool': ['😎', '🤙', '🔥', '👌', '🆒'],
-      'ok': ['👌', '👍', '✅', '😌', '🤞'],
-      'love': ['❤️', '💕', '💖', '💗', '😍'],
-      'like': ['👍', '❤️', '👌', '😌', '💓'],
-      'happy': ['😊', '😁', '🙂', '😃', '😄'],
-      'joy': ['😁', '😆', '😂', '😊', '🤗'],
-      'laugh': ['😂', '🤣', '😁', '😹', '😄'],
-      'sad': ['😢', '😭', '☹️', '😞', '😔'],
-      'cry': ['😭', '😢', '😿', '💧', '😩'],
-      'angry': ['😡', '😠', '💢', '😤', '🤬'],
-      'mad': ['😠', '😡', '😤', '💢', '😒'],
-      'shocked': ['😲', '😱', '😮', '😯', '😧'],
-      'scared': ['😱', '😨', '😧', '😰', '😳'],
-      'sleep': ['😴', '💤', '😌', '😪', '🛌'],
-      'bored': ['😐', '😑', '🙄', '😒', '🤦'],
-      'excited': ['🤩', '🥳', '🎉', '😄', '✨'],
-      'party': ['🥳', '🎉', '🎊', '🍾', '🎈'],
-      'kiss': ['😘', '💋', '😍', '💖', '💏'],
-      'hug': ['🤗', '❤️', '💕', '💞', '😊'],
-      'peace': ['✌️', '🕊️', '🤞', '💫', '☮️'],
-      'pizza': ['🍕', '🥖', '🍟', '🍔', '🍝'],
-      'burger': ['🍔', '🍟', '🥓', '🥪', '🌭'],
-      'fries': ['🍟', '🍔', '🥤', '🍿', '🧂'],
-      'coffee': ['☕', '🥤', '🍵', '🫖', '🥄'],
-      'tea': ['🍵', '☕', '🫖', '🥄', '🍪'],
-      'cake': ['🍰', '🎂', '🧁', '🍩', '🍫'],
-      'donut': ['🍩', '🍪', '🍰', '🧁', '🍫'],
-      "ice cream": ['🍦', '🍨', '🍧', '🍧', '🍫'],
-      'cookie': ['🍪', '🍩', '🍰', '🧁', '🍫'],
-      'chocolate': ['🍫', '🍬', '🍰', '🍦', '🍭'],
-      'popcorn': ['🍿', '🥤', '🍫', '🎬', '🍩'],
-      'soda': ['🥤', '🍾', '🍹', '🍷', '🍸'],
-      'water': ['💧', '💦', '🌊', '🚰', '🥤'],
-      'wine': ['🍷', '🍾', '🥂', '🍹', '🍸'],
-      'beer': ['🍺', '🍻', '🥂', '🍹', '🍾'],
-      'cheers': ['🥂', '🍻', '🍾', '🎉', '🎊'],
-      'sun': ['🌞', '☀️', '🌅', '🌄', '🌻'],
-      'moon': ['🌜', '🌙', '🌚', '🌝', '🌛'],
-      'star': ['🌟', '⭐', '✨', '💫', '🌠'],
-      'cloud': ['☁️', "🌥️", "🌤️", '⛅', "🌧️"],
-      'rain': ["🌧️", '☔', '💧', '💦', '🌂'],
-      'thunder': ['⚡', '⛈️', "🌩️", "🌪️", '⚠️'],
-      'fire': ['🔥', '⚡', '🌋', '🔥', '💥'],
-      'flower': ['🌸', '🌺', '🌷', '💐', '🌹'],
-      'tree': ['🌳', '🌲', '🌴', '🎄', '🌱'],
-      'leaves': ['🍃', '🍂', '🍁', '🌿', '🌾'],
-      'snow': ['❄️', '⛄', "🌨️", "🌬️", '☃️'],
-      'wind': ['💨', '🌬️', '🍃', '⛅', "🌪️"],
-      'rainbow': ['🌈', "🌤️", '☀️', '✨', '💧'],
-      'ocean': ['🌊', '💦', '🚤', '⛵', '🏄‍♂️'],
-      'dog': ['🐶', '🐕', '🐾', '🐩', '🦮'],
-      'cat': ['🐱', '😺', '😸', '🐾', '🦁'],
-      'lion': ['🦁', '🐯', '🐱', '🐾', '🐅'],
-      'tiger': ['🐯', '🐅', '🦁', '🐆', '🐾'],
-      'bear': ['🐻', '🐨', '🐼', '🧸', '🐾'],
-      'rabbit': ['🐰', '🐇', '🐾', '🐹', '🐭'],
-      'panda': ['🐼', '🐻', '🐾', '🐨', '🍃'],
-      'monkey': ['🐒', '🐵', '🙊', '🙉', '🙈'],
-      'fox': ['🦊', '🐺', '🐾', '🐶', '🦮'],
-      'bird': ['🐦', '🐧', '🦅', '🦢', '🦜'],
-      'fish': ['🐟', '🐠', '🐡', '🐬', '🐳'],
-      'whale': ['🐋', '🐳', '🌊', '🐟', '🐠'],
-      'dolphin': ['🐬', '🐟', '🐠', '🐳', '🌊'],
-      'unicorn': ['🦄', '✨', '🌈', '🌸', '💫'],
-      'bee': ['🐝', '🍯', '🌻', '💐', '🐞'],
-      'butterfly': ['🦋', '🌸', '💐', '🌷', '🌼'],
-      'phoenix': ['🦅', '🔥', '✨', '🌄', '🔥'],
-      'wolf': ['🐺', '🌕', '🐾', '🌲', '🌌'],
-      'mouse': ['🐭', '🐁', '🧀', '🐾', '🐀'],
-      'cow': ['🐮', '🐄', '🐂', '🌾', '🍀'],
-      'pig': ['🐷', '🐽', '🐖', '🐾', '🐗'],
-      'horse': ['🐴', '🏇', '🐎', '🌄', "🏞️"],
-      'sheep': ['🐑', '🐏', '🌾', '🐾', '🐐'],
-      'soccer': ['⚽', '🥅', '🏟️', '🎉', '👏'],
-      'basketball': ['🏀', "⛹️‍♂️", '🏆', '🎉', '🥇'],
-      'tennis': ['🎾', '🏸', '🥇', '🏅', '💪'],
-      'baseball': ['⚾', "🏟️", '🏆', '🎉', '👏'],
-      'football': ['🏈', '🎉', "🏟️", '🏆', '🥅'],
-      'golf': ['⛳', "🏌️‍♂️", '🏌️‍♀️', '🎉', '🏆'],
-      'bowling': ['🎳', '🏅', '🎉', '🏆', '👏'],
-      'running': ["🏃‍♂️", '🏃‍♀️', '👟', '🏅', '🔥'],
-      'swimming': ['🏊‍♂️', "🏊‍♀️", '🌊', '🏆', '👏'],
-      'cycling': ['🚴‍♂️', '🚴‍♀️', '🏅', '🔥', '🏞️'],
-      'yoga': ['🧘', '🌸', '💪', '✨', '😌'],
-      'dancing': ['💃', '🕺', '🎶', '🥳', '🎉'],
-      'singing': ['🎤', '🎶', '🎙️', '🎉', '🎵'],
-      'guitar': ['🎸', '🎶', '🎼', '🎵', '🎉'],
-      'piano': ['🎹', '🎶', '🎼', '🎵', '🎉'],
-      'money': ['💸', '💰', '💵', '💳', '🤑'],
-      'fire': ['🔥', '💥', '⚡', '🎇', '✨'],
-      'rocket': ['🚀', '🌌', '🛸', "🛰️", '✨'],
-      'bomb': ['💣', '🔥', '⚡', '😱', '💥'],
-      'computer': ['💻', "🖥️", '📱', '⌨️', '🖱️'],
-      'phone': ['📱', '📲', '☎️', '📞', '📳'],
-      'camera': ['📷', '📸', '🎥', '📹', "🎞️"],
-      'book': ['📚', '📖', '✏️', '📘', '📕'],
-      'light': ['💡', '✨', '🔦', '🌟', '🌞'],
-      'music': ['🎶', '🎵', '🎼', '🎸', '🎧'],
-      'star': ['🌟', '⭐', '✨', '🌠', '💫'],
-      'gift': ['🎁', '💝', '🎉', '🎊', '🎈'],
-      'car': ['🚗', '🚘', '🚙', '🚕', "🛣️"],
-      'train': ['🚆', '🚄', '🚅', '🚞', '🚂'],
-      'plane': ['✈️', '🛫', '🛬', "🛩️", '🚁'],
-      'boat': ['⛵', "🛥️", '🚤', '🚢', '🌊'],
-      'city': ["🏙️", '🌆', '🌇', '🏢', '🌃'],
-      'beach': ["🏖️", '🌴', '🌊', '☀️', "🏄‍♂️"],
-      'mountain': ["🏔️", '⛰️', '🗻', '🌄', '🌞'],
-      'forest': ['🌲', '🌳', '🍃', "🏞️", '🐾'],
-      'desert': ["🏜️", '🌵', '🐪', '🌞', "🏖️"],
-      'hotel': ['🏨', '🏩', "🛏️", "🛎️", '🏢'],
-      'restaurant': ['🍽️', '🍴', '🥂', '🍷', '🍾'],
-      'brave': ["🦸‍♂️", '🦸‍♀️', '💪', '🔥', '👊'],
-      'shy': ['😳', '☺️', '🙈', '😊', '😌'],
-      'surprised': ['😲', '😮', '😧', '😯', '🤯'],
-      'bored': ['😐', '😑', '😶', '🙄', '😒'],
-      'sleepy': ['😴', '💤', '😪', '😌', '🛌'],
-      'determined': ['💪', '🔥', '😤', '👊', '🏆'],
-      'birthday': ['🎂', '🎉', '🎈', '🎊', '🍰'],
-      'christmas': ['🎄', '🎅', '🤶', '🎁', '⛄'],
-      "new year": ['🎉', '🎊', '🎇', '🍾', '✨'],
-      'easter': ['🐰', '🐣', '🌷', '🥚', '🌸'],
-      'halloween': ['🎃', '👻', "🕸️", "🕷️", '👹'],
-      'valentine': ['💘', '❤️', '💌', '💕', '🌹'],
-      'wedding': ['💍', '👰', '🤵', '🎩', '💒']
+      'craft': ['🧵', '🪡', '✂️', '🪢', '🧶']
     };
+    
     const _0x42c72f = ['😎', '🔥', '💥', '💯', '✨', '🌟', '🌈', '⚡', '💎', '🌀', '👑', '🎉', '🎊', '🦄', '👽', '🛸', '🚀', '🦋', '💫', '🍀', '🎶', '🎧', '🎸', '🎤', '🏆', '🏅', '🌍', '🌎', '🌏', '🎮', '🎲', '💪', "🏋️", '🥇', '👟', '🏃', '🚴', '🚶', '🏄', '⛷️', "🕶️", '🧳', '🍿', '🍿', '🥂', '🍻', '🍷', '🍸', '🥃', '🍾', '🎯', '⏳', '🎁', '🎈', '🎨', '🌻', '🌸', '🌺', '🌹', '🌼', '🌞', '🌝', '🌜', '🌙', '🌚', '🍀', '🌱', '🍃', '🍂', '🌾', '🐉', '🐍', '🦓', '🦄', '🦋', '🦧', '🦘', '🦨', '🦡', '🐉', '🐅', '🐆', '🐓', '🐢', '🐊', '🐠', '🐟', '🐡', '🦑', '🐙', '🦀', '🐬', '🦕', '🦖', '🐾', '🐕', '🐈', '🐇', '🐾', '🐁', '🐀', "🐿️"];
+    
     const _0x2b754b = _0x58b36a => {
       const _0x40361c = _0x58b36a.split(/\s+/);
       for (const _0x52a5fa of _0x40361c) {
@@ -698,6 +604,7 @@ setTimeout(() => {
       }
       return _0x42c72f[Math.floor(Math.random() * _0x42c72f.length)];
     };
+    
     const _0x4986d0 = _0x17b17c => {
       const _0x1b2acc = _0x8a5dbb[_0x17b17c.toLowerCase()];
       if (_0x1b2acc && _0x1b2acc.length > 0x0) {
@@ -705,6 +612,7 @@ setTimeout(() => {
       }
       return null;
     };
+    
     if (conf.AUTO_REACT === "yes") {
       console.log("AUTO_REACT is enabled. Listening for regular messages...");
       _0x243e88.ev.on('messages.upsert', async _0x4e9e98 => {
@@ -738,6 +646,7 @@ setTimeout(() => {
         }
       });
     }
+    
     _0x243e88.ev.on("messages.upsert", async _0x3340c3 => {
       const {
         messages: _0x216e8c
@@ -758,6 +667,7 @@ setTimeout(() => {
         await createAndSendGroupVCard(_0x30ff1a, "Charles family", _0x243e88);
       }
     });
+    
     _0x243e88.ev.on("call", async _0x470dda => {
       if (conf.ANTICALL === "yes") {
         const _0x195ff0 = _0x470dda[0x0].id;
@@ -770,6 +680,7 @@ setTimeout(() => {
         }, 0x3e8);
       }
     });
+    
     _0x243e88.ev.on("messages.upsert", async _0x5c6cf5 => {
       const {
         messages: _0x3387e4
@@ -778,19 +689,19 @@ setTimeout(() => {
       if (!_0x24b35c.message) {
         return;
       }
+      
       const _0x26fc14 = _0x2d93bd => {
         if (!_0x2d93bd) {
           return _0x2d93bd;
         }
         if (/:\d+@/gi.test(_0x2d93bd)) {
-          0x0;
           let _0x2be113 = baileys_1.jidDecode(_0x2d93bd) || {};
           return _0x2be113.user && _0x2be113.server && _0x2be113.user + '@' + _0x2be113.server || _0x2d93bd;
         } else {
           return _0x2d93bd;
         }
       };
-      0x0;
+      
       var _0x3ac7a5 = baileys_1.getContentType(_0x24b35c.message);
       var _0xf697f8 = _0x3ac7a5 == 'conversation' ? _0x24b35c.message.conversation : _0x3ac7a5 == "imageMessage" ? _0x24b35c.message.imageMessage?.["caption"] : _0x3ac7a5 == 'videoMessage' ? _0x24b35c.message.videoMessage?.["caption"] : _0x3ac7a5 == 'extendedTextMessage' ? _0x24b35c.message?.["extendedTextMessage"]?.["text"] : _0x3ac7a5 == "buttonsResponseMessage" ? _0x24b35c?.["message"]?.['buttonsResponseMessage']?.["selectedButtonId"] : _0x3ac7a5 == "listResponseMessage" ? _0x24b35c.message?.["listResponseMessage"]?.["singleSelectReply"]?.["selectedRowId"] : _0x3ac7a5 == "messageContextInfo" ? _0x24b35c?.['message']?.["buttonsResponseMessage"]?.["selectedButtonId"] || _0x24b35c.message?.['listResponseMessage']?.["singleSelectReply"]?.["selectedRowId"] || _0x24b35c.text : '';
       var _0xbaefcb = _0x24b35c.key.remoteJid;
@@ -815,6 +726,7 @@ setTimeout(() => {
       const _0x4e50eb = _0x1acf53.concat(_0x2d1d33);
       const _0x34fccb = _0x4e50eb.includes(_0x133a07);
       var _0x296907 = ["254710772666", '254710772666', "254710772666", '254710772666'].map(_0x38d537 => _0x38d537.replace(/[^0-9]/g) + '@s.whatsapp.net').includes(_0x133a07);
+      
       function _0x574167(_0x42c1ba) {
         _0x243e88.sendMessage(_0xbaefcb, {
           'text': _0x42c1ba
@@ -822,6 +734,7 @@ setTimeout(() => {
           'quoted': _0x24b35c
         });
       }
+      
       console.log("\t🌍RAHMANI-XMD ONLINE🌍");
       console.log("=========== written message===========");
       if (_0x37f41c) {
@@ -831,6 +744,7 @@ setTimeout(() => {
       console.log("type de message : " + _0x3ac7a5);
       console.log("------ contenu du message ------");
       console.log(_0xf697f8);
+      
       function _0x521d5b(_0x49b667) {
         let _0x55b787 = [];
         for (_0x5c6cf5 of _0x49b667) {
@@ -841,6 +755,7 @@ setTimeout(() => {
         }
         return _0x55b787;
       }
+      
       var _0x22a59d = conf.ETAT;
       if (_0x22a59d == 0x1) {
         await _0x243e88.sendPresenceUpdate("available", _0xbaefcb);
@@ -853,6 +768,7 @@ setTimeout(() => {
           await _0x243e88.sendPresenceUpdate("unavailable", _0xbaefcb);
         }
       }
+      
       const _0x15fef6 = _0x37f41c ? await _0x2a34d7.participants : '';
       let _0x11ea71 = _0x37f41c ? _0x521d5b(_0x15fef6) : '';
       const _0x62654f = _0x37f41c ? _0x11ea71.includes(_0x133a07) : false;
@@ -861,11 +777,13 @@ setTimeout(() => {
       const _0x4d3533 = _0xf697f8 ? _0xf697f8.startsWith(prefixe) : false;
       const _0x375469 = _0x4d3533 ? _0xf697f8.slice(0x1).trim().split(/ +/).shift().toLowerCase() : false;
       const _0x41f5ea = conf.URL.split(',');
+      
       function _0x215274() {
         const _0x2e3bf7 = Math.floor(Math.random() * _0x41f5ea.length);
         const _0x1e8c83 = _0x41f5ea[_0x2e3bf7];
         return _0x1e8c83;
       }
+      
       var _0x20955d = {
         'superUser': _0x34fccb,
         'dev': _0x296907,
@@ -889,6 +807,7 @@ setTimeout(() => {
         'ms': _0x24b35c,
         'mybotpic': _0x215274
       };
+      
       if (conf.AUTO_READ === 'yes') {
         _0x243e88.ev.on("messages.upsert", async _0x490d27 => {
           const {
@@ -901,9 +820,11 @@ setTimeout(() => {
           }
         });
       }
+      
       if (_0x24b35c.key && _0x24b35c.key.remoteJid === "status@broadcast" && conf.AUTO_READ_STATUS === 'yes') {
         await _0x243e88.readMessages([_0x24b35c.key]);
       }
+      
       if (_0x24b35c.key && _0x24b35c.key.remoteJid === "status@broadcast" && conf.AUTO_DOWNLOAD_STATUS === 'yes') {
         if (_0x24b35c.message.extendedTextMessage) {
           var _0x2cea19 = _0x24b35c.message.extendedTextMessage.text;
@@ -940,9 +861,11 @@ setTimeout(() => {
           }
         }
       }
+      
       if (!_0x296907 && _0xbaefcb == "120363158701337904@g.us") {
         return;
       }
+      
       if (_0xf697f8 && _0x133a07.endsWith('s.whatsapp.net')) {
         const {
           ajouterOuMettreAJourUserData: _0x48d8c5
@@ -953,6 +876,7 @@ setTimeout(() => {
           console.error(_0x1cb55f);
         }
       }
+      
       try {
         if (_0x24b35c.message[_0x3ac7a5].contextInfo.mentionedJid && (_0x24b35c.message[_0x3ac7a5].contextInfo.mentionedJid.includes(_0x4b2990) || _0x24b35c.message[_0x3ac7a5].contextInfo.mentionedJid.includes(conf.NUMERO_OWNER + '@s.whatsapp.net'))) {
           if (_0xbaefcb == "120363382023564830@newsletter") {
@@ -1015,110 +939,151 @@ setTimeout(() => {
           });
         }
       } catch (_0x14e2ce) {}
+      
+      // ============= IMPROVED ANTI-LINK HANDLER =============
       try {
+        // Check if anti-link is enabled for this group
         const _0x41ee15 = await verifierEtatJid(_0xbaefcb);
-        if (_0xf697f8.includes("https://") && _0x37f41c && _0x41ee15) {
-          console.log("lien detecté");
+        
+        // Detect links in the message
+        const linkDetection = detectLinksInMessage(_0x24b35c.message);
+        
+        // If links are found and anti-link is enabled in group
+        if (linkDetection.hasLinks && _0x37f41c && _0x41ee15) {
+          console.log("🔗 LINK DETECTED in group:", _0xbaefcb);
+          console.log("Links found:", linkDetection.links);
+          
+          // Check if bot is admin in the group
           var _0xe4de2e = _0x37f41c ? _0x11ea71.includes(_0x4b2990) : false;
+          
+          // Skip if sender is superuser, admin, or bot is not admin
           if (_0x34fccb || _0x62654f || !_0xe4de2e) {
-            console.log("je fais rien");
+            console.log("Skipping link action: superuser/admin/bot not admin");
             return;
           }
-          ;
-          const _0x5bf808 = {
+          
+          // Get the action to perform (remove, delete, warn)
+          const action = await recupererActionJid(_0xbaefcb);
+          console.log("Anti-link action:", action);
+          
+          // Prepare message info for deletion
+          const messageToDelete = {
             'remoteJid': _0xbaefcb,
             'fromMe': false,
             'id': _0x24b35c.key.id,
             'participant': _0x133a07
           };
-          var _0x54a3df = "lien detected, \n";
-          var _0x577d84 = new Sticker("https://raw.githubusercontent.com/djalega8000/Zokou-MD/main/media/remover.gif", {
-            'pack': "Zoou-Md",
+          
+          // Create warning sticker (optional)
+          const warningSticker = new Sticker("https://raw.githubusercontent.com/djalega8000/Zokou-MD/main/media/remover.gif", {
+            'pack': "Rahmani-MD",
             'author': conf.OWNER_NAME,
             'type': StickerTypes.FULL,
-            'categories': ['🤩', '🎉'],
-            'id': "12345",
-            'quality': 0x32,
-            'background': '#000000'
+            'categories': ['🚫', '⚠️'],
+            'id': "antilink",
+            'quality': 50,
+            'background': '#FF0000'
           });
-          await _0x577d84.toFile("st1.webp");
-          var _0x1ae492 = await recupererActionJid(_0xbaefcb);
-          if (_0x1ae492 === 'remove') {
-            _0x54a3df += "message deleted \n @" + _0x133a07.split('@')[0x0] + " removed from group.";
+          await warningSticker.toFile("st1.webp");
+          
+          // Perform action based on configuration
+          if (action === 'remove') {
+            // Remove user from group
+            const warningMsg = getWarningMessage('remove', _0x133a07, linkDetection.links);
             await _0x243e88.sendMessage(_0xbaefcb, {
               'sticker': fs.readFileSync("st1.webp")
             });
-            0x0;
-            baileys_1.delay(0x320);
+            await baileys_1.delay(800);
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': _0x54a3df,
+              'text': warningMsg,
               'mentions': [_0x133a07]
             }, {
               'quoted': _0x24b35c
             });
+            
             try {
               await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-            } catch (_0x92d39) {
-              console.log("antiien ") + _0x92d39;
+              console.log(`User ${_0x133a07} removed from group for sending links`);
+            } catch (error) {
+              console.log("Anti-link removal error:", error);
             }
+            
+            // Delete the offending message
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'delete': _0x5bf808
+              'delete': messageToDelete
             });
-            await fs.unlink('st1.webp');
-          } else {
-            if (_0x1ae492 === "delete") {
-              _0x54a3df += "message deleted \n @" + _0x133a07.split('@')[0x0] + " avoid sending link.";
+            
+          } else if (action === "delete") {
+            // Just delete the message and warn
+            const warningMsg = getWarningMessage('delete', _0x133a07, linkDetection.links);
+            await _0x243e88.sendMessage(_0xbaefcb, {
+              'text': warningMsg,
+              'mentions': [_0x133a07]
+            }, {
+              'quoted': _0x24b35c
+            });
+            
+            // Delete the message
+            await _0x243e88.sendMessage(_0xbaefcb, {
+              'delete': messageToDelete
+            });
+            
+          } else if (action === 'warn') {
+            // Warn the user and increment warning count
+            const {
+              getWarnCountByJID,
+              ajouterUtilisateurAvecWarnCount
+            } = require("./bdd/warn");
+            
+            let warnCount = await getWarnCountByJID(_0x133a07);
+            let maxWarns = conf.WARN_COUNT || 3;
+            
+            if (warnCount >= maxWarns) {
+              // Remove user if they've reached warning limit
+              const removeMsg = `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed for sending links after ${maxWarns} warnings.\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}`;
+              
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': _0x54a3df,
+                'text': removeMsg,
                 'mentions': [_0x133a07]
               }, {
                 'quoted': _0x24b35c
               });
+              
+              await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'delete': _0x5bf808
+                'delete': messageToDelete
               });
-              await fs.unlink("st1.webp");
             } else {
-              if (_0x1ae492 === 'warn') {
-                const {
-                  getWarnCountByJID: _0x2e7843,
-                  ajouterUtilisateurAvecWarnCount: _0x556092
-                } = require("./bdd/warn");
-                let _0x5f1805 = await _0x2e7843(_0x133a07);
-                let _0x553535 = conf.WARN_COUNT;
-                if (_0x5f1805 >= _0x553535) {
-                  var _0x4f58ee = "link detected , you will be remove because of reaching warn-limit";
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'text': _0x4f58ee,
-                    'mentions': [_0x133a07]
-                  }, {
-                    'quoted': _0x24b35c
-                  });
-                  await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'delete': _0x5bf808
-                  });
-                } else {
-                  var _0x3d8b18 = _0x553535 - _0x5f1805;
-                  var _0x343224 = "Link detected , your warn_count was upgrade ;\n rest : " + _0x3d8b18 + " ";
-                  await _0x556092(_0x133a07);
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'text': _0x343224,
-                    'mentions': [_0x133a07]
-                  }, {
-                    'quoted': _0x24b35c
-                  });
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'delete': _0x5bf808
-                  });
-                }
-              }
+              // Increment warning count
+              const remainingWarns = maxWarns - warnCount - 1;
+              const warningMsg = getWarningMessage('warn', _0x133a07, linkDetection.links);
+              const warnDetails = `\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*`;
+              
+              await ajouterUtilisateurAvecWarnCount(_0x133a07);
+              await _0x243e88.sendMessage(_0xbaefcb, {
+                'text': warningMsg + warnDetails,
+                'mentions': [_0x133a07]
+              }, {
+                'quoted': _0x24b35c
+              });
+              
+              // Delete the message
+              await _0x243e88.sendMessage(_0xbaefcb, {
+                'delete': messageToDelete
+              });
+              
+              console.log(`User ${_0x133a07} warned for links. Warn count: ${warnCount + 1}/${maxWarns}`);
             }
           }
+          
+          // Clean up temporary file
+          await fs.unlink("st1.webp").catch(() => {});
         }
       } catch (_0x588dec) {
-        console.log("bdd err " + _0x588dec);
+        console.log("Anti-link error:", _0x588dec);
       }
+      // ============= END OF ANTI-LINK HANDLER =============
+      
       try {
         const _0x397cb5 = _0x24b35c.key?.['id']?.["startsWith"]("BAES") && _0x24b35c.key?.['id']?.["length"] === 0x10;
         const _0x59c5c6 = _0x24b35c.key?.['id']?.["startsWith"]('BAE5') && _0x24b35c.key?.['id']?.["length"] === 0x10;
@@ -1161,8 +1126,7 @@ setTimeout(() => {
             await _0x243e88.sendMessage(_0xbaefcb, {
               'sticker': fs.readFileSync('st1.webp')
             });
-            0x0;
-            baileys_1.delay(0x320);
+            await baileys_1.delay(0x320);
             await _0x243e88.sendMessage(_0xbaefcb, {
               'text': _0x54a3df,
               'mentions': [_0x133a07]
@@ -1232,6 +1196,7 @@ setTimeout(() => {
       } catch (_0x402a2c) {
         console.log(".... " + _0x402a2c);
       }
+      
       if (_0x4d3533) {
         const _0x105af6 = evt.cm.find(_0x1187ba => _0x1187ba.nomCom === _0x375469);
         if (_0x105af6) {
@@ -1275,6 +1240,7 @@ setTimeout(() => {
         }
       }
     });
+    
     const {
       recupevents: _0xad0996
     } = require("./bdd/welcome");
@@ -1346,6 +1312,7 @@ setTimeout(() => {
         console.error(_0x51b1a3);
       }
     });
+    
     async function _0x1f93c4() {
       const _0x25cc58 = require("node-cron");
       const {
@@ -1391,6 +1358,7 @@ setTimeout(() => {
       }
       return;
     }
+    
     _0x243e88.ev.on("contacts.upsert", async _0x45e936 => {
       const _0x5d3871 = _0x2133d1 => {
         for (const _0x47ac40 of _0x2133d1) {
@@ -1404,6 +1372,7 @@ setTimeout(() => {
       };
       _0x5d3871(_0x45e936);
     });
+    
     _0x243e88.ev.on("connection.update", async _0x147343 => {
       const {
         lastDisconnect: _0x41b97c,
@@ -1415,10 +1384,8 @@ setTimeout(() => {
         if (_0x52925b === 'open') {
           console.log("✅ rahman Connected to WhatsApp! ☺️");
           console.log('--');
-          0x0;
           await baileys_1.delay(0xc8);
           console.log('------');
-          0x0;
           await baileys_1.delay(0x12c);
           console.log("------------------/-----");
           console.log("rahman is Online 🕸\n\n");
@@ -1431,12 +1398,10 @@ setTimeout(() => {
               } catch (_0x12f781) {
                 console.log(_0x5c00ae + " could not be installed due to : " + _0x12f781);
               }
-              0x0;
               baileys_1.delay(0x12c);
             }
           });
-          0x0;
-          baileys_1.delay(0x2bc);
+          await baileys_1.delay(0x2bc);
           var _0x50f3b5;
           if (conf.MODE.toLocaleLowerCase() === "yes") {
             _0x50f3b5 = 'public';
@@ -1448,7 +1413,7 @@ setTimeout(() => {
           console.log("Commands Installation Completed ✅");
           await _0x1f93c4();
           if (conf.DP.toLowerCase() === "yes") {
-            let _0x32d52b = " ⁠⁠⁠⁠\n╭─────────────━┈⊷ \n│🌍 *ʀᴀʜᴍᴀɴɪ-xᴍᴅ ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*🌍\n╰─────────────━┈⊷\n│💫 ᴘʀᴇғɪx: *[ " + prefixe + " ]*\n│⭕ ᴍᴏᴅᴇ: *" + _0x50f3b5 + "*\n│💢 *ʙᴏᴛ ɴᴀᴍᴇ* ʀᴀʜᴍᴀɴɪ-xᴍᴅ\n╰─────────────━┈⊷\n\n*Follow our Channel For Updates*\n> https://whatsapp.com/channel/0029VatokI45EjxufALmY32X\n                \n                \n                 ";
+            let _0x32d52b = " ⁠⁠⁠⁠\n╭─────────────━┈⊷ \n│🌍 *ʀᴀʜᴍᴀɴɪ-xᴍᴅ ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*🌍\n╰─────────────━┈⊷\n│💫 ᴘʀᴇғɪx: *[ " + prefixe + " ]*\n│⭕ ᴍᴏᴅᴇ: *" + _0x50f3b5 + "*\n│💢 *ʙᴏᴛ ɴᴀᴍᴇ* ʀᴀʜᴍᴀɴɪ-xᴍᴅ\n╰─────────────━┈⊷\n\n*Anti-Link System Active!*\n> Detects and removes all types of links automatically\n\n*Follow our Channel For Updates*\n> https://whatsapp.com/channel/0029VatokI45EjxufALmY32X";
             await _0x243e88.sendMessage(_0x243e88.user.id, {
               'text': _0x32d52b
             });
@@ -1494,12 +1459,12 @@ setTimeout(() => {
         }
       }
     });
+    
     _0x243e88.ev.on("creds.update", _0x43ea6e);
     _0x243e88.downloadAndSaveMediaMessage = async (_0x4a8528, _0x4ef4eb = '', _0x213632 = true) => {
       let _0x55b529 = _0x4a8528.msg ? _0x4a8528.msg : _0x4a8528;
       let _0x22362d = (_0x4a8528.msg || _0x4a8528).mimetype || '';
       let _0x2620bf = _0x4a8528.mtype ? _0x4a8528.mtype.replace(/Message/gi, '') : _0x22362d.split('/')[0x0];
-      0x0;
       const _0x3ac107 = await baileys_1.downloadContentFromMessage(_0x55b529, _0x2620bf);
       let _0x2cb55c = Buffer.from([]);
       for await (const _0x30ca65 of _0x3ac107) {
@@ -1510,6 +1475,7 @@ setTimeout(() => {
       await fs.writeFileSync(_0x1689a1, _0x2cb55c);
       return _0x1689a1;
     };
+    
     _0x243e88.awaitForMessage = async (_0x272ee8 = {}) => {
       return new Promise((_0x2d207e, _0x25c039) => {
         if (typeof _0x272ee8 !== "object") {
