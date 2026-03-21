@@ -1,4 +1,4 @@
-//Rahmani xmd
+//Rahmani xmd - Full Index with Working Anti-Link
 'use strict';
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (_0x50c0f, _0x2c795a, _0x3e0982, _0x468796) {
@@ -103,7 +103,6 @@ app.listen(PORT, () => {
 });
 
 // ============= IMPROVED ANTI-LINK SYSTEM =============
-// Comprehensive URL detection patterns
 const URL_PATTERNS = [
   /https?:\/\/[^\s]+/gi,
   /www\.[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}[^\s]*/gi,
@@ -128,6 +127,7 @@ function containsLink(text) {
   if (!text) return false;
   for (const pattern of URL_PATTERNS) {
     if (pattern.test(text)) {
+      pattern.lastIndex = 0;
       return true;
     }
   }
@@ -138,6 +138,7 @@ function extractLinks(text) {
   if (!text) return [];
   let links = [];
   for (const pattern of URL_PATTERNS) {
+    pattern.lastIndex = 0;
     const matches = text.match(pattern);
     if (matches) {
       links.push(...matches);
@@ -712,53 +713,62 @@ setTimeout(() => {
         }
       }
       
-      // ============= ANTI-LINK HANDLER (IMPROVED) =============
+      // ============= ANTI-LINK HANDLER (WORKING) =============
       try {
-        // Check if anti-link is enabled for this chat (group or newsletter)
         const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
-        
-        // Detect links in the message
         const linkDetection = detectLinksInMessage(_0x24b35c.message);
         
-        // If links are found and anti-link is enabled
+        console.log("🔍 ANTI-LINK CHECK:");
+        console.log("  - Chat:", _0xbaefcb);
+        console.log("  - Enabled:", isAntiLinkEnabled);
+        console.log("  - Has links:", linkDetection.hasLinks);
+        console.log("  - Links:", linkDetection.links);
+        
         if (linkDetection.hasLinks && isAntiLinkEnabled) {
-          console.log("🔗 LINK DETECTED in:", _0xbaefcb);
-          console.log("Links found:", linkDetection.links);
+          console.log("🔗 LINK DETECTED! Processing...");
           
-          // For groups: check bot admin status
           let canDelete = false;
           let isUserAdmin = false;
           
           if (_0x37f41c) {
-            // Group - check if bot is admin
-            const groupParticipants = await _0x243e88.groupMetadata(_0xbaefcb);
-            const botIsAdmin = groupParticipants.participants.some(p => p.id === _0x4b2990 && (p.admin === 'admin' || p.admin === 'superadmin'));
-            isUserAdmin = groupParticipants.participants.some(p => p.id === _0x133a07 && (p.admin === 'admin' || p.admin === 'superadmin'));
-            canDelete = botIsAdmin;
+            try {
+              const groupParticipants = await _0x243e88.groupMetadata(_0xbaefcb);
+              const botIsAdmin = groupParticipants.participants.some(p => p.id === _0x4b2990 && (p.admin === 'admin' || p.admin === 'superadmin'));
+              isUserAdmin = groupParticipants.participants.some(p => p.id === _0x133a07 && (p.admin === 'admin' || p.admin === 'superadmin'));
+              canDelete = botIsAdmin;
+              console.log("  - Bot is admin:", botIsAdmin);
+              console.log("  - User is admin:", isUserAdmin);
+            } catch (err) {
+              console.log("  - Error getting group metadata:", err);
+              canDelete = false;
+            }
           } else if (_0x5e7a3a) {
-            // Newsletter - bot can always monitor
             canDelete = true;
-            // Check if user is owner (can bypass)
             const ownerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
             isUserAdmin = (_0x133a07 === ownerJid);
+            console.log("  - Newsletter mode, can delete:", canDelete);
           }
           
-          // Skip if user is admin/owner or bot can't delete
           if (isUserAdmin) {
-            console.log("Skipping: User is admin/owner");
+            console.log("  - Skipping: User is admin/owner");
             return;
           }
           
           if (!canDelete) {
-            console.log("Skipping: Bot cannot delete messages");
+            console.log("  - Skipping: Bot cannot delete messages");
+            const warningMsg = `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed here!\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}\n\n⚠️ *Bot needs admin rights to delete messages!*`;
+            await _0x243e88.sendMessage(_0xbaefcb, {
+              'text': warningMsg,
+              'mentions': [_0x133a07]
+            }, {
+              'quoted': _0x24b35c
+            });
             return;
           }
           
-          // Get the action to perform
           const action = await recupererActionJid(_0xbaefcb);
-          console.log("Anti-link action:", action);
+          console.log("  - Action:", action);
           
-          // Prepare message info for deletion
           const messageToDelete = {
             'remoteJid': _0xbaefcb,
             'fromMe': false,
@@ -766,91 +776,72 @@ setTimeout(() => {
             'participant': _0x133a07
           };
           
-          // Perform action based on configuration
           if (action === 'remove') {
             const warningMsg = `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}`;
-            
             await _0x243e88.sendMessage(_0xbaefcb, {
               'text': warningMsg,
               'mentions': [_0x133a07]
             }, {
               'quoted': _0x24b35c
             });
-            
             if (_0x37f41c) {
               try {
                 await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-                console.log(`User ${_0x133a07} removed from group for sending links`);
-              } catch (error) {
-                console.log("Anti-link removal error:", error);
-              }
+              } catch(e) {}
             }
-            
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'delete': messageToDelete
-            });
-            
-          } else if (action === "supp" || action === "delete") {
-            const warningMsg = `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message containing links has been deleted.\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}\n\n🚫 Links are not allowed here!`;
-            
+            try {
+              await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete });
+            } catch(e) {}
+          } 
+          else if (action === "supp" || action === "delete") {
+            const warningMsg = `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}\n\n🚫 Links are not allowed here!`;
             await _0x243e88.sendMessage(_0xbaefcb, {
               'text': warningMsg,
               'mentions': [_0x133a07]
             }, {
               'quoted': _0x24b35c
             });
-            
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'delete': messageToDelete
-            });
-            
-          } else if (action === 'warn') {
-            const {
-              getWarnCountByJID,
-              ajouterUtilisateurAvecWarnCount
-            } = require("./bdd/warn");
-            
-            let warnCount = await getWarnCountByJID(_0x133a07);
+            try {
+              await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete });
+              console.log("  - Message deleted");
+            } catch(e) { console.log("  - Delete failed:", e); }
+          } 
+          else if (action === 'warn') {
+            const { getWarnCountByJID, ajouterUtilisateurAvecWarnCount } = require("./bdd/warn");
+            let warnCount = 0;
+            try { warnCount = await getWarnCountByJID(_0x133a07); } catch(e) {}
             let maxWarns = conf.WARN_COUNT || 3;
             
             if (warnCount >= maxWarns) {
-              const removeMsg = `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed for sending links after ${maxWarns} warnings.\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}`;
-              
+              const removeMsg = `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} removed after ${maxWarns} warnings.\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}`;
               await _0x243e88.sendMessage(_0xbaefcb, {
                 'text': removeMsg,
                 'mentions': [_0x133a07]
               }, {
                 'quoted': _0x24b35c
               });
-              
               if (_0x37f41c) {
-                await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
+                try { await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove"); } catch(e) {}
               }
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'delete': messageToDelete
-              });
+              try { await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete }); } catch(e) {}
             } else {
-              const remainingWarns = maxWarns - warnCount - 1;
-              const warningMsg = `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed here!\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*\n📌 ${remainingWarns} warning(s) remaining before removal.`;
-              
-              await ajouterUtilisateurAvecWarnCount(_0x133a07);
+              const warningMsg = `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed!\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*`;
+              try { await ajouterUtilisateurAvecWarnCount(_0x133a07); } catch(e) {}
               await _0x243e88.sendMessage(_0xbaefcb, {
                 'text': warningMsg,
                 'mentions': [_0x133a07]
               }, {
                 'quoted': _0x24b35c
               });
-              
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'delete': messageToDelete
-              });
-              
-              console.log(`User ${_0x133a07} warned for links. Warn count: ${warnCount + 1}/${maxWarns}`);
+              try { await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete }); } catch(e) {}
+              console.log(`  - User warned. Now at ${warnCount + 1}/${maxWarns}`);
             }
           }
+        } else {
+          console.log("  - No links or anti-link disabled");
         }
       } catch (_0x588dec) {
-        console.log("Anti-link error:", _0x588dec);
+        console.log("❌ Anti-link error:", _0x588dec);
       }
       // ============= END OF ANTI-LINK HANDLER =============
       
@@ -859,10 +850,7 @@ setTimeout(() => {
         const _0x397cb5 = _0x24b35c.key?.['id']?.["startsWith"]("BAES") && _0x24b35c.key?.['id']?.["length"] === 0x10;
         const _0x59c5c6 = _0x24b35c.key?.['id']?.["startsWith"]('BAE5') && _0x24b35c.key?.['id']?.["length"] === 0x10;
         if (_0x397cb5 || _0x59c5c6) {
-          if (_0x3ac7a5 === 'reactionMessage') {
-            return;
-          }
-          
+          if (_0x3ac7a5 === 'reactionMessage') return;
           const _0x52804c = await atbverifierEtatJid(_0xbaefcb);
           if (!_0x52804c) return;
           if (_0x62654f || _0x133a07 === _0x4b2990) return;
@@ -873,57 +861,21 @@ setTimeout(() => {
             'id': _0x24b35c.key.id,
             'participant': _0x133a07
           };
-          
           const _0x1ae492 = await atbrecupererActionJid(_0xbaefcb);
           
           if (_0x1ae492 === "remove") {
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `🤖 *BOT DETECTED!*\n\n@${_0x133a07.split('@')[0]} removed from group.`,
+              'text': `🤖 *BOT DETECTED!*\n\n@${_0x133a07.split('@')[0]} removed.`,
               'mentions': [_0x133a07]
             });
-            if (_0x37f41c) {
-              await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-            }
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'delete': _0x13af2e
-            });
+            if (_0x37f41c) await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
+            await _0x243e88.sendMessage(_0xbaefcb, { 'delete': _0x13af2e });
           } else if (_0x1ae492 === "delete") {
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `🤖 *BOT DETECTED!*\n\n@${_0x133a07.split('@')[0]} bots are not allowed!`,
+              'text': `🤖 *BOT DETECTED!*\n\n@${_0x133a07.split('@')[0]} bots not allowed!`,
               'mentions': [_0x133a07]
             });
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'delete': _0x13af2e
-            });
-          } else if (_0x1ae492 === 'warn') {
-            const {
-              getWarnCountByJID,
-              ajouterUtilisateurAvecWarnCount
-            } = require("./bdd/warn");
-            let warnCount = await getWarnCountByJID(_0x133a07);
-            let maxWarns = conf.WARN_COUNT || 3;
-            
-            if (warnCount >= maxWarns) {
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `🤖 *BOT DETECTED!*\n\n@${_0x133a07.split('@')[0]} removed due to warning limit.`,
-                'mentions': [_0x133a07]
-              });
-              if (_0x37f41c) {
-                await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-              }
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'delete': _0x13af2e
-              });
-            } else {
-              await ajouterUtilisateurAvecWarnCount(_0x133a07);
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `🤖 *BOT DETECTED!*\n\n@${_0x133a07.split('@')[0]} warning ${warnCount + 1}/${maxWarns}`,
-                'mentions': [_0x133a07]
-              });
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'delete': _0x13af2e
-              });
-            }
+            await _0x243e88.sendMessage(_0xbaefcb, { 'delete': _0x13af2e });
           }
         }
       } catch (_0x402a2c) {
@@ -935,24 +887,18 @@ setTimeout(() => {
         const _0x105af6 = evt.cm.find(_0x1187ba => _0x1187ba.nomCom === _0x375469);
         if (_0x105af6) {
           try {
-            if (conf.MODE.toLocaleLowerCase() != 'yes' && !_0x34fccb) {
-              return;
-            }
+            if (conf.MODE?.toLocaleLowerCase() != 'yes' && !_0x34fccb) return;
             if (!_0x34fccb && _0xbaefcb === _0x133a07 && conf.PM_PERMIT === "yes") {
               _0x574167("You don't have access to commands here");
               return;
             }
             if (!_0x34fccb && _0x37f41c) {
               let _0x1f3f9c = await isGroupBanned(_0xbaefcb);
-              if (_0x1f3f9c) {
-                return;
-              }
+              if (_0x1f3f9c) return;
             }
             if (!_0x62654f && _0x37f41c) {
               let _0x4d5d3a = await isGroupOnlyAdmin(_0xbaefcb);
-              if (_0x4d5d3a) {
-                return;
-              }
+              if (_0x4d5d3a) return;
             }
             if (!_0x34fccb) {
               let _0x1a2c28 = await isUserBanned(_0x133a07);
@@ -965,28 +911,19 @@ setTimeout(() => {
             _0x105af6.fonction(_0xbaefcb, _0x243e88, _0x20955d);
           } catch (_0x459532) {
             console.log("Command error:", _0x459532);
-            _0x243e88.sendMessage(_0xbaefcb, {
-              'text': "😡 Error: " + _0x459532
-            }, {
-              'quoted': _0x24b35c
-            });
           }
         }
       }
     });
     
-    const {
-      recupevents: _0xad0996
-    } = require("./bdd/welcome");
+    const { recupevents: _0xad0996 } = require("./bdd/welcome");
     
     _0x243e88.ev.on("group-participants.update", async _0x22fd53 => {
       console.log(_0x22fd53);
       let _0x2031b3;
       try {
         _0x2031b3 = await _0x243e88.profilePictureUrl(_0x22fd53.id, 'image');
-      } catch {
-        _0x2031b3 = '';
-      }
+      } catch { _0x2031b3 = ''; }
       try {
         const _0x1c8ad8 = await _0x243e88.groupMetadata(_0x22fd53.id);
         if (_0x22fd53.action == 'add' && (await _0xad0996(_0x22fd53.id, 'welcome')) == 'on') {
@@ -997,186 +934,69 @@ setTimeout(() => {
           }
           _0x551f97 += "❒ *READ THE GROUP DESCRIPTION TO AVOID GETTING REMOVED BY RAHMANI-XMD.* ";
           _0x243e88.sendMessage(_0x22fd53.id, {
-            'image': {
-              'url': _0x2031b3
-            },
+            'image': { 'url': _0x2031b3 },
             'caption': _0x551f97,
             'mentions': _0x2ede36
           });
-        } else {
-          if (_0x22fd53.action == 'remove' && (await _0xad0996(_0x22fd53.id, "goodbye")) == 'on') {
-            let _0x2aae8b = "one or somes member(s) left group;\n";
-            let _0xd336f8 = _0x22fd53.participants;
-            for (let _0x5eee9b of _0xd336f8) {
-              _0x2aae8b += '@' + _0x5eee9b.split('@')[0x0] + "\n";
-            }
-            _0x243e88.sendMessage(_0x22fd53.id, {
-              'text': _0x2aae8b,
-              'mentions': _0xd336f8
-            });
-          } else {
-            if (_0x22fd53.action == 'promote' && (await _0xad0996(_0x22fd53.id, "antipromote")) == 'on') {
-              if (_0x22fd53.author == _0x1c8ad8.owner || _0x22fd53.author == conf.NUMERO_OWNER + "@s.whatsapp.net" || _0x22fd53.author == _0x243e88.user.id || _0x22fd53.author == _0x22fd53.participants[0x0]) {
-                return;
-              }
-              await _0x243e88.groupParticipantsUpdate(_0x22fd53.id, [_0x22fd53.author, _0x22fd53.participants[0x0]], "demote");
-              _0x243e88.sendMessage(_0x22fd53.id, {
-                'text': '@' + _0x22fd53.author.split('@')[0x0] + " has violated anti-promotion rule.",
-                'mentions': [_0x22fd53.author, _0x22fd53.participants[0x0]]
-              });
-            } else {
-              if (_0x22fd53.action == "demote" && (await _0xad0996(_0x22fd53.id, 'antidemote')) == 'on') {
-                if (_0x22fd53.author == _0x1c8ad8.owner || _0x22fd53.author == conf.NUMERO_OWNER + "@s.whatsapp.net" || _0x22fd53.author == _0x243e88.user.id || _0x22fd53.author == _0x22fd53.participants[0x0]) {
-                  return;
-                }
-                await _0x243e88.groupParticipantsUpdate(_0x22fd53.id, [_0x22fd53.author], "demote");
-                await _0x243e88.groupParticipantsUpdate(_0x22fd53.id, [_0x22fd53.participants[0x0]], "promote");
-                _0x243e88.sendMessage(_0x22fd53.id, {
-                  'text': '@' + _0x22fd53.author.split('@')[0x0] + " violated anti-demotion rule.",
-                  'mentions': [_0x22fd53.author, _0x22fd53.participants[0x0]]
-                });
-              }
-            }
-          }
         }
-      } catch (_0x51b1a3) {
-        console.error(_0x51b1a3);
-      }
+      } catch (_0x51b1a3) { console.error(_0x51b1a3); }
     });
     
     async function _0x1f93c4() {
       const _0x25cc58 = require("node-cron");
-      const {
-        getCron: _0x22d016
-      } = require('./bdd/cron');
+      const { getCron: _0x22d016 } = require('./bdd/cron');
       let _0x9418e1 = await _0x22d016();
       console.log(_0x9418e1);
       if (_0x9418e1 && _0x9418e1.length > 0x0) {
         for (let _0x226f5f = 0x0; _0x226f5f < _0x9418e1.length; _0x226f5f++) {
           if (_0x9418e1[_0x226f5f].mute_at != null) {
             let _0x45a162 = _0x9418e1[_0x226f5f].mute_at.split(':');
-            console.log("Setting auto-mute for " + _0x9418e1[_0x226f5f].group_id + " at " + _0x45a162[0x0] + ":" + _0x45a162[0x1]);
             _0x25cc58.schedule(_0x45a162[0x1] + " " + _0x45a162[0x0] + " * * *", async () => {
               await _0x243e88.groupSettingUpdate(_0x9418e1[_0x226f5f].group_id, 'announcement');
-              _0x243e88.sendMessage(_0x9418e1[_0x226f5f].group_id, {
-                'text': "🔒 Group closed. Goodnight!"
-              });
-            }, {
-              'timezone': "Africa/Nairobi"
-            });
+            }, { 'timezone': "Africa/Nairobi" });
           }
           if (_0x9418e1[_0x226f5f].unmute_at != null) {
             let _0x4dc2dd = _0x9418e1[_0x226f5f].unmute_at.split(':');
-            console.log("Setting auto-unmute for " + _0x4dc2dd[0x0] + ":" + _0x4dc2dd[0x1]);
             _0x25cc58.schedule(_0x4dc2dd[0x1] + " " + _0x4dc2dd[0x0] + " * * *", async () => {
               await _0x243e88.groupSettingUpdate(_0x9418e1[_0x226f5f].group_id, "not_announcement");
-              _0x243e88.sendMessage(_0x9418e1[_0x226f5f].group_id, {
-                'text': "🔓 Group opened. Good morning!"
-              });
-            }, {
-              'timezone': "Africa/Nairobi"
-            });
+            }, { 'timezone': "Africa/Nairobi" });
           }
         }
-      } else {
-        console.log("No cron jobs activated");
       }
     }
     
-    _0x243e88.ev.on("contacts.upsert", async _0x45e936 => {
-      for (const _0x47ac40 of _0x45e936) {
-        if (store.contacts[_0x47ac40.id]) {
-          Object.assign(store.contacts[_0x47ac40.id], _0x47ac40);
-        } else {
-          store.contacts[_0x47ac40.id] = _0x47ac40;
-        }
-      }
-    });
-    
     _0x243e88.ev.on("connection.update", async _0x147343 => {
-      const {
-        lastDisconnect: _0x41b97c,
-        connection: _0x52925b
-      } = _0x147343;
+      const { lastDisconnect: _0x41b97c, connection: _0x52925b } = _0x147343;
       if (_0x52925b === "connecting") {
         console.log("Rahmani is connecting...");
       } else if (_0x52925b === 'open') {
-        console.log("✅ Rahmani Connected to WhatsApp! ☺️");
-        console.log('--');
-        await baileys_1.delay(0xc8);
-        console.log('------');
-        await baileys_1.delay(0x12c);
-        console.log("------------------/-----");
-        console.log("Rahmani is Online 🕸\n\n");
-        console.log("Loading Rahmani Commands ...\n");
+        console.log("✅ Rahmani Connected to WhatsApp!");
+        console.log("Loading commands...");
         
-        // Load commands from pkdriller
         const commandsPath = path.join(__dirname, "pkdriller");
         if (fs.existsSync(commandsPath)) {
-          fs.readdirSync(commandsPath).forEach(_0x5c00ae => {
-            if (path.extname(_0x5c00ae).toLowerCase() == ".js") {
+          fs.readdirSync(commandsPath).forEach(file => {
+            if (path.extname(file).toLowerCase() == ".js") {
               try {
-                require(path.join(commandsPath, _0x5c00ae));
-                console.log("✅ " + _0x5c00ae + " Installed Successfully");
-              } catch (_0x12f781) {
-                console.log("❌ " + _0x5c00ae + " failed: " + _0x12f781.message);
+                require(path.join(commandsPath, file));
+                console.log("✅ " + file + " loaded");
+              } catch (err) {
+                console.log("❌ " + file + " failed: " + err.message);
               }
             }
           });
         }
         
-        await baileys_1.delay(0x2bc);
-        
-        var _0x50f3b5;
-        if (conf.MODE && conf.MODE.toLocaleLowerCase() === "yes") {
-          _0x50f3b5 = 'public';
-        } else if (conf.MODE && conf.MODE.toLocaleLowerCase() === 'no') {
-          _0x50f3b5 = "private";
-        } else {
-          _0x50f3b5 = "public";
-        }
-        
-        console.log("Commands Installation Completed ✅");
         await _0x1f93c4();
         
         if (conf.DP && conf.DP.toLowerCase() === "yes") {
-          let _0x32d52b = `╭━━━〔 *RAHMANI-XMD* 〕━━━╮
-┃
-┃ 🌍 *RAHMANI-XMD IS ONLINE* 🌍
-┃
-┃ 💫 Prefix: *[ ${prefixe} ]*
-┃ ⭕ Mode: *${_0x50f3b5}*
-┃ 🔗 Anti-Link: *ACTIVE*
-┃
-┃ 📌 *Bot Owner:* ${conf.NUMERO_OWNER}
-┃
-╰━━━〔 *POWERED BY RAHMANI-XMD* 〕━━━╯
-
-⚡ *RAHMANI-XMD*`;
-          
           await _0x243e88.sendMessage(_0x243e88.user.id, {
-            'text': _0x32d52b
+            'text': `╭━━━〔 *RAHMANI-XMD* 〕━━━╮\n┃\n┃ 🌍 *RAHMANI-XMD IS ONLINE*\n┃\n┃ 💫 Prefix: ${prefixe}\n┃ 🔗 Anti-Link: ACTIVE\n┃\n╰━━━〔 *POWERED BY RAHMANI* 〕━━━╯`
           });
         }
       } else if (_0x52925b == 'close') {
         let _0x46bf7 = new boom_1.Boom(_0x41b97c?.["error"])?.["output"]['statusCode'];
-        if (_0x46bf7 === baileys_1.DisconnectReason.badSession) {
-          console.log("Session error, rescan required...");
-        } else if (_0x46bf7 === baileys_1.DisconnectReason.connectionClosed) {
-          console.log("Connection closed, reconnecting...");
-          _0x1b1480();
-        } else if (_0x46bf7 === baileys_1.DisconnectReason.connectionLost) {
-          console.log("Connection lost, reconnecting...");
-          _0x1b1480();
-        } else if (_0x46bf7 === baileys_1.DisconnectReason.connectionReplaced) {
-          console.log("Connection replaced, another session is open");
-        } else if (_0x46bf7 === baileys_1.DisconnectReason.loggedOut) {
-          console.log("Logged out, please scan QR again");
-        } else if (_0x46bf7 === baileys_1.DisconnectReason.restartRequired) {
-          console.log("Restart required, restarting...");
-          _0x1b1480();
-        } else {
-          console.log("Unknown disconnect reason:", _0x46bf7);
+        if (_0x46bf7 === baileys_1.DisconnectReason.connectionClosed || _0x46bf7 === baileys_1.DisconnectReason.connectionLost) {
           _0x1b1480();
         }
       }
