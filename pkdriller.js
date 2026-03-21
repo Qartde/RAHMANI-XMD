@@ -1,4 +1,4 @@
-//Rahmani xmd - Full Index with Working Anti-Link (No Self-Delete)
+//Rahmani xmd - Final Fixed Anti-Link (Admin Links Not Deleted)
 'use strict';
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (_0x50c0f, _0x2c795a, _0x3e0982, _0x468796) {
@@ -102,7 +102,7 @@ app.listen(PORT, () => {
   console.log("Server is running at http://localhost:" + PORT);
 });
 
-// ============= IMPROVED ANTI-LINK SYSTEM =============
+// ============= ANTI-LINK SYSTEM =============
 const URL_PATTERNS = [
   /https?:\/\/[^\s]+/gi,
   /www\.[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}[^\s]*/gi,
@@ -119,8 +119,7 @@ const URL_PATTERNS = [
   /youtu\.be\/[^\s]+/gi,
   /discord\.gg\/[^\s]+/gi,
   /spotify\.com\/[^\s]+/gi,
-  /whatsapp\.com\/channel\/[^\s]+/gi,
-  /[\w\-]+\.[\w\-]+\.[\w\-]+/gi
+  /whatsapp\.com\/channel\/[^\s]+/gi
 ];
 
 function containsLink(text) {
@@ -173,7 +172,7 @@ function detectLinksInMessage(message) {
     text: textToCheck
   };
 }
-// ============= END OF ANTI-LINK SYSTEM =============
+// ============= END ANTI-LINK SYSTEM =============
 
 async function authentification() {
   try {
@@ -714,7 +713,7 @@ setTimeout(() => {
         }
       }
       
-      // ============= ANTI-LINK HANDLER (FIXED - Only Deletes Link Message) =============
+      // ============= ANTI-LINK HANDLER (FINAL FIX) =============
       try {
         const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
         const linkDetection = detectLinksInMessage(_0x24b35c.message);
@@ -723,14 +722,14 @@ setTimeout(() => {
         console.log("  - Chat:", _0xbaefcb);
         console.log("  - Enabled:", isAntiLinkEnabled);
         console.log("  - Has links:", linkDetection.hasLinks);
-        console.log("  - Links:", linkDetection.links);
         
-        if (linkDetection.hasLinks && isAntiLinkEnabled) {
+        if (linkDetection.hasLinks && isAntiLinkEnabled && !_0x24b35c.key.fromMe) {
           console.log("🔗 LINK DETECTED! Processing...");
           
-          let botIsAdmin = false;
           let isUserAdmin = false;
+          let botIsAdmin = false;
           
+          // Check admin status
           if (_0x37f41c) {
             try {
               const groupParticipants = await _0x243e88.groupMetadata(_0xbaefcb);
@@ -743,17 +742,17 @@ setTimeout(() => {
             }
           }
           
-          // Skip if user is admin (don't delete admin messages)
-          if (isUserAdmin) {
-            console.log("  - Skipping: User is admin");
+          // DON'T DELETE ADMIN MESSAGES
+          if (isUserAdmin || _0x34fccb) {
+            console.log("  - User is admin/owner, skipping deletion");
             return;
           }
           
-          // Get the action to perform
+          // Get the action
           const action = await recupererActionJid(_0xbaefcb);
           console.log("  - Action:", action);
           
-          // Prepare message info for deletion (ONLY the link message)
+          // Message to delete (ONLY the link message)
           const messageToDelete = {
             'remoteJid': _0xbaefcb,
             'fromMe': false,
@@ -761,7 +760,7 @@ setTimeout(() => {
             'participant': _0x133a07
           };
           
-          // ONLY DELETE THE LINK MESSAGE - NOT THE WARNING
+          // Try to delete the link message
           let linkDeleted = false;
           try {
             await _0x243e88.sendMessage(_0xbaefcb, {
@@ -773,29 +772,21 @@ setTimeout(() => {
             console.log("  - Could not delete link message:", delError.message);
           }
           
-          // Send warning message (THIS SHOULD NOT BE DELETED)
+          // Send warning message (WITHOUT showing the actual link)
           let warningText = "";
           
-          if (action === 'remove') {
-            if (botIsAdmin) {
-              warningText = `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}`;
-              
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': warningText,
-                'mentions': [_0x133a07]
-              });
-              
-              try {
-                await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-                console.log(`  - User ${_0x133a07} removed from group`);
-              } catch(e) { console.log("  - Removal failed:", e); }
-            } else {
-              warningText = `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed here!\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}\n\n⚠️ *Bot needs admin rights to remove users!*`;
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': warningText,
-                'mentions': [_0x133a07]
-              });
-            }
+          if (action === 'remove' && botIsAdmin) {
+            warningText = `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.\n\n🚫 Links are not allowed in this group!`;
+            
+            await _0x243e88.sendMessage(_0xbaefcb, {
+              'text': warningText,
+              'mentions': [_0x133a07]
+            });
+            
+            try {
+              await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
+              console.log(`  - User ${_0x133a07} removed from group`);
+            } catch(e) { console.log("  - Removal failed:", e); }
           } 
           else if (action === 'warn') {
             const { getWarnCountByJID, ajouterUtilisateurAvecWarnCount } = require("./bdd/warn");
@@ -804,7 +795,7 @@ setTimeout(() => {
             let maxWarns = conf.WARN_COUNT || 3;
             
             if (warnCount >= maxWarns && botIsAdmin) {
-              warningText = `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}`;
+              warningText = `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.\n\n🚫 Links are not allowed in this group!`;
               
               await _0x243e88.sendMessage(_0xbaefcb, {
                 'text': warningText,
@@ -813,13 +804,13 @@ setTimeout(() => {
               
               try { await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove"); } catch(e) {}
             } else if (warnCount >= maxWarns && !botIsAdmin) {
-              warningText = `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has reached ${maxWarns} warnings.\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}\n\n⚠️ *Bot needs admin rights to remove users!*`;
+              warningText = `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has reached ${maxWarns} warnings.\n\n⚠️ *Bot needs admin rights to remove users!*`;
               await _0x243e88.sendMessage(_0xbaefcb, {
                 'text': warningText,
                 'mentions': [_0x133a07]
               });
             } else {
-              warningText = `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed!\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*`;
+              warningText = `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*\n\n🚫 Please avoid sending links.`;
               
               try { await ajouterUtilisateurAvecWarnCount(_0x133a07); } catch(e) {}
               await _0x243e88.sendMessage(_0xbaefcb, {
@@ -831,11 +822,7 @@ setTimeout(() => {
           } 
           else {
             // Default action (delete only)
-            if (linkDeleted) {
-              warningText = `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}\n\n🚫 Links are not allowed here!`;
-            } else {
-              warningText = `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed here!\n\n🔗 Links: ${linkDetection.links.slice(0, 2).join(', ')}\n\n⚠️ *Bot needs admin rights to delete messages!*`;
-            }
+            warningText = `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!\n\n📌 Please respect the group rules.`;
             
             await _0x243e88.sendMessage(_0xbaefcb, {
               'text': warningText,
@@ -843,12 +830,12 @@ setTimeout(() => {
             });
           }
         } else {
-          console.log("  - No links or anti-link disabled");
+          console.log("  - No links, anti-link disabled, or message from bot");
         }
       } catch (_0x588dec) {
         console.log("❌ Anti-link error:", _0x588dec);
       }
-      // ============= END OF ANTI-LINK HANDLER =============
+      // ============= END ANTI-LINK HANDLER =============
       
       // Anti-bot handler
       try {
