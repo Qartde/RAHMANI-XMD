@@ -1,6 +1,7 @@
 const { zokou } = require("../framework/zokou");
 const { verifierEtatJid, recupererActionJid, mettreAJourAction, ajouterOuMettreAJourJid } = require("../bdd/antilien");
 const { getWarnCountByJID, ajouterUtilisateurAvecWarnCount, resetWarnCountByJID } = require("../bdd/warn");
+const conf = require("../set");
 
 zokou({
   nomCom: "antilink",
@@ -10,24 +11,54 @@ zokou({
 }, async (dest, zk, commandeOptions) => {
   const { ms, repondre, arg, auteurMessage, idBot, msgRepondu, auteurMsgRepondu } = commandeOptions;
   
-  // Check if in group
-  if (!dest.endsWith("@g.us")) {
-    return repondre("❌ This command only works in groups.");
+  // Get owner number from config
+  const ownerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
+  const isOwner = auteurMessage === ownerJid;
+  
+  // Check if in group or newsletter
+  const isNewsletter = dest.endsWith("@newsletter");
+  const isGroup = dest.endsWith("@g.us");
+  
+  if (!isGroup && !isNewsletter) {
+    return repondre("❌ This command only works in groups or newsletters.");
   }
   
   try {
-    // Get group metadata
-    const groupMetadata = await zk.groupMetadata(dest);
-    const participants = groupMetadata.participants;
+    let isAdmin = false;
+    let isBotAdmin = false;
+    let groupMetadata = null;
     
-    // Check if user is admin
-    const isAdmin = participants.some(p => p.id === auteurMessage && (p.admin === 'admin' || p.admin === 'superadmin'));
+    // For groups - check admin status normally
+    if (isGroup) {
+      groupMetadata = await zk.groupMetadata(dest);
+      const participants = groupMetadata.participants;
+      isAdmin = participants.some(p => p.id === auteurMessage && (p.admin === 'admin' || p.admin === 'superadmin'));
+      isBotAdmin = participants.some(p => p.id === idBot && (p.admin === 'admin' || p.admin === 'superadmin'));
+    }
     
-    // Check if bot is admin (required for deleting messages)
-    const isBotAdmin = participants.some(p => p.id === idBot && (p.admin === 'admin' || p.admin === 'superadmin'));
+    // For newsletters - owner is automatically admin
+    if (isNewsletter) {
+      // In newsletter, owner has full control
+      if (isOwner) {
+        isAdmin = true;
+        isBotAdmin = true; // Bot can also manage newsletter
+      } else {
+        // Check if user is newsletter admin (if possible)
+        // For now, only owner can manage newsletter anti-link
+        isAdmin = isOwner;
+      }
+    }
     
-    if (!isAdmin) {
-      return repondre("❌ Only group admins can use this command.");
+    // Also check if user is superuser/owner from config
+    const superUsers = [ownerJid, "254710772666@s.whatsapp.net", "254710772666@s.whatsapp.net"];
+    const isSuperUser = superUsers.includes(auteurMessage) || isOwner;
+    
+    if (!isAdmin && !isSuperUser) {
+      return repondre(`❌ Only group admins or the bot owner can use this command.
+
+👑 *Owner:* ${conf.NUMERO_OWNER}
+
+If you are the owner, make sure your number is correctly set in set.js`);
     }
     
     const subCommand = arg[0]?.toLowerCase();
@@ -39,8 +70,24 @@ zokou({
       // Set default action to warn (3 strikes rule)
       await mettreAJourAction(dest, 'warn');
       
-      return zk.sendMessage(dest, {
-        text: `╭━━━〔 *RAHMANI-XMD* 〕━━━╮
+      const replyText = isNewsletter ? 
+        `╭━━━〔 *RAHMANI-XMD* 〕━━━╮
+┃
+┃ 🔗 *ANTI-LINK ACTIVATED*
+┃
+┃ ✅ Anti-link protection is now *ENABLED*
+┃
+┃ ⚙️ *3-Strike Rule:*
+┃ ├─ 1st Offense: ⚠️ Warning
+┃ ├─ 2nd Offense: ⚠️ Warning
+┃ └─ 3rd Offense: 🚫 Removed from newsletter
+┃
+┃ 📌 *Bot will monitor all links*
+┃
+╰━━━〔 *POWERED BY RAHMANI-XMD* 〕━━━╯
+
+⚡ *RAHMANI-XMD*` :
+        `╭━━━〔 *RAHMANI-XMD* 〕━━━╮
 ┃
 ┃ 🔗 *ANTI-LINK ACTIVATED*
 ┃
@@ -55,7 +102,10 @@ zokou({
 ┃
 ╰━━━〔 *POWERED BY RAHMANI-XMD* 〕━━━╯
 
-⚡ *RAHMANI-XMD*`,
+⚡ *RAHMANI-XMD*`;
+      
+      return zk.sendMessage(dest, {
+        text: replyText,
         contextInfo: {
           externalAdReply: {
             title: "RAHMANI-XMD",
@@ -72,8 +122,19 @@ zokou({
     else if (subCommand === "off") {
       await ajouterOuMettreAJourJid(dest, 'non');
       
-      return zk.sendMessage(dest, {
-        text: `╭━━━〔 *RAHMANI-XMD* 〕━━━╮
+      const replyText = isNewsletter ?
+        `╭━━━〔 *RAHMANI-XMD* 〕━━━╮
+┃
+┃ 🔗 *ANTI-LINK DEACTIVATED*
+┃
+┃ ❌ Anti-link protection is now *DISABLED*
+┃
+┃ 📌 Links are now allowed in this newsletter
+┃
+╰━━━〔 *POWERED BY RAHMANI-XMD* 〕━━━╯
+
+⚡ *RAHMANI-XMD*` :
+        `╭━━━〔 *RAHMANI-XMD* 〕━━━╮
 ┃
 ┃ 🔗 *ANTI-LINK DEACTIVATED*
 ┃
@@ -83,7 +144,10 @@ zokou({
 ┃
 ╰━━━〔 *POWERED BY RAHMANI-XMD* 〕━━━╯
 
-⚡ *RAHMANI-XMD*`,
+⚡ *RAHMANI-XMD*`;
+      
+      return zk.sendMessage(dest, {
+        text: replyText,
         contextInfo: {
           externalAdReply: {
             title: "RAHMANI-XMD",
@@ -149,10 +213,6 @@ Example: \`.antilink action warn\``);
     
     // ========== RESET WARNINGS ==========
     else if (subCommand === "reset") {
-      if (!isBotAdmin) {
-        return repondre("❌ Bot must be admin to manage warnings.");
-      }
-      
       let targetJid = null;
       
       // Check if replying to a message
@@ -213,13 +273,20 @@ or reply to user's message with \`.antilink reset\``);
       const statusText = etat ? "✅ ENABLED" : "❌ DISABLED";
       const statusEmoji = etat ? "🟢" : "🔴";
       
-      // Get bot admin status
-      const botAdminStatus = isBotAdmin ? "✅ Yes" : "❌ No (Cannot delete messages)";
+      // Get bot admin status for groups
+      let botAdminStatus = "N/A";
+      if (isGroup) {
+        botAdminStatus = isBotAdmin ? "✅ Yes" : "❌ No (Cannot delete messages)";
+      } else if (isNewsletter) {
+        botAdminStatus = "✅ Bot can monitor newsletter";
+      }
+      
+      const locationType = isNewsletter ? "NEWSLETTER" : "GROUP";
       
       return zk.sendMessage(dest, {
         text: `╭━━━〔 *RAHMANI-XMD* 〕━━━╮
 ┃
-┃ ${statusEmoji} *ANTI-LINK SETTINGS*
+┃ ${statusEmoji} *ANTI-LINK SETTINGS* (${locationType})
 ┃
 ┃ 📊 *Status:* ${statusText}
 ┃ ${actionEmoji} *Action:* ${actionDisplay}
@@ -228,6 +295,7 @@ or reply to user's message with \`.antilink reset\``);
 ┃ └─ ${actionDescription}
 ┃
 ┃ 🤖 *Bot Admin:* ${botAdminStatus}
+┃ 👑 *Owner:* ${conf.NUMERO_OWNER}
 ┃
 ┃ ━━━━━━━━━━━━━━━━━━━
 ┃
@@ -260,6 +328,7 @@ or reply to user's message with \`.antilink reset\``);
 Please check:
 1. Bot is admin in the group
 2. Your database files exist
-3. Group is valid`);
+3. Your owner number is correct in set.js
+4. You are using the correct prefix`);
   }
 });
