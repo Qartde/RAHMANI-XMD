@@ -7,7 +7,7 @@ const {
 } = require('../bdd/antilien');
 
 module.exports = {
-  nomCom: 'antilink',
+  nomCom: 'antilink1',
   categorie: 'Group Settings',
   reaction: '🔗',
   description: 'Manage anti-link settings in groups',
