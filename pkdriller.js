@@ -1015,11 +1015,11 @@ setTimeout(() => {
         }
       } catch (_0x14e2ce) {}
       
-      // ============= ANTI-LINK HANDLER (ORIGINAL WORKING VERSION) =============
+      // ============= ANTI-LINK HANDLER (WORKING VERSION FROM BEFORE) =============
       try {
         const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
         
-        // Check for any link in the message
+        // Check if message contains any link
         let hasLink = false;
         if (_0xf697f8) {
           hasLink = _0xf697f8.includes("https://") || 
@@ -1032,7 +1032,12 @@ setTimeout(() => {
                      _0xf697f8.includes("chat.whatsapp.com") ||
                      _0xf697f8.includes("t.me") ||
                      _0xf697f8.includes("bit.ly") ||
-                     _0xf697f8.includes("tinyurl.com");
+                     _0xf697f8.includes("tinyurl.com") ||
+                     _0xf697f8.includes("youtube.com") ||
+                     _0xf697f8.includes("youtu.be") ||
+                     _0xf697f8.includes("instagram.com") ||
+                     _0xf697f8.includes("facebook.com") ||
+                     _0xf697f8.includes("twitter.com");
         }
         
         if (hasLink && _0x37f41c && isAntiLinkEnabled) {
@@ -1040,9 +1045,9 @@ setTimeout(() => {
           
           var _0xe4de2e = _0x37f41c ? _0x11ea71.includes(_0x4b2990) : false;
           
-          // Skip if sender is admin or bot is not admin
+          // Skip if sender is admin, owner, or bot is not admin
           if (_0x34fccb || _0x62654f || !_0xe4de2e) {
-            console.log("Skipping: admin or bot not admin");
+            console.log("Skipping: admin/owner or bot not admin");
             return;
           }
           
