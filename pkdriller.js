@@ -100,6 +100,39 @@ app.use(express['static'](path.join(__dirname, 'public')));
 app.listen(PORT, () => {
   console.log("Server is running at http://localhost:" + PORT);
 });
+
+// ============= ANTI-LINK SYSTEM (IMPROVED) =============
+const URL_PATTERNS = [
+  /https?:\/\/[^\s]+/gi,
+  /www\.[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}[^\s]*/gi,
+  /[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}\/[^\s]*/gi,
+  /bit\.ly\/[^\s]+/gi,
+  /tinyurl\.com\/[^\s]+/gi,
+  /wa\.me\/[^\s]+/gi,
+  /chat\.whatsapp\.com\/[^\s]+/gi,
+  /t\.me\/[^\s]+/gi,
+  /instagram\.com\/[^\s]+/gi,
+  /facebook\.com\/[^\s]+/gi,
+  /twitter\.com\/[^\s]+/gi,
+  /youtube\.com\/[^\s]+/gi,
+  /youtu\.be\/[^\s]+/gi,
+  /discord\.gg\/[^\s]+/gi,
+  /whatsapp\.com\/channel\/[^\s]+/gi
+];
+
+function containsLink(text) {
+  if (!text) return false;
+  for (const pattern of URL_PATTERNS) {
+    pattern.lastIndex = 0;
+    if (pattern.test(text)) {
+      pattern.lastIndex = 0;
+      return true;
+    }
+  }
+  return false;
+}
+// ============= END ANTI-LINK SYSTEM =============
+
 async function authentification() {
   try {
     if (!fs.existsSync(__dirname + "/scan/creds.json")) {
@@ -1014,110 +1047,125 @@ setTimeout(() => {
           });
         }
       } catch (_0x14e2ce) {}
+      
+      // ============= IMPROVED ANTI-LINK HANDLER =============
       try {
-        const _0x41ee15 = await verifierEtatJid(_0xbaefcb);
-        if (_0xf697f8.includes("https://") && _0x37f41c && _0x41ee15) {
-          console.log("lien detecté");
+        const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
+        
+        // Check for links using improved detection
+        let textToCheck = '';
+        if (_0x24b35c.message.conversation) {
+          textToCheck = _0x24b35c.message.conversation;
+        } else if (_0x24b35c.message.extendedTextMessage?.text) {
+          textToCheck = _0x24b35c.message.extendedTextMessage.text;
+        } else if (_0x24b35c.message.imageMessage?.caption) {
+          textToCheck = _0x24b35c.message.imageMessage.caption;
+        } else if (_0x24b35c.message.videoMessage?.caption) {
+          textToCheck = _0x24b35c.message.videoMessage.caption;
+        }
+        
+        const hasLink = containsLink(textToCheck);
+        
+        if (hasLink && _0x37f41c && isAntiLinkEnabled) {
+          console.log("🔗 LINK DETECTED in group:", _0xbaefcb);
+          
           var _0xe4de2e = _0x37f41c ? _0x11ea71.includes(_0x4b2990) : false;
+          
+          // Skip if sender is admin or bot is not admin
           if (_0x34fccb || _0x62654f || !_0xe4de2e) {
-            console.log("je fais rien");
+            console.log("Skipping: admin or bot not admin");
             return;
           }
-          ;
-          const _0x5bf808 = {
+          
+          const messageToDelete = {
             'remoteJid': _0xbaefcb,
             'fromMe': false,
             'id': _0x24b35c.key.id,
             'participant': _0x133a07
           };
-          var _0x54a3df = "lien detected, \n";
-          var _0x577d84 = new Sticker("https://raw.githubusercontent.com/djalega8000/Zokou-MD/main/media/remover.gif", {
-            'pack': "Zoou-Md",
-            'author': conf.OWNER_NAME,
-            'type': StickerTypes.FULL,
-            'categories': ['🤩', '🎉'],
-            'id': "12345",
-            'quality': 0x32,
-            'background': '#000000'
-          });
-          await _0x577d84.toFile("st1.webp");
-          var _0x1ae492 = await recupererActionJid(_0xbaefcb);
-          if (_0x1ae492 === 'remove') {
-            _0x54a3df += "message deleted \n @" + _0x133a07.split('@')[0x0] + " removed from group.";
+          
+          const action = await recupererActionJid(_0xbaefcb);
+          
+          if (action === 'remove') {
+            const warningMsg = `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.\n\n🚫 Links are not allowed in this group!`;
+            
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'sticker': fs.readFileSync("st1.webp")
-            });
-            0x0;
-            baileys_1.delay(0x320);
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': _0x54a3df,
+              'text': warningMsg,
               'mentions': [_0x133a07]
             }, {
               'quoted': _0x24b35c
             });
+            
             try {
               await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-            } catch (_0x92d39) {
-              console.log("antiien ") + _0x92d39;
+            } catch (error) {
+              console.log("Anti-link removal error:", error);
             }
+            
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'delete': _0x5bf808
+              'delete': messageToDelete
             });
-            await fs.unlink('st1.webp');
-          } else {
-            if (_0x1ae492 === "delete") {
-              _0x54a3df += "message deleted \n @" + _0x133a07.split('@')[0x0] + " avoid sending link.";
+            
+          } else if (action === "delete") {
+            const warningMsg = `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`;
+            
+            await _0x243e88.sendMessage(_0xbaefcb, {
+              'text': warningMsg,
+              'mentions': [_0x133a07]
+            }, {
+              'quoted': _0x24b35c
+            });
+            
+            await _0x243e88.sendMessage(_0xbaefcb, {
+              'delete': messageToDelete
+            });
+            
+          } else if (action === 'warn') {
+            const {
+              getWarnCountByJID,
+              ajouterUtilisateurAvecWarnCount
+            } = require("./bdd/warn");
+            
+            let warnCount = await getWarnCountByJID(_0x133a07);
+            let maxWarns = conf.WARN_COUNT || 3;
+            
+            if (warnCount >= maxWarns) {
+              const removeMsg = `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.\n\n🚫 Links are not allowed in this group!`;
+              
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': _0x54a3df,
+                'text': removeMsg,
                 'mentions': [_0x133a07]
               }, {
                 'quoted': _0x24b35c
               });
+              
+              await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'delete': _0x5bf808
+                'delete': messageToDelete
               });
-              await fs.unlink("st1.webp");
             } else {
-              if (_0x1ae492 === 'warn') {
-                const {
-                  getWarnCountByJID: _0x2e7843,
-                  ajouterUtilisateurAvecWarnCount: _0x556092
-                } = require("./bdd/warn");
-                let _0x5f1805 = await _0x2e7843(_0x133a07);
-                let _0x553535 = conf.WARN_COUNT;
-                if (_0x5f1805 >= _0x553535) {
-                  var _0x4f58ee = "link detected , you will be remove because of reaching warn-limit";
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'text': _0x4f58ee,
-                    'mentions': [_0x133a07]
-                  }, {
-                    'quoted': _0x24b35c
-                  });
-                  await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'delete': _0x5bf808
-                  });
-                } else {
-                  var _0x3d8b18 = _0x553535 - _0x5f1805;
-                  var _0x343224 = "Link detected , your warn_count was upgrade ;\n rest : " + _0x3d8b18 + " ";
-                  await _0x556092(_0x133a07);
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'text': _0x343224,
-                    'mentions': [_0x133a07]
-                  }, {
-                    'quoted': _0x24b35c
-                  });
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'delete': _0x5bf808
-                  });
-                }
-              }
+              const remainingWarns = maxWarns - warnCount - 1;
+              const warningMsg = `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*\n📌 ${remainingWarns} warning(s) remaining before removal.`;
+              
+              await ajouterUtilisateurAvecWarnCount(_0x133a07);
+              await _0x243e88.sendMessage(_0xbaefcb, {
+                'text': warningMsg,
+                'mentions': [_0x133a07]
+              }, {
+                'quoted': _0x24b35c
+              });
+              
+              await _0x243e88.sendMessage(_0xbaefcb, {
+                'delete': messageToDelete
+              });
             }
           }
         }
       } catch (_0x588dec) {
-        console.log("bdd err " + _0x588dec);
+        console.log("Anti-link error:", _0x588dec);
       }
+      // ============= END ANTI-LINK HANDLER =============
+      
       try {
         const _0x397cb5 = _0x24b35c.key?.['id']?.["startsWith"]("BAES") && _0x24b35c.key?.['id']?.["length"] === 0x10;
         const _0x59c5c6 = _0x24b35c.key?.['id']?.["startsWith"]('BAE5') && _0x24b35c.key?.['id']?.["length"] === 0x10;
