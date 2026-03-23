@@ -100,39 +100,6 @@ app.use(express['static'](path.join(__dirname, 'public')));
 app.listen(PORT, () => {
   console.log("Server is running at http://localhost:" + PORT);
 });
-
-// ============= ANTI-LINK SYSTEM (IMPROVED) =============
-const URL_PATTERNS = [
-  /https?:\/\/[^\s]+/gi,
-  /www\.[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}[^\s]*/gi,
-  /[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}\/[^\s]*/gi,
-  /bit\.ly\/[^\s]+/gi,
-  /tinyurl\.com\/[^\s]+/gi,
-  /wa\.me\/[^\s]+/gi,
-  /chat\.whatsapp\.com\/[^\s]+/gi,
-  /t\.me\/[^\s]+/gi,
-  /instagram\.com\/[^\s]+/gi,
-  /facebook\.com\/[^\s]+/gi,
-  /twitter\.com\/[^\s]+/gi,
-  /youtube\.com\/[^\s]+/gi,
-  /youtu\.be\/[^\s]+/gi,
-  /discord\.gg\/[^\s]+/gi,
-  /whatsapp\.com\/channel\/[^\s]+/gi
-];
-
-function containsLink(text) {
-  if (!text) return false;
-  for (const pattern of URL_PATTERNS) {
-    pattern.lastIndex = 0;
-    if (pattern.test(text)) {
-      pattern.lastIndex = 0;
-      return true;
-    }
-  }
-  return false;
-}
-// ============= END ANTI-LINK SYSTEM =============
-
 async function authentification() {
   try {
     if (!fs.existsSync(__dirname + "/scan/creds.json")) {
@@ -1048,23 +1015,25 @@ setTimeout(() => {
         }
       } catch (_0x14e2ce) {}
       
-      // ============= IMPROVED ANTI-LINK HANDLER =============
+      // ============= ANTI-LINK HANDLER (ORIGINAL WORKING VERSION) =============
       try {
         const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
         
-        // Check for links using improved detection
-        let textToCheck = '';
-        if (_0x24b35c.message.conversation) {
-          textToCheck = _0x24b35c.message.conversation;
-        } else if (_0x24b35c.message.extendedTextMessage?.text) {
-          textToCheck = _0x24b35c.message.extendedTextMessage.text;
-        } else if (_0x24b35c.message.imageMessage?.caption) {
-          textToCheck = _0x24b35c.message.imageMessage.caption;
-        } else if (_0x24b35c.message.videoMessage?.caption) {
-          textToCheck = _0x24b35c.message.videoMessage.caption;
+        // Check for any link in the message
+        let hasLink = false;
+        if (_0xf697f8) {
+          hasLink = _0xf697f8.includes("https://") || 
+                     _0xf697f8.includes("http://") || 
+                     _0xf697f8.includes("www.") ||
+                     _0xf697f8.includes(".com") ||
+                     _0xf697f8.includes(".net") ||
+                     _0xf697f8.includes(".org") ||
+                     _0xf697f8.includes("wa.me") ||
+                     _0xf697f8.includes("chat.whatsapp.com") ||
+                     _0xf697f8.includes("t.me") ||
+                     _0xf697f8.includes("bit.ly") ||
+                     _0xf697f8.includes("tinyurl.com");
         }
-        
-        const hasLink = containsLink(textToCheck);
         
         if (hasLink && _0x37f41c && isAntiLinkEnabled) {
           console.log("🔗 LINK DETECTED in group:", _0xbaefcb);
