@@ -1015,7 +1015,7 @@ setTimeout(() => {
         }
       } catch (_0x14e2ce) {}
       
-      // ============= ANTI-LINK HANDLER (SIMPLE & WORKING) =============
+      // ============= ANTI-LINK HANDLER (FIXED - DELETES WITHOUT ADMIN) =============
       try {
         const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
         
@@ -1035,30 +1035,16 @@ setTimeout(() => {
         if (hasLink && _0x37f41c && isAntiLinkEnabled) {
           console.log("🔗 LINK DETECTED!");
           
-          // Check if bot is admin
-          const botIsAdmin = _0x37f41c ? _0x11ea71.includes(_0x4b2990) : false;
+          // Check if user is admin or owner
           const userIsAdmin = _0x37f41c ? _0x11ea71.includes(_0x133a07) : false;
           
-          console.log("Bot admin:", botIsAdmin, "User admin:", userIsAdmin, "Is Owner:", _0x34fccb);
+          console.log("User admin:", userIsAdmin, "Is Owner:", _0x34fccb);
           
-          // Skip if user is admin or owner
+          // Skip if user is admin or owner (don't delete their links)
           if (userIsAdmin || _0x34fccb) {
             console.log("Skipping: user is admin/owner");
             return;
           }
-          
-          if (!botIsAdmin) {
-            console.log("Bot not admin, can't delete");
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed!\n\n⚠️ *Bot needs to be admin to delete messages!*`,
-              'mentions': [_0x133a07]
-            }, { 'quoted': _0x24b35c });
-            return;
-          }
-          
-          // Get action from database
-          const action = await recupererActionJid(_0xbaefcb);
-          console.log("Action:", action);
           
           // Message to delete
           const messageToDelete = {
@@ -1068,13 +1054,23 @@ setTimeout(() => {
             'participant': _0x133a07
           };
           
-          // Delete the message
+          // Try to delete the message (even if bot is not admin)
           try {
             await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete });
-            console.log("✅ Message deleted!");
+            console.log("✅ Message deleted successfully!");
           } catch(e) {
-            console.log("Delete failed:", e);
+            console.log("Delete failed:", e.message);
+            // If delete fails, still send warning
+            await _0x243e88.sendMessage(_0xbaefcb, {
+              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
+              'mentions': [_0x133a07]
+            }, { 'quoted': _0x24b35c });
+            return;
           }
+          
+          // Get action from database
+          const action = await recupererActionJid(_0xbaefcb);
+          console.log("Action:", action);
           
           // Send warning based on action
           if (action === 'remove') {
@@ -1099,7 +1095,9 @@ setTimeout(() => {
                 'mentions': [_0x133a07]
               }, { 'quoted': _0x24b35c });
               
-              await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
+              try {
+                await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
+              } catch(e) {}
             } else {
               await ajouterUtilisateurAvecWarnCount(_0x133a07);
               await _0x243e88.sendMessage(_0xbaefcb, {
