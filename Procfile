@@ -1,2 +1,3 @@
 
-web: node pkdriller.js && node pkdriller.js
+
+worker: node pkdriller.js
