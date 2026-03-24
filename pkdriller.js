@@ -1015,42 +1015,52 @@ setTimeout(() => {
         }
       } catch (_0x14e2ce) {}
       
-      // ============= ANTI-LINK HANDLER (WORKING VERSION FROM BEFORE) =============
+      // ============= ANTI-LINK HANDLER (SIMPLE & WORKING) =============
       try {
         const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
         
-        // Check if message contains any link
+        // Simple link detection
         let hasLink = false;
         if (_0xf697f8) {
-          hasLink = _0xf697f8.includes("https://") || 
-                     _0xf697f8.includes("http://") || 
-                     _0xf697f8.includes("www.") ||
-                     _0xf697f8.includes(".com") ||
-                     _0xf697f8.includes(".net") ||
-                     _0xf697f8.includes(".org") ||
-                     _0xf697f8.includes("wa.me") ||
-                     _0xf697f8.includes("chat.whatsapp.com") ||
-                     _0xf697f8.includes("t.me") ||
-                     _0xf697f8.includes("bit.ly") ||
-                     _0xf697f8.includes("tinyurl.com") ||
-                     _0xf697f8.includes("youtube.com") ||
-                     _0xf697f8.includes("youtu.be") ||
-                     _0xf697f8.includes("instagram.com") ||
-                     _0xf697f8.includes("facebook.com") ||
-                     _0xf697f8.includes("twitter.com");
+          hasLink = _0xf697f8.includes("http") || _0xf697f8.includes("www.");
         }
         
+        console.log("🔍 ANTI-LINK CHECK:", { 
+          hasLink: hasLink, 
+          isEnabled: isAntiLinkEnabled, 
+          isGroup: _0x37f41c,
+          text: _0xf697f8 ? _0xf697f8.substring(0, 50) : "no text"
+        });
+        
         if (hasLink && _0x37f41c && isAntiLinkEnabled) {
-          console.log("🔗 LINK DETECTED in group:", _0xbaefcb);
+          console.log("🔗 LINK DETECTED!");
           
-          var _0xe4de2e = _0x37f41c ? _0x11ea71.includes(_0x4b2990) : false;
+          // Check if bot is admin
+          const botIsAdmin = _0x37f41c ? _0x11ea71.includes(_0x4b2990) : false;
+          const userIsAdmin = _0x37f41c ? _0x11ea71.includes(_0x133a07) : false;
           
-          // Skip if sender is admin, owner, or bot is not admin
-          if (_0x34fccb || _0x62654f || !_0xe4de2e) {
-            console.log("Skipping: admin/owner or bot not admin");
+          console.log("Bot admin:", botIsAdmin, "User admin:", userIsAdmin, "Is Owner:", _0x34fccb);
+          
+          // Skip if user is admin or owner
+          if (userIsAdmin || _0x34fccb) {
+            console.log("Skipping: user is admin/owner");
             return;
           }
           
+          if (!botIsAdmin) {
+            console.log("Bot not admin, can't delete");
+            await _0x243e88.sendMessage(_0xbaefcb, {
+              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed!\n\n⚠️ *Bot needs to be admin to delete messages!*`,
+              'mentions': [_0x133a07]
+            }, { 'quoted': _0x24b35c });
+            return;
+          }
+          
+          // Get action from database
+          const action = await recupererActionJid(_0xbaefcb);
+          console.log("Action:", action);
+          
+          // Message to delete
           const messageToDelete = {
             'remoteJid': _0xbaefcb,
             'fromMe': false,
@@ -1058,81 +1068,52 @@ setTimeout(() => {
             'participant': _0x133a07
           };
           
-          const action = await recupererActionJid(_0xbaefcb);
+          // Delete the message
+          try {
+            await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete });
+            console.log("✅ Message deleted!");
+          } catch(e) {
+            console.log("Delete failed:", e);
+          }
           
+          // Send warning based on action
           if (action === 'remove') {
-            const warningMsg = `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.\n\n🚫 Links are not allowed in this group!`;
-            
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': warningMsg,
+              'text': `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.\n\n🚫 Links are not allowed in this group!`,
               'mentions': [_0x133a07]
-            }, {
-              'quoted': _0x24b35c
-            });
+            }, { 'quoted': _0x24b35c });
             
             try {
               await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-            } catch (error) {
-              console.log("Anti-link removal error:", error);
-            }
-            
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'delete': messageToDelete
-            });
-            
-          } else if (action === "delete") {
-            const warningMsg = `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`;
-            
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': warningMsg,
-              'mentions': [_0x133a07]
-            }, {
-              'quoted': _0x24b35c
-            });
-            
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'delete': messageToDelete
-            });
+              console.log("User removed");
+            } catch(e) { console.log("Remove failed:", e); }
             
           } else if (action === 'warn') {
-            const {
-              getWarnCountByJID,
-              ajouterUtilisateurAvecWarnCount
-            } = require("./bdd/warn");
-            
+            const { getWarnCountByJID, ajouterUtilisateurAvecWarnCount } = require("./bdd/warn");
             let warnCount = await getWarnCountByJID(_0x133a07);
             let maxWarns = conf.WARN_COUNT || 3;
             
             if (warnCount >= maxWarns) {
-              const removeMsg = `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.\n\n🚫 Links are not allowed in this group!`;
-              
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': removeMsg,
+                'text': `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.\n\n🚫 Links are not allowed in this group!`,
                 'mentions': [_0x133a07]
-              }, {
-                'quoted': _0x24b35c
-              });
+              }, { 'quoted': _0x24b35c });
               
               await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'delete': messageToDelete
-              });
             } else {
-              const remainingWarns = maxWarns - warnCount - 1;
-              const warningMsg = `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*\n📌 ${remainingWarns} warning(s) remaining before removal.`;
-              
               await ajouterUtilisateurAvecWarnCount(_0x133a07);
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': warningMsg,
+                'text': `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*`,
                 'mentions': [_0x133a07]
-              }, {
-                'quoted': _0x24b35c
-              });
-              
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'delete': messageToDelete
-              });
+              }, { 'quoted': _0x24b35c });
             }
+            
+          } else {
+            // Default delete only
+            await _0x243e88.sendMessage(_0xbaefcb, {
+              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
+              'mentions': [_0x133a07]
+            }, { 'quoted': _0x24b35c });
           }
         }
       } catch (_0x588dec) {
