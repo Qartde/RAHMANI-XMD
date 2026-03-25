@@ -2,8 +2,8 @@ const { zokou } = require("../framework/zokou");
 
 zokou({
   nomCom: "tagonline",
-  aliases: ["online", "tagactive", "active", "tagonline"],
-  reaction: "🙄",
+  aliases: ["online", "tagactive", "active"],
+  reaction: "🟢",
   categorie: "Group"
 }, async (dest, zk, commandeOptions) => {
   const { ms, repondre, verifGroupe, verifAdmin, superUser, auteurMessage, idBot } = commandeOptions;
@@ -17,6 +17,7 @@ zokou({
     // Get group metadata
     const groupMetadata = await zk.groupMetadata(dest);
     const participants = groupMetadata.participants;
+    const groupName = groupMetadata.subject;
     
     // Check if user is admin or owner
     const isAdmin = participants.some(p => p.id === auteurMessage && (p.admin === 'admin' || p.admin === 'superadmin'));
@@ -26,110 +27,97 @@ zokou({
       return repondre("❌ Only group admins can use this command!");
     }
     
-    // Send typing indicator
-    await zk.sendPresenceUpdate("composing", dest);
-    
-    // Get online status for all participants
-    let onlineUsers = [];
-    let offlineUsers = [];
-    let unknownUsers = [];
-    
     // Send initial message
-    const statusMsg = await repondre("🙄 *Checking online status...*\n\nPlease wait...");
+    await repondre("🟢 *Checking online status...*\nPlease wait...");
     
-    // Get presence for each participant (limited to avoid rate limit)
-    for (let i = 0; i < participants.length; i++) {
-      const participant = participants[i];
+    // Get all participants
+    let onlineUsers = [];
+    let allUsers = [];
+    
+    // Get presence for all participants quickly
+    const presencePromises = [];
+    
+    for (let participant of participants) {
       const jid = participant.id;
-      
       // Skip bot itself
       if (jid === idBot) continue;
       
-      try {
-        // Get presence status
-        const presence = await zk.presenceSubscribe(jid);
-        
-        // Wait a bit to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        // Check if user is online
-        if (presence && presence.lastKnownPresence === "available") {
-          onlineUsers.push({
-            jid: jid,
-            name: participant.name || jid.split('@')[0],
-            admin: participant.admin
-          });
-        } else {
-          offlineUsers.push({
-            jid: jid,
-            name: participant.name || jid.split('@')[0],
-            admin: participant.admin
-          });
+      allUsers.push({
+        jid: jid,
+        name: participant.name || jid.split('@')[0],
+        admin: participant.admin
+      });
+      
+      // Try to get presence
+      presencePromises.push(
+        zk.presenceSubscribe(jid).catch(() => null)
+      );
+    }
+    
+    // Wait for all presence checks with timeout
+    const presences = await Promise.allSettled(presencePromises);
+    
+    // Process results
+    for (let i = 0; i < allUsers.length; i++) {
+      const user = allUsers[i];
+      const presence = presences[i];
+      
+      if (presence.status === 'fulfilled' && presence.value) {
+        // Check if online
+        if (presence.value.lastKnownPresence === "available" || 
+            presence.value.lastKnownPresence === "composing" ||
+            presence.value.lastKnownPresence === "recording") {
+          onlineUsers.push(user);
         }
-      } catch (err) {
-        // If can't get presence, add to unknown
-        unknownUsers.push({
-          jid: jid,
-          name: participant.name || jid.split('@')[0],
-          admin: participant.admin
-        });
       }
     }
     
-    // Format the message
+    // Format message
     let message = `╭━━━〔 *RAHMANI-XMD* 〕━━━╮\n`;
     message += `┃\n`;
     message += `┃ 🟢 *ONLINE MEMBERS*\n`;
+    message += `┃ 📌 *Group:* ${groupName}\n`;
     message += `┃\n`;
     
     if (onlineUsers.length > 0) {
-      message += `┃ *Online:* ${onlineUsers.length} members\n`;
+      message += `┃ *Online:* ${onlineUsers.length}/${allUsers.length}\n`;
       message += `┃\n`;
-      for (let user of onlineUsers) {
+      
+      // Show online users (max 30)
+      for (let user of onlineUsers.slice(0, 30)) {
         const adminBadge = user.admin ? "👑 " : "";
         message += `┃ ${adminBadge}@${user.jid.split('@')[0]}\n`;
+      }
+      
+      if (onlineUsers.length > 30) {
+        message += `┃ ... and ${onlineUsers.length - 30} more online\n`;
       }
     } else {
       message += `┃ ❌ No online members found\n`;
     }
     
     message += `┃\n`;
-    message += `┃ ━━━━━━━━━━━━━━━━━━━\n`;
-    message += `┃\n`;
-    message += `┃ ⚫ *Offline:* ${offlineUsers.length} members\n`;
-    message += `┃\n`;
-    
-    if (offlineUsers.length > 0 && offlineUsers.length <= 10) {
-      for (let user of offlineUsers.slice(0, 5)) {
-        message += `┃ • @${user.jid.split('@')[0]}\n`;
-      }
-      if (offlineUsers.length > 5) {
-        message += `┃ • ... and ${offlineUsers.length - 5} more\n`;
-      }
-    }
-    
-    message += `┃\n`;
-    message += `┃ ❓ *Unknown:* ${unknownUsers.length} members\n`;
+    message += `┃ 📊 *Total members:* ${allUsers.length}\n`;
     message += `┃\n`;
     message += `╰━━━〔 *BY RAHMANI-XMD* 〕━━━╯`;
     
-    // Collect all mentions
-    const mentions = [...onlineUsers, ...offlineUsers.slice(0, 5), ...unknownUsers.slice(0, 5)]
-      .map(u => u.jid);
+    // Collect mentions
+    const mentions = onlineUsers.map(u => u.jid);
     
-    // Delete status message and send final
+    // Send final message
     await zk.sendMessage(dest, {
       text: message,
       mentions: mentions
     });
     
-    // Delete the status message
-    if (statusMsg && statusMsg.key) {
-      await zk.sendMessage(dest, { delete: statusMsg.key });
-    }
+    // Delete the initial message (optional)
+    // Uncomment if you want to delete it
+    // if (statusMsg && statusMsg.key) {
+    //   await zk.sendMessage(dest, { delete: statusMsg.key });
+    // }
     
   } catch (error) {
     console.error("Tag online error:", error);
-    repondre(`❌ Error: ${error.message}\n\nMake sure bot has admin rights to see online status.`);
+    repondre(`❌ Error: ${error.message}\n\nMake sure bot is admin to see online status.`);
   }
 });
