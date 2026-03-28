@@ -101,13 +101,37 @@ app.listen(PORT, () => {
   console.log("Server is running at http://localhost:" + PORT);
 });
 
-// ============= ANTI-VIRUS & ANTI-BUG PROTECTION SYSTEM =============
+// ============= ADVANCED ANTI-VIRUS & ANTI-BUG PROTECTION SYSTEM =============
 const antiMalware = {
     enabled: true,
     autoDelete: true,
     sendWarning: true,
     autoBan: false,
+    autoBlock: true,
+    blockInDM: true,
     logAttacks: true,
+    
+    blockedUsers: new Map(),
+    
+    blockUser: async function(sock, userJid, reason) {
+        if (this.blockedUsers.has(userJid)) return false;
+        try {
+            await sock.updateBlockStatus(userJid, 'block');
+            this.blockedUsers.set(userJid, {
+                timestamp: Date.now(),
+                reason: reason
+            });
+            console.log(`🚫 USER BLOCKED: ${userJid} - Reason: ${reason}`);
+            return true;
+        } catch(e) {
+            console.log(`Failed to block ${userJid}: ${e.message}`);
+            return false;
+        }
+    },
+    
+    isUserBlocked: function(userJid) {
+        return this.blockedUsers.has(userJid);
+    },
     
     detection: {
         maxMessageLength: 5000,
@@ -146,11 +170,11 @@ const antiMalware = {
             ],
             
             unicodeFlood: [
-                /[\uA980-\uA9DF\u1B00-\u1B7F\u0980-\u09FF]{50,}/,
+                /[\uA980-\uA9DF\u1B00-\u1B7F\u0980-\u09FF]{30,}/,
                 /(.)\1{100,}/
             ],
             
-            longString: /^[^\s]{1000,}$/
+            longString: /^[^\s]{500,}$/
         },
         
         blockedKeywords: [
@@ -173,7 +197,7 @@ const antiMalware = {
         };
         this.securityLogs.unshift(event);
         if (this.securityLogs.length > 1000) this.securityLogs.pop();
-        console.log(`🛡️ [SECURITY] ${type}: ${details}`);
+        console.log(`🛡️ [SECURITY] ${type}: ${details} | Sender: ${sender}`);
     },
     
     detectMaliciousContent: function(message) {
@@ -184,7 +208,7 @@ const antiMalware = {
         if (message.length > this.detection.maxMessageLength) {
             return {
                 detected: true,
-                reason: `Message too long (${message.length} chars)`,
+                reason: `Message too long (${message.length} chars) - Possible crash attack`,
                 type: 'excessive_length'
             };
         }
@@ -193,8 +217,8 @@ const antiMalware = {
             if (pattern.test(message)) {
                 return {
                     detected: true,
-                    reason: 'Unicode flood attack detected (Javanese/Balinese)',
-                    type: 'unicode_flood'
+                    reason: 'Unicode flood attack detected (Javanese/Balinese) - CRASH ATTEMPT',
+                    type: 'unicode_flood_crash'
                 };
             }
         }
@@ -202,8 +226,17 @@ const antiMalware = {
         if (this.detection.patterns.longString.test(message)) {
             return {
                 detected: true,
-                reason: `Extremely long continuous string - crash attack`,
+                reason: `Extremely long continuous string (${message.length} chars) - CRASH ATTACK`,
                 type: 'crash_attack'
+            };
+        }
+        
+        const repeatedPattern = /(.)\1{200,}/;
+        if (repeatedPattern.test(message)) {
+            return {
+                detected: true,
+                reason: 'Excessive character repetition - CRASH ATTEMPT',
+                type: 'repetition_attack'
             };
         }
         
@@ -272,7 +305,7 @@ const antiMalware = {
         const key = `${senderJid}:${attackType}`;
         const currentCount = this.attackCount.get(key) || 0;
         this.attackCount.set(key, currentCount + 1);
-        return currentCount + 1 >= 3;
+        return currentCount + 1 >= 2;
     }
 };
 
@@ -587,123 +620,7 @@ setTimeout(() => {
       'john': ['👑', '🔥', '💥', '😎', '💯'],
       'mike': ['💪', '🏆', '🔥', '💥', '🚀'],
       'lisa': ['💖', '👑', '🌸', '😍', '🌺'],
-      'emily': ['💖', '💃', '👑', '🎉', '🎀'],
-      'happy': ['😁', '😄', '😊', '🙌', '🎉', '🥳', '💃', '🕺', '🔥'],
-      'excited': ['🤩', '🎉', '🥳', '🎊', '😆', '🤗', '💥', '🚀'],
-      'love': ['❤️', '💖', '💘', '💝', '😍', '😘', '💍', '💑', '🌹'],
-      'grateful': ['🙏', '💐', '🥰', '❤️', '😊'],
-      'thankful': ['🙏', '💖', '💐', '🤗', '😇'],
-      'sad': ['😢', '😭', '😞', '💔', '😔', '😓', '😖'],
-      'angry': ['😡', '😠', '🤬', '💢', '👊', '💥', '⚡'],
-      'frustrated': ['😤', '😩', '🤯', '😑', '🌀'],
-      'bored': ['😴', '🥱', '🙄', '😑', '😒'],
-      'surprised': ['😲', '😳', '😮', '😯', '😲', '🙀'],
-      'shocked': ['😱', '😳', '😯', '💥', '🤯'],
-      'wow': ['😲', '😱', '🤩', '🤯', '💥', '🚀'],
-      'crying': ['😭', '😢', '💔', '😞', '😓'],
-      "miss you": ['😭', '💔', '😔', '😢', '❤️'],
-      'lonely': ['😔', '😭', '😢', '💔', '🙁'],
-      'help': ['🆘', '❓', '🤔', "🙋‍♂️", "🙋‍♀️", '💡'],
-      "need assistance": ['🆘', "💁‍♂️", '💁‍♀️', '❓', '🙏'],
-      'sorry': ['😔', '🙏', '💔', '😓', '🥺', "🙇‍♂️", "🙇‍♀️"],
-      'apology': ['😔', '😞', '🙏', '💔', '🙇‍♂️', "🙇‍♀️"],
-      "good job": ['👏', '💯', '🎉', '🌟', '👍', '👏'],
-      "well done": ['👏', '🎉', '🎖️', '💪', '🔥', '🏆'],
-      "you can do it": ['💪', '🔥', '💯', '🚀', '🌟'],
-      'congratulations': ['🎉', '🏆', '🎊', '🎁', '👏', '🍾'],
-      'cheers': ['🥂', '🍻', '🍾', '🍷', '🥳', '🎉'],
-      'goodbye': ['👋', '😢', '💔', "👋🏻", "🚶‍♂️", "🚶‍♀️"],
-      'bye': ['👋', '👋🏻', '🥲', '🚶‍♂️', "🚶‍♀️"],
-      "see you": ['👋', "👋🏻", '🤗', '✌️', "🙋‍♂️", "🙋‍♀️"],
-      'hello': ['👋', '🙂', '😊', "🙋‍♂️", "🙋‍♀️"],
-      'hi': ['👋', '🙂', '😁', '🙋‍♂️', "🙋‍♀️"],
-      'party': ['🎉', '🥳', '🎤', '💃', '🕺', '🍻', '🎶'],
-      'fun': ['🎮', '🎲', '🤣', '🎉', '🃏'],
-      'play': ['🎮', '🏀', '⚽', '🎾', '🎱', '🎲', '🏆'],
-      'work': ['💻', "🖥️", '💼', '📅', '📝'],
-      'school': ['📚', '🏫', '🎒', "👨‍🏫", '👩‍🏫'],
-      'study': ['📖', '📝', '💡', '📚', '🎓'],
-      'summer': ['🌞', "🏖️", '🌴', '🍉', '🌻'],
-      'winter': ['❄️', '☃️', '🎿', '🔥', '⛄'],
-      'autumn': ['🍁', '🍂', '🎃', '🍂', '🍁'],
-      'spring': ['🌸', '🌼', '🌷', '🌱', '🌺'],
-      'birthday': ['🎂', '🎉', '🎁', '🎈', '🎊'],
-      'anniversary': ['💍', '🎉', '🎁', '🎈', '💑'],
-      'robot': ['🤖', '⚙️', '🔧', '🤖', '🧠'],
-      'bot': ['🤖', '🧠', '⚙️', '💻', "🖥️"],
-      'thanks': ['🙏', '💖', '😊', '❤️', '💐'],
-      "good luck": ['🍀', '🍀', '💯', '🍀', '🎯'],
-      'john': ['👑', '🔥', '💥', '😎', '💯'],
-      'mike': ['💪', '🏆', '🔥', '💥', '🚀'],
-      'lisa': ['💖', '👑', '🌸', '😍', '🌺'],
-      'emily': ['💖', '💃', '👑', '🎉', '🎀'],
-      'food': ['🍕', '🍔', '🍟', '🍲', '🍣', '🍩'],
-      'drink': ['🍺', '🍷', '🥂', '🍾', '🥤'],
-      'coffee': ['☕', '🥤', '🍵', '🥶'],
-      'tea': ['🍵', '🫖', '🍂', '🍃'],
-      'excited': ['🤩', '🎉', '🥳', '💥', '🚀', '😆', '😜'],
-      'nervous': ['😬', '😰', '🤞', '🧠', '👐'],
-      'confused': ['🤔', '😕', '🧐', '😵', "🤷‍♂️", '🤷‍♀️'],
-      'embarrassed': ['😳', '😳', '🙈', '😳', '😬', '😅'],
-      'hopeful': ['🤞', '🌠', '🙏', '🌈', '💫'],
-      'shy': ['😊', '😳', '🙈', '🫣', '🫶'],
-      'family': ["👨‍👩‍👧‍👦", "👩‍👧", "👩‍👧‍👦", "👨‍👩‍👧", '💏', "👨‍👨‍👧‍👦", "👩‍👩‍👧‍👦"],
-      'friends': ["👯‍♂️", "👯‍♀️", '🤗', '🫶', '💫', '🤝'],
-      'relationship': ['💑', '❤️', '💍', '🥰', '💏', '💌'],
-      'couple': ["👩‍❤️‍👨", '👨‍❤️‍👨', "👩‍❤️‍👩", '💍', '💑', '💏'],
-      "best friend": ['🤗', '💖', "👯‍♀️", "👯‍♂️", '🙌'],
-      "love you": ['❤️', '😘', '💖', '💘', '💓', '💗'],
-      'vacation': ["🏖️", '🌴', '✈️', '🌊', "🛳️", '🏞️', "🏕️"],
-      'beach': ["🏖️", '🌊', "🏄‍♀️", '🩴', "🏖️", '🌴', '🦀'],
-      "road trip": ['🚗', '🚙', "🛣️", '🌄', '🌟'],
-      'mountain': ["🏞️", '⛰️', "🏔️", '🌄', "🏕️", '🌲'],
-      'city': ["🏙️", '🌆', '🗽', '🌇', '🚖', "🏙️"],
-      'exploration': ['🌍', '🧭', '🌎', '🌍', '🧳', '📍', '⛵'],
-      'morning': ['🌅', '☀️', '🌞', '🌄', '🌻', '🕶️'],
-      'afternoon': ['🌞', "🌤️", '⛅', '🌻', '🌇'],
-      'night': ['🌙', '🌛', '🌜', '⭐', '🌚', '💫'],
-      'evening': ['🌙', '🌛', '🌇', '🌓', '💫'],
-      'goodnight': ['🌙', '😴', '💤', '🌜', '🛌', '🌛', '✨'],
-      'productivity': ['💻', '📊', '📝', '💼', '📅', '📈'],
-      'office': ['🖥️', '💼', '🗂️', '📅', "🖋️"],
-      'workout': ["🏋️‍♀️", '💪', "🏃‍♂️", '🏃‍♀️', "🤸‍♀️", "🚴‍♀️", "🏋️‍♂️"],
-      "study hard": ['📚', '📝', '📖', '💡', '💼'],
-      'focus': ['🔍', '🎯', '💻', '🧠', '🤓'],
-      'food': ['🍕', '🍔', '🍟', '🍖', '🍖', '🥗', '🍣', '🍲'],
-      'drink': ['🍹', '🥤', '🍷', '🍾', '🍸', '🍺', '🥂', '☕'],
-      'coffee': ['☕', '🧃', '🍵', '🥤', '🍫'],
-      'cake': ['🍰', '🎂', '🍩', '🍪', '🍫', '🧁'],
-      "ice cream": ['🍦', '🍧', '🍨', '🍪'],
-      'cat': ['🐱', '😺', '🐈', '🐾'],
-      'dog': ['🐶', '🐕', '🐩', '🐕‍🦺', '🐾'],
-      'bird': ['🐦', '🦉', '🦅', '🐦'],
-      'fish': ['🐟', '🐠', '🐡', '🐡', '🐙'],
-      'rabbit': ['🐰', '🐇', '🐹', '🐾'],
-      'lion': ['🦁', '🐯', '🐅', '🐆'],
-      'bear': ['🐻', '🐨', '🐼', "🐻‍❄️"],
-      'elephant': ['🐘', '🐘'],
-      'sun': ['☀️', '🌞', '🌄', '🌅', '🌞'],
-      'rain': ["🌧️", '☔', '🌈', "🌦️", '🌧️'],
-      'snow': ['❄️', '⛄', "🌨️", "🌬️", '❄️'],
-      'wind': ['💨', "🌬️", "🌪️", "🌬️"],
-      'earth': ['🌍', '🌏', '🌎', '🌍', '🌱', '🌳'],
-      'phone': ['📱', '☎️', '📞', '📲', '📡'],
-      'computer': ['💻', '🖥️', '⌨️', "🖱️", "🖥️"],
-      'internet': ['🌐', '💻', '📶', '📡', '🔌'],
-      'software': ['💻', "🖥️", "🧑‍💻", "🖱️", '💡'],
-      'star': ['⭐', '🌟', '✨', '🌠', '💫'],
-      'light': ['💡', '🔦', '✨', '🌟', '🔆'],
-      'money': ['💵', '💰', '💸', '💳', '💶'],
-      'victory': ['✌️', '🏆', '🎉', "🎖️", '🎊'],
-      'gift': ['🎁', '🎀', '🎉', '🎁'],
-      'fire': ['🔥', '💥', '🌋', '🔥', '💣'],
-      'music': ['🎵', '🎶', '🎧', '🎤', '🎸', '🎹'],
-      'sports': ['⚽', '🏀', '🏈', '🎾', "🏋️‍♂️", "🏃‍♀️", '🏆', '🥇'],
-      'games': ['🎮', "🕹️", '🎲', '🎯', '🧩'],
-      'art': ['🎨', "🖌️", '🖼️', '🎭', "🖍️"],
-      'photography': ['📷', '📸', '📸', '🖼️', '🎥'],
-      'reading': ['📚', '📖', '📚', '📰'],
-      'craft': ['🧵', '🪡', '✂️', '🪢', '🧶']
+      'emily': ['💖', '💃', '👑', '🎉', '🎀']
     };
     
     const _0x42c72f = ['😎', '🔥', '💥', '💯', '✨', '🌟', '🌈', '⚡', '💎', '🌀', '👑', '🎉', '🎊', '🦄', '👽', '🛸', '🚀', '🦋', '💫', '🍀', '🎶', '🎧', '🎸', '🎤', '🏆', '🏅', '🌍', '🌎', '🌏', '🎮', '🎲', '💪', "🏋️", '🥇', '👟', '🏃', '🚴', '🚶', '🏄', '⛷️', "🕶️", '🧳', '🍿', '🍿', '🥂', '🍻', '🍷', '🍸', '🥃', '🍾', '🎯', '⏳', '🎁', '🎈', '🎨', '🌻', '🌸', '🌺', '🌹', '🌼', '🌞', '🌝', '🌜', '🌙', '🌚', '🍀', '🌱', '🍃', '🍂', '🌾', '🐉', '🐍', '🦓', '🦄', '🦋', '🦧', '🦘', '🦨', '🦡', '🐉', '🐅', '🐆', '🐓', '🐢', '🐊', '🐠', '🐟', '🐡', '🦑', '🐙', '🦀', '🐬', '🦕', '🦖', '🐾', '🐕', '🐈', '🐇', '🐾', '🐁', '🐀', "🐿️"];
@@ -860,33 +777,24 @@ setTimeout(() => {
       console.log("------ contenu du message ------");
       console.log(_0xf697f8);
       
-      // ============= ANTI-MALWARE INTEGRATION =============
+      // ============= ENHANCED ANTI-MALWARE WITH DM PROTECTION =============
       if (antiMalware.enabled && _0xf697f8 && !_0x24b35c.key.fromMe) {
           const isSpam = antiMalware.checkSpam(_0x133a07);
           if (isSpam) {
               console.log(`🚨 SPAM DETECTED from ${_0x133a07}`);
-              
               if (antiMalware.sendWarning) {
                   await _0x243e88.sendMessage(_0xbaefcb, {
-                      text: `⚠️ *SPAM WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, you are sending messages too quickly!\n\nPlease wait a moment before sending more messages.\n\n🛡️ *Anti-Spam Protection Active*`,
+                      text: `⚠️ *SPAM WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, you are sending messages too quickly!\n\nPlease wait a moment before sending more messages.`,
                       mentions: [_0x133a07]
                   }, { quoted: _0x24b35c });
               }
-              
               if (antiMalware.autoDelete) {
                   try {
                       await _0x243e88.sendMessage(_0xbaefcb, {
-                          delete: {
-                              remoteJid: _0xbaefcb,
-                              fromMe: false,
-                              id: _0x24b35c.key.id,
-                              participant: _0x133a07
-                          }
+                          delete: { remoteJid: _0xbaefcb, fromMe: false, id: _0x24b35c.key.id, participant: _0x133a07 }
                       });
-                      console.log(`✅ Spam message deleted`);
-                  } catch(e) {
-                      console.log(`Failed to delete spam: ${e.message}`);
-                  }
+                      console.log(`✅ Spam message deleted in ${_0x37f41c ? 'group' : 'DM'}`);
+                  } catch(e) {}
               }
               return;
           }
@@ -894,65 +802,50 @@ setTimeout(() => {
           const detection = antiMalware.detectMaliciousContent(_0xf697f8);
           
           if (detection.detected) {
-              antiMalware.logSecurityEvent(
-                  detection.type.toUpperCase(),
-                  _0x133a07,
-                  _0x37f41c ? _0x878d70 : 'DM',
-                  `${detection.reason} | Content: ${_0xf697f8.substring(0, 100)}`
-              );
-              
+              antiMalware.logSecurityEvent(detection.type.toUpperCase(), _0x133a07, _0x37f41c ? _0x878d70 : 'DM', `${detection.reason}`);
               const shouldBan = antiMalware.trackAttack(_0x133a07, detection.type);
-              
-              console.log(`🛡️ MALICIOUS CONTENT BLOCKED: ${detection.reason} from ${_0x133a07}`);
+              console.log(`🛡️ MALICIOUS CONTENT BLOCKED: ${detection.reason} from ${_0x133a07} in ${_0x37f41c ? 'group' : 'DM'}`);
               
               if (antiMalware.autoDelete) {
                   try {
                       await _0x243e88.sendMessage(_0xbaefcb, {
-                          delete: {
-                              remoteJid: _0xbaefcb,
-                              fromMe: false,
-                              id: _0x24b35c.key.id,
-                              participant: _0x133a07
-                          }
+                          delete: { remoteJid: _0xbaefcb, fromMe: false, id: _0x24b35c.key.id, participant: _0x133a07 }
                       });
-                      console.log(`✅ Malicious message deleted`);
-                  } catch(e) {
-                      console.log(`Failed to delete: ${e.message}`);
-                  }
+                      console.log(`✅ Malicious message deleted in ${_0x37f41c ? 'group' : 'DM'}`);
+                  } catch(e) {}
               }
               
               if (antiMalware.sendWarning) {
-                  let warningMessage = `⚠️ *SECURITY ALERT!* ⚠️\n\n`;
-                  warningMessage += `@${_0x133a07.split('@')[0]}, your message has been blocked!\n\n`;
-                  warningMessage += `*Reason:* ${detection.reason}\n\n`;
-                  warningMessage += `*⚠️ WARNING:* Your message contained potentially harmful content!\n`;
-                  warningMessage += `This has been logged and recorded.\n\n`;
-                  
-                  if (shouldBan) {
-                      warningMessage += `*🚨 FINAL WARNING!* Multiple violations detected!\n`;
+                  let warningMessage = `⚠️ *SECURITY ALERT!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been blocked!\n\n*Reason:* ${detection.reason}\n\n`;
+                  if (detection.type === 'unicode_flood_crash' || detection.type === 'crash_attack') {
+                      warningMessage += `*🚨 CRASH ATTACK DETECTED!* This is a serious violation!\n`;
                   }
-                  
+                  if (shouldBan && antiMalware.autoBlock) {
+                      warningMessage += `*🔒 ACTION TAKEN:* Your account has been blocked for sending malicious content.\n`;
+                  }
                   warningMessage += `\n🛡️ *RAHMANI-XMD SECURITY SYSTEM* 🛡️`;
-                  
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                      text: warningMessage,
-                      mentions: [_0x133a07]
-                  }, { quoted: _0x24b35c });
+                  await _0x243e88.sendMessage(_0xbaefcb, { text: warningMessage, mentions: [_0x133a07] }, { quoted: _0x24b35c });
+              }
+              
+              if (antiMalware.autoBlock && (shouldBan || detection.type === 'unicode_flood_crash' || detection.type === 'crash_attack')) {
+                  try {
+                      const blocked = await antiMalware.blockUser(_0x243e88, _0x133a07, detection.reason);
+                      if (blocked) {
+                          console.log(`✅ User ${_0x133a07} BLOCKED for sending crash attack`);
+                          const ownerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
+                          await _0x243e88.sendMessage(ownerJid, {
+                              text: `🚨 *USER BLOCKED!* 🚨\n\nUser: @${_0x133a07.split('@')[0]}\nReason: ${detection.reason}\nLocation: ${_0x37f41c ? 'Group: ' + _0x878d70 : 'DM'}\n\n🛡️ Auto-blocked by security system`,
+                              mentions: [_0x133a07]
+                          });
+                      }
+                  } catch(e) {}
               }
               
               if (antiMalware.autoBan && shouldBan && _0x37f41c && !_0x62654f) {
                   try {
                       await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-                      await _0x243e88.sendMessage(_0xbaefcb, {
-                          text: `🚨 *USER REMOVED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed from the group for multiple security violations.\n\n🛡️ Safety first!`,
-                          mentions: [_0x133a07]
-                      });
-                      antiMalware.logSecurityEvent('AUTO_BAN_EXECUTED', _0x133a07, _0x878d70, 'User removed for multiple violations');
-                  } catch(e) {
-                      console.log(`Auto-ban failed: ${e.message}`);
-                  }
+                  } catch(e) {}
               }
-              
               return;
           }
       }
@@ -961,9 +854,7 @@ setTimeout(() => {
       function _0x521d5b(_0x49b667) {
         let _0x55b787 = [];
         for (_0x5c6cf5 of _0x49b667) {
-          if (_0x5c6cf5.admin == null) {
-            continue;
-          }
+          if (_0x5c6cf5.admin == null) continue;
           _0x55b787.push(_0x5c6cf5.id);
         }
         return _0x55b787;
@@ -972,14 +863,12 @@ setTimeout(() => {
       var _0x22a59d = conf.ETAT;
       if (_0x22a59d == 0x1) {
         await _0x243e88.sendPresenceUpdate("available", _0xbaefcb);
+      } else if (_0x22a59d == 0x2) {
+        await _0x243e88.sendPresenceUpdate("composing", _0xbaefcb);
+      } else if (_0x22a59d == 0x3) {
+        await _0x243e88.sendPresenceUpdate("recording", _0xbaefcb);
       } else {
-        if (_0x22a59d == 0x2) {
-          await _0x243e88.sendPresenceUpdate("composing", _0xbaefcb);
-        } else if (_0x22a59d == 0x3) {
-          await _0x243e88.sendPresenceUpdate("recording", _0xbaefcb);
-        } else {
-          await _0x243e88.sendPresenceUpdate("unavailable", _0xbaefcb);
-        }
+        await _0x243e88.sendPresenceUpdate("unavailable", _0xbaefcb);
       }
       
       const _0x15fef6 = _0x37f41c ? await _0x2a34d7.participants : '';
@@ -993,8 +882,7 @@ setTimeout(() => {
       
       function _0x215274() {
         const _0x2e3bf7 = Math.floor(Math.random() * _0x41f5ea.length);
-        const _0x1e8c83 = _0x41f5ea[_0x2e3bf7];
-        return _0x1e8c83;
+        return _0x41f5ea[_0x2e3bf7];
       }
       
       var _0x20955d = {
@@ -1022,15 +910,11 @@ setTimeout(() => {
       };
       
       // ============= ANTI-BUG COMMANDS =============
-      // Command: antibug on/off/status
       if (_0x375469 === 'antibug') {
           if (!_0x34fccb) {
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                  text: '🔒 *Access Denied!*\n\nOnly bot owners can control the Anti-Bug system.\n\n🛡️ *RAHMANI-XMD Security*'
-              }, { quoted: _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '🔒 *Access Denied!*\n\nOnly bot owners can control the Anti-Bug system.' }, { quoted: _0x24b35c });
               return;
           }
-          
           const args = _0x43a440;
           const action = args && args[0] ? args[0].toLowerCase() : null;
           
@@ -1038,138 +922,83 @@ setTimeout(() => {
               antiMalware.enabled = true;
               antiMalware.autoDelete = true;
               antiMalware.sendWarning = true;
-              
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                  text: '✅ *ANTI-BUG SYSTEM ACTIVATED!* ✅\n\n' +
-                        '🛡️ *Security Features NOW ACTIVE:*\n' +
-                        '━━━━━━━━━━━━━━━━━━━━━━\n' +
-                        '✓ JavaScript/SQL Injection Protection\n' +
-                        '✓ Crash Attack Prevention (Javanese/Balinese)\n' +
-                        '✓ Spam & Flood Detection\n' +
-                        '✓ Malicious File Blocking\n' +
-                        '✓ Phishing URL Detection\n' +
-                        '✓ Auto-delete Malicious Messages\n' +
-                        '✓ User Warning System\n' +
-                        '━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-                        '📊 *Commands:*\n' +
-                        '• `.antibug status` - View system status\n' +
-                        '• `.antibug off` - Deactivate system\n' +
-                        '• `.security` - View security report\n\n' +
-                        '🛡️ *RAHMANI-XMD is now protecting your groups!*'
-              }, { quoted: _0x24b35c });
-              
-              antiMalware.logSecurityEvent('ANTIBUG_ACTIVATED', _0x133a07, _0x37f41c ? _0x878d70 : 'DM', 'Anti-Bug system activated');
-              
+              antiMalware.autoBlock = true;
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '✅ *ANTI-BUG SYSTEM ACTIVATED!* ✅\n\n🛡️ Security Features NOW ACTIVE:\n✓ Crash Attack Prevention\n✓ Malicious File Blocking\n✓ Spam Protection\n✓ Auto-block for crash attacks\n\nUse .antibug off to deactivate' }, { quoted: _0x24b35c });
+              antiMalware.logSecurityEvent('ANTIBUG_ACTIVATED', _0x133a07, _0x37f41c ? _0x878d70 : 'DM', 'System activated');
           } else if (action === 'off' || action === 'zima') {
               antiMalware.enabled = false;
-              
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                  text: '⚠️ *⚠️ ANTI-BUG SYSTEM DEACTIVATED! ⚠️*\n\n' +
-                        '🔴 *WARNING: Your bot is now VULNERABLE!*\n' +
-                        '━━━━━━━━━━━━━━━━━━━━━━\n' +
-                        '❌ The following protections are DISABLED:\n' +
-                        '• Bug & Virus Detection\n' +
-                        '• Crash Attack Prevention\n' +
-                        '• Spam Protection\n' +
-                        '• Malicious File Blocking\n' +
-                        '• SQL/JS Injection Protection\n' +
-                        '━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-                        '✅ *To Reactivate:* Use `.antibug on`\n\n' +
-                        '*It is HIGHLY RECOMMENDED to keep security ON!*'
-              }, { quoted: _0x24b35c });
-              
-              antiMalware.logSecurityEvent('ANTIBUG_DEACTIVATED', _0x133a07, _0x37f41c ? _0x878d70 : 'DM', 'Anti-Bug system deactivated');
-              
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '⚠️ *ANTI-BUG SYSTEM DEACTIVATED!* ⚠️\n\n🔴 WARNING: Your bot is now VULNERABLE!\n\n✅ To Reactivate: .antibug on' }, { quoted: _0x24b35c });
+              antiMalware.logSecurityEvent('ANTIBUG_DEACTIVATED', _0x133a07, _0x37f41c ? _0x878d70 : 'DM', 'System deactivated');
           } else if (action === 'status') {
               const status = antiMalware.enabled ? '🟢 ACTIVE' : '🔴 DEACTIVATED';
-              const autoDelete = antiMalware.autoDelete ? '✅ Enabled' : '❌ Disabled';
-              const warnings = antiMalware.sendWarning ? '✅ Enabled' : '❌ Disabled';
-              
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                  text: '🛡️ *ANTI-BUG SYSTEM STATUS* 🛡️\n\n' +
-                        `📊 *System Status:* ${status}\n\n` +
-                        '*Configuration:*\n' +
-                        `• Auto-Delete: ${autoDelete}\n` +
-                        `• User Warnings: ${warnings}\n` +
-                        `• Spam Protection: ${antiMalware.detection.maxConsecutiveMessages === 5 ? '✅ Active' : '❌ Inactive'}\n\n` +
-                        '*Statistics:*\n' +
-                        `📝 Total Attacks Blocked: ${antiMalware.securityLogs.length}\n` +
-                        `👤 Spam Trackers: ${antiMalware.spamTracker.size}\n` +
-                        `⚔️ Attack Attempts: ${antiMalware.attackCount.size}\n\n` +
-                        '*Protected Threats:*\n' +
-                        '✓ JavaScript/SQL Injection\n' +
-                        '✓ Crash Attacks (Unicode Flood)\n' +
-                        '✓ Spam & Flood\n' +
-                        '✓ Malicious Files\n' +
-                        '✓ Phishing Links\n\n' +
-                        '*Commands:*\n' +
-                        '• `.antibug on` - Activate protection\n' +
-                        '• `.antibug off` - Deactivate protection\n' +
-                        '• `.security` - View attack logs'
-              }, { quoted: _0x24b35c });
-              
+              await _0x243e88.sendMessage(_0xbaefcb, { text: `🛡️ *ANTI-BUG STATUS* 🛡️\n\n📊 System: ${status}\n📝 Attacks Blocked: ${antiMalware.securityLogs.length}\n👤 Blocked Users: ${antiMalware.blockedUsers.size}\n\nUse .blocked to see blocked users\nUse .antibug on/off to control` }, { quoted: _0x24b35c });
           } else {
               const status = antiMalware.enabled ? '🟢 ACTIVE' : '🔴 DEACTIVATED';
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                  text: '🛡️ *ANTI-BUG SYSTEM* 🛡️\n\n' +
-                        `📊 *Current Status:* ${status}\n\n` +
-                        '*Available Commands:*\n' +
-                        '━━━━━━━━━━━━━━━━━━━━━━\n' +
-                        '🔒 `.antibug on` - Activate full protection\n' +
-                        '🔓 `.antibug off` - Deactivate protection\n' +
-                        '📊 `.antibug status` - Show system status\n' +
-                        '📋 `.security` - View attack logs\n' +
-                        '━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-                        '*What gets blocked:*\n' +
-                        '• 💀 Crash attacks (Javanese/Balinese text)\n' +
-                        '• 🐛 JavaScript/SQL injection\n' +
-                        '• 📁 Malicious files (.exe, .bat, .sh)\n' +
-                        '• 🔗 Phishing URLs\n' +
-                        '• 📨 Spam messages\n\n' +
-                        `*Protection Status:* ${status}`
-              }, { quoted: _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { text: `🛡️ *ANTI-BUG SYSTEM* 🛡️\n\n📊 Status: ${status}\n\nCommands:\n🔒 .antibug on - Activate\n🔓 .antibug off - Deactivate\n📊 .antibug status - Show status\n🚫 .blocked - List blocked users\n🔓 .unblock [number] - Unblock user` }, { quoted: _0x24b35c });
           }
           return;
       }
       
-      // Command: bugstatus - Quick status check
-      if (_0x375469 === 'bugstatus' || _0x375469 === 'status') {
+      if (_0x375469 === 'bugstatus') {
           const status = antiMalware.enabled ? '🟢 ACTIVE' : '🔴 DEACTIVATED';
-          const totalBlocked = antiMalware.securityLogs.length;
-          
-          await _0x243e88.sendMessage(_0xbaefcb, {
-              text: '🛡️ *ANTI-BUG STATUS* 🛡️\n\n' +
-                    `🔰 System: ${status}\n` +
-                    `📝 Blocked: ${totalBlocked} attacks\n` +
-                    `👤 Spammers: ${antiMalware.spamTracker.size}\n\n` +
-                    `Use .antibug on/off to control\n` +
-                    `Use .security for detailed report`
-          }, { quoted: _0x24b35c });
+          await _0x243e88.sendMessage(_0xbaefcb, { text: `🛡️ *ANTI-BUG STATUS*\n\n🔰 System: ${status}\n📝 Blocked: ${antiMalware.securityLogs.length}\n👤 Blocked: ${antiMalware.blockedUsers.size}\n\nUse .antibug on/off` }, { quoted: _0x24b35c });
           return;
       }
       
-      // Command: security - View security report
+      if (_0x375469 === 'blocked') {
+          if (!_0x34fccb) {
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '🔒 Access Denied!' }, { quoted: _0x24b35c });
+              return;
+          }
+          if (antiMalware.blockedUsers.size === 0) {
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '📋 No users are currently blocked.' }, { quoted: _0x24b35c });
+              return;
+          }
+          let message = '🚫 *BLOCKED USERS* 🚫\n\n';
+          let count = 1;
+          for (let [user, data] of antiMalware.blockedUsers.entries()) {
+              message += `${count}. @${user.split('@')[0]}\n   Reason: ${data.reason}\n   Date: ${new Date(data.timestamp).toLocaleString()}\n\n`;
+              count++;
+          }
+          message += `\nTotal: ${antiMalware.blockedUsers.size}\nUse .unblock [number] to unblock`;
+          await _0x243e88.sendMessage(_0xbaefcb, { text: message, mentions: Array.from(antiMalware.blockedUsers.keys()) }, { quoted: _0x24b35c });
+          return;
+      }
+      
+      if (_0x375469 === 'unblock') {
+          if (!_0x34fccb) {
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '🔒 Access Denied!' }, { quoted: _0x24b35c });
+              return;
+          }
+          const args = _0x43a440;
+          const userToUnblock = args && args[0] ? args[0] : null;
+          if (!userToUnblock) {
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '📝 Usage: .unblock [number]\nExample: .unblock 254712345678' }, { quoted: _0x24b35c });
+              return;
+          }
+          let userJid = userToUnblock;
+          if (!userJid.includes('@')) userJid = userJid.replace(/[^0-9]/g, '') + '@s.whatsapp.net';
+          try {
+              await _0x243e88.updateBlockStatus(userJid, 'unblock');
+              antiMalware.blockedUsers.delete(userJid);
+              await _0x243e88.sendMessage(_0xbaefcb, { text: `✅ User @${userJid.split('@')[0]} unblocked!`, mentions: [userJid] }, { quoted: _0x24b35c });
+          } catch(e) {
+              await _0x243e88.sendMessage(_0xbaefcb, { text: `❌ Failed: ${e.message}` }, { quoted: _0x24b35c });
+          }
+          return;
+      }
+      
       if (_0x375469 === 'security' && _0x34fccb) {
           const logs = antiMalware.securityLogs.slice(0, 10);
           if (logs.length === 0) {
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                  text: '🔒 *SECURITY REPORT*\n\nNo security incidents detected yet.\n\n🛡️ System is clean!'
-              }, { quoted: _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '🔒 No security incidents detected.' }, { quoted: _0x24b35c });
           } else {
               let report = '🔒 *SECURITY REPORT* 🔒\n\n';
               report += `Total incidents: ${antiMalware.securityLogs.length}\n`;
-              report += `Active spam trackers: ${antiMalware.spamTracker.size}\n`;
-              report += `Attack attempts tracked: ${antiMalware.attackCount.size}\n\n`;
-              report += '*Recent Incidents:*\n';
-              
+              report += `Blocked users: ${antiMalware.blockedUsers.size}\n\n*Recent:*\n`;
               for (let log of logs) {
-                  report += `\n⏰ ${log.timestamp}\n`;
-                  report += `📌 Type: ${log.type}\n`;
-                  report += `👤 Sender: ${log.sender.split('@')[0]}\n`;
-                  report += `📝 Details: ${log.details.substring(0, 100)}\n`;
-                  report += `─ ─ ─ ─ ─ ─ ─ ─ ─ ─\n`;
+                  report += `\n⏰ ${log.timestamp}\n📌 ${log.type}\n👤 ${log.sender.split('@')[0]}\n📝 ${log.details.substring(0, 80)}\n`;
               }
-              
               await _0x243e88.sendMessage(_0xbaefcb, { text: report }, { quoted: _0x24b35c });
           }
           return;
@@ -1178,13 +1007,9 @@ setTimeout(() => {
       
       if (conf.AUTO_READ === 'yes') {
         _0x243e88.ev.on("messages.upsert", async _0x490d27 => {
-          const {
-            messages: _0x543d2e
-          } = _0x490d27;
+          const { messages: _0x543d2e } = _0x490d27;
           for (const _0x179941 of _0x543d2e) {
-            if (!_0x179941.key.fromMe) {
-              await _0x243e88.readMessages([_0x179941.key]);
-            }
+            if (!_0x179941.key.fromMe) await _0x243e88.readMessages([_0x179941.key]);
           }
         });
       }
@@ -1196,171 +1021,76 @@ setTimeout(() => {
       if (_0x24b35c.key && _0x24b35c.key.remoteJid === "status@broadcast" && conf.AUTO_DOWNLOAD_STATUS === 'yes') {
         if (_0x24b35c.message.extendedTextMessage) {
           var _0x2cea19 = _0x24b35c.message.extendedTextMessage.text;
-          await _0x243e88.sendMessage(_0x4b2990, {
-            'text': _0x2cea19
-          }, {
-            'quoted': _0x24b35c
-          });
-        } else {
-          if (_0x24b35c.message.imageMessage) {
-            var _0x2aebb5 = _0x24b35c.message.imageMessage.caption;
-            var _0x1222c1 = await _0x243e88.downloadAndSaveMediaMessage(_0x24b35c.message.imageMessage);
-            await _0x243e88.sendMessage(_0x4b2990, {
-              'image': {
-                'url': _0x1222c1
-              },
-              'caption': _0x2aebb5
-            }, {
-              'quoted': _0x24b35c
-            });
-          } else {
-            if (_0x24b35c.message.videoMessage) {
-              var _0x2aebb5 = _0x24b35c.message.videoMessage.caption;
-              var _0x4d83aa = await _0x243e88.downloadAndSaveMediaMessage(_0x24b35c.message.videoMessage);
-              await _0x243e88.sendMessage(_0x4b2990, {
-                'video': {
-                  'url': _0x4d83aa
-                },
-                'caption': _0x2aebb5
-              }, {
-                'quoted': _0x24b35c
-              });
-            }
-          }
+          await _0x243e88.sendMessage(_0x4b2990, { 'text': _0x2cea19 }, { 'quoted': _0x24b35c });
+        } else if (_0x24b35c.message.imageMessage) {
+          var _0x2aebb5 = _0x24b35c.message.imageMessage.caption;
+          var _0x1222c1 = await _0x243e88.downloadAndSaveMediaMessage(_0x24b35c.message.imageMessage);
+          await _0x243e88.sendMessage(_0x4b2990, { 'image': { 'url': _0x1222c1 }, 'caption': _0x2aebb5 }, { 'quoted': _0x24b35c });
+        } else if (_0x24b35c.message.videoMessage) {
+          var _0x2aebb5 = _0x24b35c.message.videoMessage.caption;
+          var _0x4d83aa = await _0x243e88.downloadAndSaveMediaMessage(_0x24b35c.message.videoMessage);
+          await _0x243e88.sendMessage(_0x4b2990, { 'video': { 'url': _0x4d83aa }, 'caption': _0x2aebb5 }, { 'quoted': _0x24b35c });
         }
       }
       
-      if (!_0x296907 && _0xbaefcb == "120363158701337904@g.us") {
-        return;
-      }
+      if (!_0x296907 && _0xbaefcb == "120363158701337904@g.us") return;
       
       if (_0xf697f8 && _0x133a07.endsWith('s.whatsapp.net')) {
-        const {
-          ajouterOuMettreAJourUserData: _0x48d8c5
-        } = require("./bdd/level");
-        try {
-          await _0x48d8c5(_0x133a07);
-        } catch (_0x1cb55f) {
-          console.error(_0x1cb55f);
-        }
+        const { ajouterOuMettreAJourUserData: _0x48d8c5 } = require("./bdd/level");
+        try { await _0x48d8c5(_0x133a07); } catch (_0x1cb55f) { console.error(_0x1cb55f); }
       }
       
       try {
         if (_0x24b35c.message[_0x3ac7a5].contextInfo.mentionedJid && (_0x24b35c.message[_0x3ac7a5].contextInfo.mentionedJid.includes(_0x4b2990) || _0x24b35c.message[_0x3ac7a5].contextInfo.mentionedJid.includes(conf.NUMERO_OWNER + '@s.whatsapp.net'))) {
-          if (_0xbaefcb == "120363382023564830@newsletter") {
-            return;
-          }
-          if (_0x34fccb) {
-            console.log("hummm");
-            return;
-          }
+          if (_0xbaefcb == "120363382023564830@newsletter") return;
+          if (_0x34fccb) return;
           let _0x4826b6 = require("./bdd/mention");
           let _0x300c49 = await _0x4826b6.recupererToutesLesValeurs();
           let _0xa3a8cf = _0x300c49[0x0];
-          if (_0xa3a8cf.status === "non") {
-            console.log("mention pas actifs");
-            return;
-          }
+          if (_0xa3a8cf.status === "non") return;
           let _0x21e48d;
           if (_0xa3a8cf.type.toLocaleLowerCase() === "image") {
-            _0x21e48d = {
-              'image': {
-                'url': _0xa3a8cf.url
-              },
-              'caption': _0xa3a8cf.message
-            };
-          } else {
-            if (_0xa3a8cf.type.toLocaleLowerCase() === 'video') {
-              _0x21e48d = {
-                'video': {
-                  'url': _0xa3a8cf.url
-                },
-                'caption': _0xa3a8cf.message
-              };
-            } else {
-              if (_0xa3a8cf.type.toLocaleLowerCase() === "sticker") {
-                let _0x1bc6c0 = new Sticker(_0xa3a8cf.url, {
-                  'pack': conf.NOM_OWNER,
-                  'type': StickerTypes.FULL,
-                  'categories': ['🤩', '🎉'],
-                  'id': "12345",
-                  'quality': 0x46,
-                  'background': 'transparent'
-                });
-                const _0x1bd60b = await _0x1bc6c0.toBuffer();
-                _0x21e48d = {
-                  'sticker': _0x1bd60b
-                };
-              } else if (_0xa3a8cf.type.toLocaleLowerCase() === "audio") {
-                _0x21e48d = {
-                  'audio': {
-                    'url': _0xa3a8cf.url
-                  },
-                  'mimetype': "audio/mp4"
-                };
-              }
-            }
+            _0x21e48d = { 'image': { 'url': _0xa3a8cf.url }, 'caption': _0xa3a8cf.message };
+          } else if (_0xa3a8cf.type.toLocaleLowerCase() === 'video') {
+            _0x21e48d = { 'video': { 'url': _0xa3a8cf.url }, 'caption': _0xa3a8cf.message };
+          } else if (_0xa3a8cf.type.toLocaleLowerCase() === "sticker") {
+            let _0x1bc6c0 = new Sticker(_0xa3a8cf.url, { 'pack': conf.NOM_OWNER, 'type': StickerTypes.FULL, 'categories': ['🤩', '🎉'], 'id': "12345", 'quality': 0x46, 'background': 'transparent' });
+            const _0x1bd60b = await _0x1bc6c0.toBuffer();
+            _0x21e48d = { 'sticker': _0x1bd60b };
+          } else if (_0xa3a8cf.type.toLocaleLowerCase() === "audio") {
+            _0x21e48d = { 'audio': { 'url': _0xa3a8cf.url }, 'mimetype': "audio/mp4" };
           }
-          _0x243e88.sendMessage(_0xbaefcb, _0x21e48d, {
-            'quoted': _0x24b35c
-          });
+          _0x243e88.sendMessage(_0xbaefcb, _0x21e48d, { 'quoted': _0x24b35c });
         }
       } catch (_0x14e2ce) {}
       
-      // ============= ANTI-LINK HANDLER =============
+      // ANTI-LINK HANDLER
       try {
         const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
         let hasLink = false;
-        if (_0xf697f8) {
-          hasLink = _0xf697f8.includes("http") || _0xf697f8.includes("www.");
-        }
+        if (_0xf697f8) hasLink = _0xf697f8.includes("http") || _0xf697f8.includes("www.");
         if (hasLink && _0x37f41c && isAntiLinkEnabled) {
           const userIsAdmin = _0x37f41c ? _0x11ea71.includes(_0x133a07) : false;
-          if (userIsAdmin || _0x34fccb) {
-            return;
-          }
-          const messageToDelete = {
-            'remoteJid': _0xbaefcb,
-            'fromMe': false,
-            'id': _0x24b35c.key.id,
-            'participant': _0x133a07
-          };
-          try {
-            await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete });
-          } catch(e) {}
+          if (userIsAdmin || _0x34fccb) return;
+          const messageToDelete = { 'remoteJid': _0xbaefcb, 'fromMe': false, 'id': _0x24b35c.key.id, 'participant': _0x133a07 };
+          try { await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete }); } catch(e) {}
           const action = await recupererActionJid(_0xbaefcb);
           if (action === 'remove') {
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.\n\n🚫 Links are not allowed in this group!`,
-              'mentions': [_0x133a07]
-            }, { 'quoted': _0x24b35c });
-            try {
-              await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-            } catch(e) {}
+            await _0x243e88.sendMessage(_0xbaefcb, { 'text': `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} removed for sending links.`, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
+            try { await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove"); } catch(e) {}
           } else if (action === 'warn') {
             const { getWarnCountByJID, ajouterUtilisateurAvecWarnCount } = require("./bdd/warn");
             let warnCount = await getWarnCountByJID(_0x133a07);
             let maxWarns = conf.WARN_COUNT || 3;
             if (warnCount >= maxWarns) {
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.\n\n🚫 Links are not allowed in this group!`,
-                'mentions': [_0x133a07]
-              }, { 'quoted': _0x24b35c });
-              try {
-                await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-              } catch(e) {}
+              await _0x243e88.sendMessage(_0xbaefcb, { 'text': `⚠️ *FINAL WARNING!* @${_0x133a07.split('@')[0]} removed after ${maxWarns} warnings.`, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
+              try { await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove"); } catch(e) {}
             } else {
               await ajouterUtilisateurAvecWarnCount(_0x133a07);
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*`,
-                'mentions': [_0x133a07]
-              }, { 'quoted': _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { 'text': `⚠️ *WARNING!* @${_0x133a07.split('@')[0]} links not allowed!\n⚠️ Warning ${warnCount + 1}/${maxWarns}`, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
             }
           } else {
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
-              'mentions': [_0x133a07]
-            }, { 'quoted': _0x24b35c });
+            await _0x243e88.sendMessage(_0xbaefcb, { 'text': `⚠️ *LINK DETECTED!* @${_0x133a07.split('@')[0]} message deleted.`, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
           }
         }
       } catch (_0x588dec) {}
@@ -1369,101 +1099,43 @@ setTimeout(() => {
         const _0x397cb5 = _0x24b35c.key?.['id']?.["startsWith"]("BAES") && _0x24b35c.key?.['id']?.["length"] === 0x10;
         const _0x59c5c6 = _0x24b35c.key?.['id']?.["startsWith"]('BAE5') && _0x24b35c.key?.['id']?.["length"] === 0x10;
         if (_0x397cb5 || _0x59c5c6) {
-          if (_0x3ac7a5 === 'reactionMessage') {
-            return;
-          }
+          if (_0x3ac7a5 === 'reactionMessage') return;
           const _0x52804c = await atbverifierEtatJid(_0xbaefcb);
-          if (!_0x52804c) {
-            return;
-          }
-          if (_0x62654f || _0x133a07 === _0x4b2990) {
-            return;
-          }
-          const _0x13af2e = {
-            'remoteJid': _0xbaefcb,
-            'fromMe': false,
-            'id': _0x24b35c.key.id,
-            'participant': _0x133a07
-          };
+          if (!_0x52804c) return;
+          if (_0x62654f || _0x133a07 === _0x4b2990) return;
+          const _0x13af2e = { 'remoteJid': _0xbaefcb, 'fromMe': false, 'id': _0x24b35c.key.id, 'participant': _0x133a07 };
           var _0x54a3df = "bot detected, \n";
-          var _0x577d84 = new Sticker("https://raw.githubusercontent.com/djalega8000/Zokou-MD/main/media/remover.gif", {
-            'pack': "Zoou-Md",
-            'author': conf.OWNER_NAME,
-            'type': StickerTypes.FULL,
-            'categories': ['🤩', '🎉'],
-            'id': "12345",
-            'quality': 0x32,
-            'background': '#000000'
-          });
+          var _0x577d84 = new Sticker("https://raw.githubusercontent.com/djalega8000/Zokou-MD/main/media/remover.gif", { 'pack': "Zoou-Md", 'author': conf.OWNER_NAME, 'type': StickerTypes.FULL, 'categories': ['🤩', '🎉'], 'id': "12345", 'quality': 0x32, 'background': '#000000' });
           await _0x577d84.toFile("st1.webp");
           var _0x1ae492 = await atbrecupererActionJid(_0xbaefcb);
           if (_0x1ae492 === "remove") {
             _0x54a3df += "message deleted \n @" + _0x133a07.split('@')[0x0] + " removed from group.";
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'sticker': fs.readFileSync('st1.webp')
-            });
+            await _0x243e88.sendMessage(_0xbaefcb, { 'sticker': fs.readFileSync('st1.webp') });
             baileys_1.delay(0x320);
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': _0x54a3df,
-              'mentions': [_0x133a07]
-            }, {
-              'quoted': _0x24b35c
-            });
-            try {
-              await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-            } catch (_0xc9bcd0) {}
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'delete': _0x13af2e
-            });
+            await _0x243e88.sendMessage(_0xbaefcb, { 'text': _0x54a3df, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
+            try { await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove"); } catch(_0xc9bcd0) {}
+            await _0x243e88.sendMessage(_0xbaefcb, { 'delete': _0x13af2e });
             await fs.unlink("st1.webp");
-          } else {
-            if (_0x1ae492 === "delete") {
-              _0x54a3df += "message delete \n @" + _0x133a07.split('@')[0x0] + " Avoid sending link.";
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': _0x54a3df,
-                'mentions': [_0x133a07]
-              }, {
-                'quoted': _0x24b35c
-              });
-              await _0x243e88.sendMessage(_0xbaefcb, {
-                'delete': _0x13af2e
-              });
-              await fs.unlink("st1.webp");
+          } else if (_0x1ae492 === "delete") {
+            _0x54a3df += "message delete \n @" + _0x133a07.split('@')[0x0] + " Avoid sending link.";
+            await _0x243e88.sendMessage(_0xbaefcb, { 'text': _0x54a3df, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
+            await _0x243e88.sendMessage(_0xbaefcb, { 'delete': _0x13af2e });
+            await fs.unlink("st1.webp");
+          } else if (_0x1ae492 === 'warn') {
+            const { getWarnCountByJID: _0x48fe1a, ajouterUtilisateurAvecWarnCount: _0x3e2cfc } = require("./bdd/warn");
+            let _0x21e70c = await _0x48fe1a(_0x133a07);
+            let _0x3272e9 = conf.WARN_COUNT;
+            if (_0x21e70c >= _0x3272e9) {
+              var _0x4f58ee = "bot detected ;you will be remove because of reaching warn-limit";
+              await _0x243e88.sendMessage(_0xbaefcb, { 'text': _0x4f58ee, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
+              await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
+              await _0x243e88.sendMessage(_0xbaefcb, { 'delete': _0x13af2e });
             } else {
-              if (_0x1ae492 === 'warn') {
-                const {
-                  getWarnCountByJID: _0x48fe1a,
-                  ajouterUtilisateurAvecWarnCount: _0x3e2cfc
-                } = require("./bdd/warn");
-                let _0x21e70c = await _0x48fe1a(_0x133a07);
-                let _0x3272e9 = conf.WARN_COUNT;
-                if (_0x21e70c >= _0x3272e9) {
-                  var _0x4f58ee = "bot detected ;you will be remove because of reaching warn-limit";
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'text': _0x4f58ee,
-                    'mentions': [_0x133a07]
-                  }, {
-                    'quoted': _0x24b35c
-                  });
-                  await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'delete': _0x13af2e
-                  });
-                } else {
-                  var _0x3d8b18 = _0x3272e9 - _0x21e70c;
-                  var _0x343224 = "bot detected , your warn_count was upgrade ;\n rest : " + _0x3d8b18 + " ";
-                  await _0x3e2cfc(_0x133a07);
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'text': _0x343224,
-                    'mentions': [_0x133a07]
-                  }, {
-                    'quoted': _0x24b35c
-                  });
-                  await _0x243e88.sendMessage(_0xbaefcb, {
-                    'delete': _0x13af2e
-                  });
-                }
-              }
+              var _0x3d8b18 = _0x3272e9 - _0x21e70c;
+              var _0x343224 = "bot detected , your warn_count was upgrade ;\n rest : " + _0x3d8b18 + " ";
+              await _0x3e2cfc(_0x133a07);
+              await _0x243e88.sendMessage(_0xbaefcb, { 'text': _0x343224, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { 'delete': _0x13af2e });
             }
           }
         }
@@ -1473,120 +1145,56 @@ setTimeout(() => {
         const _0x105af6 = evt.cm.find(_0x1187ba => _0x1187ba.nomCom === _0x375469);
         if (_0x105af6) {
           try {
-            if (conf.MODE.toLocaleLowerCase() != 'yes' && !_0x34fccb) {
-              return;
-            }
-            if (!_0x34fccb && _0xbaefcb === _0x133a07 && conf.PM_PERMIT === "yes") {
-              _0x574167("You don't have acces to commands here");
-              return;
-            }
-            if (!_0x34fccb && _0x37f41c) {
-              let _0x1f3f9c = await isGroupBanned(_0xbaefcb);
-              if (_0x1f3f9c) {
-                return;
-              }
-            }
-            if (!_0x62654f && _0x37f41c) {
-              let _0x4d5d3a = await isGroupOnlyAdmin(_0xbaefcb);
-              if (_0x4d5d3a) {
-                return;
-              }
-            }
-            if (!_0x34fccb) {
-              let _0x1a2c28 = await isUserBanned(_0x133a07);
-              if (_0x1a2c28) {
-                _0x574167("You are banned from bot commands");
-                return;
-              }
-            }
+            if (conf.MODE.toLocaleLowerCase() != 'yes' && !_0x34fccb) return;
+            if (!_0x34fccb && _0xbaefcb === _0x133a07 && conf.PM_PERMIT === "yes") { _0x574167("You don't have acces to commands here"); return; }
+            if (!_0x34fccb && _0x37f41c) { let _0x1f3f9c = await isGroupBanned(_0xbaefcb); if (_0x1f3f9c) return; }
+            if (!_0x62654f && _0x37f41c) { let _0x4d5d3a = await isGroupOnlyAdmin(_0xbaefcb); if (_0x4d5d3a) return; }
+            if (!_0x34fccb) { let _0x1a2c28 = await isUserBanned(_0x133a07); if (_0x1a2c28) { _0x574167("You are banned from bot commands"); return; } }
             reagir(_0xbaefcb, _0x243e88, _0x24b35c, _0x105af6.reaction);
             _0x105af6.fonction(_0xbaefcb, _0x243e88, _0x20955d);
           } catch (_0x459532) {
             console.log("😡😡 " + _0x459532);
-            _0x243e88.sendMessage(_0xbaefcb, {
-              'text': "😡😡 " + _0x459532
-            }, {
-              'quoted': _0x24b35c
-            });
+            _0x243e88.sendMessage(_0xbaefcb, { 'text': "😡😡 " + _0x459532 }, { 'quoted': _0x24b35c });
           }
         }
       }
     });
     
-    const {
-      recupevents: _0xad0996
-    } = require("./bdd/welcome");
+    const { recupevents: _0xad0996 } = require("./bdd/welcome");
     
     _0x243e88.ev.on("group-participants.update", async _0x22fd53 => {
       console.log(_0x22fd53);
       let _0x2031b3;
-      try {
-        _0x2031b3 = await _0x243e88.profilePictureUrl(_0x22fd53.id, 'image');
-      } catch {
-        _0x2031b3 = '';
-      }
+      try { _0x2031b3 = await _0x243e88.profilePictureUrl(_0x22fd53.id, 'image'); } catch { _0x2031b3 = ''; }
       try {
         const _0x1c8ad8 = await _0x243e88.groupMetadata(_0x22fd53.id);
         if (_0x22fd53.action == 'add' && (await _0xad0996(_0x22fd53.id, 'welcome')) == 'on') {
           let _0x551f97 = "*RAHMANI-XMD WELCOME MESSAGE*";
           let _0x2ede36 = _0x22fd53.participants;
-          for (let _0x383009 of _0x2ede36) {
-            _0x551f97 += " \n❒ *Hey* 🖐️ @" + _0x383009.split('@')[0x0] + " WELCOME TO OUR GROUP. \n\n";
-          }
+          for (let _0x383009 of _0x2ede36) { _0x551f97 += " \n❒ *Hey* 🖐️ @" + _0x383009.split('@')[0x0] + " WELCOME TO OUR GROUP. \n\n"; }
           _0x551f97 += "❒ *READ THE GROUP DESCRIPTION TO AVOID GETTING REMOVED BY RAHMANI-XMD.* ";
-          _0x243e88.sendMessage(_0x22fd53.id, {
-            'image': {
-              'url': _0x2031b3
-            },
-            'caption': _0x551f97,
-            'mentions': _0x2ede36
-          });
-        } else {
-          if (_0x22fd53.action == 'remove' && (await _0xad0996(_0x22fd53.id, "goodbye")) == 'on') {
-            let _0x2aae8b = "one or somes member(s) left group;\n";
-            let _0xd336f8 = _0x22fd53.participants;
-            for (let _0x5eee9b of _0xd336f8) {
-              _0x2aae8b += '@' + _0x5eee9b.split('@')[0x0] + "\n";
-            }
-            _0x243e88.sendMessage(_0x22fd53.id, {
-              'text': _0x2aae8b,
-              'mentions': _0xd336f8
-            });
-          } else {
-            if (_0x22fd53.action == 'promote' && (await _0xad0996(_0x22fd53.id, "antipromote")) == 'on') {
-              if (_0x22fd53.author == _0x1c8ad8.owner || _0x22fd53.author == conf.NUMERO_OWNER + "@s.whatsapp.net" || _0x22fd53.author == decodeJid(_0x243e88.user.id) || _0x22fd53.author == _0x22fd53.participants[0x0]) {
-                return;
-              }
-              await _0x243e88.groupParticipantsUpdate(_0x22fd53.id, [_0x22fd53.author, _0x22fd53.participants[0x0]], "demote");
-              _0x243e88.sendMessage(_0x22fd53.id, {
-                'text': '@' + _0x22fd53.author.split('@')[0x0] + " has violated the anti-promotion rule, therefore both " + _0x22fd53.author.split('@')[0x0] + " and @" + _0x22fd53.participants[0x0].split('@')[0x0] + " have been removed from administrative rights.",
-                'mentions': [_0x22fd53.author, _0x22fd53.participants[0x0]]
-              });
-            } else {
-              if (_0x22fd53.action == "demote" && (await _0xad0996(_0x22fd53.id, 'antidemote')) == 'on') {
-                if (_0x22fd53.author == _0x1c8ad8.owner || _0x22fd53.author == conf.NUMERO_OWNER + "@s.whatsapp.net" || _0x22fd53.author == decodeJid(_0x243e88.user.id) || _0x22fd53.author == _0x22fd53.participants[0x0]) {
-                  return;
-                }
-                await _0x243e88.groupParticipantsUpdate(_0x22fd53.id, [_0x22fd53.author], "demote");
-                await _0x243e88.groupParticipantsUpdate(_0x22fd53.id, [_0x22fd53.participants[0x0]], "promote");
-                _0x243e88.sendMessage(_0x22fd53.id, {
-                  'text': '@' + _0x22fd53.author.split('@')[0x0] + " has violated the anti-demotion rule by removing @" + _0x22fd53.participants[0x0].split('@')[0x0] + ". Consequently, he has been stripped of administrative rights.",
-                  'mentions': [_0x22fd53.author, _0x22fd53.participants[0x0]]
-                });
-              }
-            }
-          }
+          _0x243e88.sendMessage(_0x22fd53.id, { 'image': { 'url': _0x2031b3 }, 'caption': _0x551f97, 'mentions': _0x2ede36 });
+        } else if (_0x22fd53.action == 'remove' && (await _0xad0996(_0x22fd53.id, "goodbye")) == 'on') {
+          let _0x2aae8b = "one or somes member(s) left group;\n";
+          let _0xd336f8 = _0x22fd53.participants;
+          for (let _0x5eee9b of _0xd336f8) { _0x2aae8b += '@' + _0x5eee9b.split('@')[0x0] + "\n"; }
+          _0x243e88.sendMessage(_0x22fd53.id, { 'text': _0x2aae8b, 'mentions': _0xd336f8 });
+        } else if (_0x22fd53.action == 'promote' && (await _0xad0996(_0x22fd53.id, "antipromote")) == 'on') {
+          if (_0x22fd53.author == _0x1c8ad8.owner || _0x22fd53.author == conf.NUMERO_OWNER + "@s.whatsapp.net" || _0x22fd53.author == decodeJid(_0x243e88.user.id) || _0x22fd53.author == _0x22fd53.participants[0x0]) return;
+          await _0x243e88.groupParticipantsUpdate(_0x22fd53.id, [_0x22fd53.author, _0x22fd53.participants[0x0]], "demote");
+          _0x243e88.sendMessage(_0x22fd53.id, { 'text': '@' + _0x22fd53.author.split('@')[0x0] + " has violated the anti-promotion rule, therefore both " + _0x22fd53.author.split('@')[0x0] + " and @" + _0x22fd53.participants[0x0].split('@')[0x0] + " have been removed from administrative rights.", 'mentions': [_0x22fd53.author, _0x22fd53.participants[0x0]] });
+        } else if (_0x22fd53.action == "demote" && (await _0xad0996(_0x22fd53.id, 'antidemote')) == 'on') {
+          if (_0x22fd53.author == _0x1c8ad8.owner || _0x22fd53.author == conf.NUMERO_OWNER + "@s.whatsapp.net" || _0x22fd53.author == decodeJid(_0x243e88.user.id) || _0x22fd53.author == _0x22fd53.participants[0x0]) return;
+          await _0x243e88.groupParticipantsUpdate(_0x22fd53.id, [_0x22fd53.author], "demote");
+          await _0x243e88.groupParticipantsUpdate(_0x22fd53.id, [_0x22fd53.participants[0x0]], "promote");
+          _0x243e88.sendMessage(_0x22fd53.id, { 'text': '@' + _0x22fd53.author.split('@')[0x0] + " has violated the anti-demotion rule by removing @" + _0x22fd53.participants[0x0].split('@')[0x0] + ". Consequently, he has been stripped of administrative rights.", 'mentions': [_0x22fd53.author, _0x22fd53.participants[0x0]] });
         }
-      } catch (_0x51b1a3) {
-        console.error(_0x51b1a3);
-      }
+      } catch (_0x51b1a3) { console.error(_0x51b1a3); }
     });
     
     async function _0x1f93c4() {
       const _0x25cc58 = require("node-cron");
-      const {
-        getCron: _0x22d016
-      } = require('./bdd/cron');
+      const { getCron: _0x22d016 } = require('./bdd/cron');
       let _0x9418e1 = await _0x22d016();
       console.log(_0x9418e1);
       if (_0x9418e1.length > 0x0) {
@@ -1596,46 +1204,27 @@ setTimeout(() => {
             console.log("etablissement d'un automute pour " + _0x9418e1[_0x226f5f].group_id + " a " + _0x45a162[0x0] + " H " + _0x45a162[0x1]);
             _0x25cc58.schedule(_0x45a162[0x1] + " " + _0x45a162[0x0] + " * * *", async () => {
               await _0x243e88.groupSettingUpdate(_0x9418e1[_0x226f5f].group_id, 'announcement');
-              _0x243e88.sendMessage(_0x9418e1[_0x226f5f].group_id, {
-                'image': {
-                  'url': './media/chrono.webp'
-                },
-                'caption': "Hello, it's time to close the group; sayonara."
-              });
-            }, {
-              'timezone': "Africa/Nairobi"
-            });
+              _0x243e88.sendMessage(_0x9418e1[_0x226f5f].group_id, { 'image': { 'url': './media/chrono.webp' }, 'caption': "Hello, it's time to close the group; sayonara." });
+            }, { 'timezone': "Africa/Nairobi" });
           }
           if (_0x9418e1[_0x226f5f].unmute_at != null) {
             let _0x4dc2dd = _0x9418e1[_0x226f5f].unmute_at.split(':');
             console.log("etablissement d'un autounmute pour " + _0x4dc2dd[0x0] + " H " + _0x4dc2dd[0x1] + " ");
             _0x25cc58.schedule(_0x4dc2dd[0x1] + " " + _0x4dc2dd[0x0] + " * * *", async () => {
               await _0x243e88.groupSettingUpdate(_0x9418e1[_0x226f5f].group_id, "not_announcement");
-              _0x243e88.sendMessage(_0x9418e1[_0x226f5f].group_id, {
-                'image': {
-                  'url': "./media/chrono.webp"
-                },
-                'caption': "Good morning; It's time to open the group."
-              });
-            }, {
-              'timezone': "Africa/Nairobi"
-            });
+              _0x243e88.sendMessage(_0x9418e1[_0x226f5f].group_id, { 'image': { 'url': "./media/chrono.webp" }, 'caption': "Good morning; It's time to open the group." });
+            }, { 'timezone': "Africa/Nairobi" });
           }
         }
-      } else {
-        console.log("Les crons n'ont pas été activés");
-      }
+      } else { console.log("Les crons n'ont pas été activés"); }
       return;
     }
     
     _0x243e88.ev.on("contacts.upsert", async _0x45e936 => {
       const _0x5d3871 = _0x2133d1 => {
         for (const _0x47ac40 of _0x2133d1) {
-          if (store.contacts[_0x47ac40.id]) {
-            Object.assign(store.contacts[_0x47ac40.id], _0x47ac40);
-          } else {
-            store.contacts[_0x47ac40.id] = _0x47ac40;
-          }
+          if (store.contacts[_0x47ac40.id]) Object.assign(store.contacts[_0x47ac40.id], _0x47ac40);
+          else store.contacts[_0x47ac40.id] = _0x47ac40;
         }
         return;
       };
@@ -1643,89 +1232,49 @@ setTimeout(() => {
     });
     
     _0x243e88.ev.on("connection.update", async _0x147343 => {
-      const {
-        lastDisconnect: _0x41b97c,
-        connection: _0x52925b
-      } = _0x147343;
+      const { lastDisconnect: _0x41b97c, connection: _0x52925b } = _0x147343;
       if (_0x52925b === "connecting") {
         console.log(" rahman is connecting...");
-      } else {
-        if (_0x52925b === 'open') {
-          console.log("✅ rahman Connected to WhatsApp! ☺️");
-          console.log('--');
-          await baileys_1.delay(0xc8);
-          console.log('------');
-          await baileys_1.delay(0x12c);
-          console.log("------------------/-----");
-          console.log("rahman is Online 🕸\n\n");
-          console.log("Loading rahman Commands ...\n");
-          fs.readdirSync(__dirname + "/pkdriller").forEach(_0x5c00ae => {
-            if (path.extname(_0x5c00ae).toLowerCase() == ".js") {
-              try {
-                require(__dirname + "/pkdriller/" + _0x5c00ae);
-                console.log(_0x5c00ae + " Installed Successfully✔️");
-              } catch (_0x12f781) {
-                console.log(_0x5c00ae + " could not be installed due to : " + _0x12f781);
-              }
-              baileys_1.delay(0x12c);
-            }
-          });
-          baileys_1.delay(0x2bc);
-          var _0x50f3b5;
-          if (conf.MODE.toLocaleLowerCase() === "yes") {
-            _0x50f3b5 = 'public';
-          } else if (conf.MODE.toLocaleLowerCase() === 'no') {
-            _0x50f3b5 = "private";
-          } else {
-            _0x50f3b5 = "undefined";
+      } else if (_0x52925b === 'open') {
+        console.log("✅ rahman Connected to WhatsApp! ☺️");
+        console.log('--');
+        await baileys_1.delay(0xc8);
+        console.log('------');
+        await baileys_1.delay(0x12c);
+        console.log("------------------/-----");
+        console.log("rahman is Online 🕸\n\n");
+        console.log("Loading rahman Commands ...\n");
+        fs.readdirSync(__dirname + "/pkdriller").forEach(_0x5c00ae => {
+          if (path.extname(_0x5c00ae).toLowerCase() == ".js") {
+            try {
+              require(__dirname + "/pkdriller/" + _0x5c00ae);
+              console.log(_0x5c00ae + " Installed Successfully✔️");
+            } catch (_0x12f781) { console.log(_0x5c00ae + " could not be installed due to : " + _0x12f781); }
+            baileys_1.delay(0x12c);
           }
-          console.log("Commands Installation Completed ✅");
-          await _0x1f93c4();
-          if (conf.DP.toLowerCase() === "yes") {
-            let _0x32d52b = " ⁠⁠⁠⁠\n╭─────────────━┈⊷ \n│🌍 *ʀᴀʜᴍᴀɴɪ-xᴍᴅ ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*🌍\n╰─────────────━┈⊷\n│💫 ᴘʀᴇғɪx: *[ " + prefixe + " ]*\n│⭕ ᴍᴏᴅᴇ: *" + _0x50f3b5 + "*\n│💢 *ʙᴏᴛ ɴᴀᴍᴇ* ʀᴀʜᴍᴀɴɪ-xᴍᴅ\n╰─────────────━┈⊷\n\n*Follow our Channel For Updates*\n> https://whatsapp.com/channel/0029VatokI45EjxufALmY32X\n                \n                \n                 ";
-            await _0x243e88.sendMessage(_0x243e88.user.id, {
-              'text': _0x32d52b
-            });
-          }
-        } else {
-          if (_0x52925b == 'close') {
-            let _0x46bf7 = new boom_1.Boom(_0x41b97c?.["error"])?.["output"]['statusCode'];
-            if (_0x46bf7 === baileys_1.DisconnectReason.badSession) {
-              console.log("Session id error, rescan again...");
-            } else {
-              if (_0x46bf7 === baileys_1.DisconnectReason.connectionClosed) {
-                console.log("!!! connexion fermée, reconnexion en cours ...");
-                _0x1b1480();
-              } else {
-                if (_0x46bf7 === baileys_1.DisconnectReason.connectionLost) {
-                  console.log("connection error 😞 ,,, trying to reconnect... ");
-                  _0x1b1480();
-                } else {
-                  if (_0x46bf7 === baileys_1.DisconnectReason?.['connectionReplaced']) {
-                    console.log("connexion réplacée ,,, une sesssion est déjà ouverte veuillez la fermer svp !!!");
-                  } else {
-                    if (_0x46bf7 === baileys_1.DisconnectReason.loggedOut) {
-                      console.log("vous êtes déconnecté,,, veuillez rescanner le code qr svp");
-                    } else {
-                      if (_0x46bf7 === baileys_1.DisconnectReason.restartRequired) {
-                        console.log("redémarrage en cours ▶️");
-                        _0x1b1480();
-                      } else {
-                        console.log("redemarrage sur le coup de l'erreur  ", _0x46bf7);
-                        const {
-                          exec: _0x5b98ef
-                        } = require("child_process");
-                        _0x5b98ef("pm2 restart all");
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            console.log("hum " + _0x52925b);
-            _0x1b1480();
-          }
+        });
+        baileys_1.delay(0x2bc);
+        var _0x50f3b5;
+        if (conf.MODE.toLocaleLowerCase() === "yes") _0x50f3b5 = 'public';
+        else if (conf.MODE.toLocaleLowerCase() === 'no') _0x50f3b5 = "private";
+        else _0x50f3b5 = "undefined";
+        console.log("Commands Installation Completed ✅");
+        await _0x1f93c4();
+        if (conf.DP.toLowerCase() === "yes") {
+          let _0x32d52b = " ⁠⁠⁠⁠\n╭─────────────━┈⊷ \n│🌍 *ʀᴀʜᴍᴀɴɪ-xᴍᴅ ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*🌍\n╰─────────────━┈⊷\n│💫 ᴘʀᴇғɪx: *[ " + prefixe + " ]*\n│⭕ ᴍᴏᴅᴇ: *" + _0x50f3b5 + "*\n│💢 *ʙᴏᴛ ɴᴀᴍᴇ* ʀᴀʜᴍᴀɴɪ-xᴍᴅ\n╰─────────────━┈⊷\n\n*Follow our Channel For Updates*\n> https://whatsapp.com/channel/0029VatokI45EjxufALmY32X\n                \n                \n                 ";
+          await _0x243e88.sendMessage(_0x243e88.user.id, { 'text': _0x32d52b });
         }
+      } else if (_0x52925b == 'close') {
+        let _0x46bf7 = new boom_1.Boom(_0x41b97c?.["error"])?.["output"]['statusCode'];
+        if (_0x46bf7 === baileys_1.DisconnectReason.badSession) console.log("Session id error, rescan again...");
+        else if (_0x46bf7 === baileys_1.DisconnectReason.connectionClosed) { console.log("!!! connexion fermée, reconnexion en cours ..."); _0x1b1480(); }
+        else if (_0x46bf7 === baileys_1.DisconnectReason.connectionLost) { console.log("connection error 😞 ,,, trying to reconnect... "); _0x1b1480(); }
+        else if (_0x46bf7 === baileys_1.DisconnectReason?.['connectionReplaced']) console.log("connexion réplacée ,,, une sesssion est déjà ouverte veuillez la fermer svp !!!");
+        else if (_0x46bf7 === baileys_1.DisconnectReason.loggedOut) console.log("vous êtes déconnecté,,, veuillez rescanner le code qr svp");
+        else if (_0x46bf7 === baileys_1.DisconnectReason.restartRequired) { console.log("redémarrage en cours ▶️"); _0x1b1480(); }
+        else { console.log("redemarrage sur le coup de l'erreur  ", _0x46bf7); const { exec: _0x5b98ef } = require("child_process"); _0x5b98ef("pm2 restart all"); }
+        console.log("hum " + _0x52925b);
+        _0x1b1480();
       }
     });
     
@@ -1737,9 +1286,7 @@ setTimeout(() => {
       let _0x2620bf = _0x4a8528.mtype ? _0x4a8528.mtype.replace(/Message/gi, '') : _0x22362d.split('/')[0x0];
       const _0x3ac107 = await baileys_1.downloadContentFromMessage(_0x55b529, _0x2620bf);
       let _0x2cb55c = Buffer.from([]);
-      for await (const _0x30ca65 of _0x3ac107) {
-        _0x2cb55c = Buffer.concat([_0x2cb55c, _0x30ca65]);
-      }
+      for await (const _0x30ca65 of _0x3ac107) { _0x2cb55c = Buffer.concat([_0x2cb55c, _0x30ca65]); }
       let _0x741e23 = await FileType.fromBuffer(_0x2cb55c);
       let _0x1689a1 = './' + _0x4ef4eb + '.' + _0x741e23.ext;
       await fs.writeFileSync(_0x1689a1, _0x2cb55c);
@@ -1748,29 +1295,16 @@ setTimeout(() => {
     
     _0x243e88.awaitForMessage = async (_0x272ee8 = {}) => {
       return new Promise((_0x2d207e, _0x25c039) => {
-        if (typeof _0x272ee8 !== "object") {
-          _0x25c039(new Error("Options must be an object"));
-        }
-        if (typeof _0x272ee8.sender !== 'string') {
-          _0x25c039(new Error("Sender must be a string"));
-        }
-        if (typeof _0x272ee8.chatJid !== "string") {
-          _0x25c039(new Error("ChatJid must be a string"));
-        }
-        if (_0x272ee8.timeout && typeof _0x272ee8.timeout !== "number") {
-          _0x25c039(new Error("Timeout must be a number"));
-        }
-        if (_0x272ee8.filter && typeof _0x272ee8.filter !== "function") {
-          _0x25c039(new Error("Filter must be a function"));
-        }
+        if (typeof _0x272ee8 !== "object") _0x25c039(new Error("Options must be an object"));
+        if (typeof _0x272ee8.sender !== 'string') _0x25c039(new Error("Sender must be a string"));
+        if (typeof _0x272ee8.chatJid !== "string") _0x25c039(new Error("ChatJid must be a string"));
+        if (_0x272ee8.timeout && typeof _0x272ee8.timeout !== "number") _0x25c039(new Error("Timeout must be a number"));
+        if (_0x272ee8.filter && typeof _0x272ee8.filter !== "function") _0x25c039(new Error("Filter must be a function"));
         const _0x48cf8b = _0x272ee8?.["timeout"] || undefined;
         const _0x50d51d = _0x272ee8?.["filter"] || (() => true);
         let _0x2b6fd7 = undefined;
         let _0xa776a1 = _0x2c10e5 => {
-          let {
-            type: _0x3efe17,
-            messages: _0x3bedb5
-          } = _0x2c10e5;
+          let { type: _0x3efe17, messages: _0x3bedb5 } = _0x2c10e5;
           if (_0x3efe17 == "notify") {
             for (let _0x553b45 of _0x3bedb5) {
               const _0x13e794 = _0x553b45.key.fromMe;
@@ -1787,12 +1321,7 @@ setTimeout(() => {
           }
         };
         _0x243e88.ev.on("messages.upsert", _0xa776a1);
-        if (_0x48cf8b) {
-          _0x2b6fd7 = setTimeout(() => {
-            _0x243e88.ev.off("messages.upsert", _0xa776a1);
-            _0x25c039(new Error('Timeout'));
-          }, _0x48cf8b);
-        }
+        if (_0x48cf8b) { _0x2b6fd7 = setTimeout(() => { _0x243e88.ev.off("messages.upsert", _0xa776a1); _0x25c039(new Error('Timeout')); }, _0x48cf8b); }
       });
     };
     return _0x243e88;
