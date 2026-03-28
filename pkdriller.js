@@ -170,11 +170,11 @@ const antiMalware = {
             ],
             
             unicodeFlood: [
-                /[\uA980-\uA9DF\u1B00-\u1B7F\u0980-\u09FF]{30,}/,
-                /(.)\1{100,}/
+                /[\uA980-\uA9DF\u1B00-\u1B7F\u0980-\u09FF]{20,}/,
+                /(.)\1{80,}/
             ],
             
-            longString: /^[^\s]{500,}$/
+            longString: /^[^\s]{300,}$/
         },
         
         blockedKeywords: [
@@ -231,7 +231,7 @@ const antiMalware = {
             };
         }
         
-        const repeatedPattern = /(.)\1{200,}/;
+        const repeatedPattern = /(.)\1{150,}/;
         if (repeatedPattern.test(message)) {
             return {
                 detected: true,
@@ -784,7 +784,7 @@ setTimeout(() => {
               console.log(`🚨 SPAM DETECTED from ${_0x133a07}`);
               if (antiMalware.sendWarning) {
                   await _0x243e88.sendMessage(_0xbaefcb, {
-                      text: `⚠️ *SPAM WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, you are sending messages too quickly!\n\nPlease wait a moment before sending more messages.`,
+                      text: `⚠️ *SPAM WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, you are sending messages too quickly!\n\nPlease wait a moment.`,
                       mentions: [_0x133a07]
                   }, { quoted: _0x24b35c });
               }
@@ -793,7 +793,7 @@ setTimeout(() => {
                       await _0x243e88.sendMessage(_0xbaefcb, {
                           delete: { remoteJid: _0xbaefcb, fromMe: false, id: _0x24b35c.key.id, participant: _0x133a07 }
                       });
-                      console.log(`✅ Spam message deleted in ${_0x37f41c ? 'group' : 'DM'}`);
+                      console.log(`✅ Spam deleted in ${_0x37f41c ? 'group' : 'DM'}`);
                   } catch(e) {}
               }
               return;
@@ -802,54 +802,75 @@ setTimeout(() => {
           const detection = antiMalware.detectMaliciousContent(_0xf697f8);
           
           if (detection.detected) {
-              antiMalware.logSecurityEvent(detection.type.toUpperCase(), _0x133a07, _0x37f41c ? _0x878d70 : 'DM', `${detection.reason}`);
+              antiMalware.logSecurityEvent(detection.type.toUpperCase(), _0x133a07, _0x37f41c ? _0x878d70 : 'DM', detection.reason);
               const shouldBan = antiMalware.trackAttack(_0x133a07, detection.type);
-              console.log(`🛡️ MALICIOUS CONTENT BLOCKED: ${detection.reason} from ${_0x133a07} in ${_0x37f41c ? 'group' : 'DM'}`);
+              const isCrashAttack = (detection.type === 'unicode_flood_crash' || detection.type === 'crash_attack' || detection.type === 'repetition_attack');
               
+              console.log(`🛡️ ${detection.reason} from ${_0x133a07} in ${_0x37f41c ? 'group' : 'DM'}`);
+              
+              // ============= DELETE MESSAGE =============
               if (antiMalware.autoDelete) {
                   try {
                       await _0x243e88.sendMessage(_0xbaefcb, {
                           delete: { remoteJid: _0xbaefcb, fromMe: false, id: _0x24b35c.key.id, participant: _0x133a07 }
                       });
-                      console.log(`✅ Malicious message deleted in ${_0x37f41c ? 'group' : 'DM'}`);
-                  } catch(e) {}
+                      console.log(`✅ Message DELETED in ${_0x37f41c ? 'group' : 'DM'}`);
+                  } catch(e) {
+                      console.log(`Delete failed: ${e.message}`);
+                      try {
+                          await _0x243e88.sendMessage(_0xbaefcb, {
+                              delete: { remoteJid: _0xbaefcb, fromMe: false, id: _0x24b35c.key.id }
+                          });
+                          console.log(`✅ Message deleted with alt method`);
+                      } catch(e2) {}
+                  }
               }
               
-              if (antiMalware.sendWarning) {
+              // ============= BLOCK USER =============
+              if (antiMalware.autoBlock && (shouldBan || isCrashAttack)) {
+                  try {
+                      console.log(`🚫 Attempting to BLOCK: ${_0x133a07}`);
+                      await _0x243e88.updateBlockStatus(_0x133a07, 'block');
+                      antiMalware.blockedUsers.set(_0x133a07, {
+                          timestamp: Date.now(),
+                          reason: detection.reason
+                      });
+                      console.log(`✅ USER BLOCKED: ${_0x133a07}`);
+                      
+                      const ownerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
+                      await _0x243e88.sendMessage(ownerJid, {
+                          text: `🚨 *USER BLOCKED!* 🚨\n\nUser: @${_0x133a07.split('@')[0]}\nReason: ${detection.reason}\nLocation: ${_0x37f41c ? 'Group' : 'DM'}\nType: ${detection.type}\n\n🛡️ Auto-blocked`,
+                          mentions: [_0x133a07]
+                      });
+                      
+                      await _0x243e88.sendMessage(_0xbaefcb, {
+                          text: `🔒 *USER BLOCKED!* 🔒\n\n@${_0x133a07.split('@')[0]} has been BLOCKED for sending a crash attack.\n\nReason: ${detection.reason}\n\n🛡️ Security system activated.`,
+                          mentions: [_0x133a07]
+                      }, { quoted: _0x24b35c });
+                      
+                  } catch(blockError) {
+                      console.log(`Block failed: ${blockError.message}`);
+                      if (antiMalware.sendWarning) {
+                          await _0x243e88.sendMessage(_0xbaefcb, {
+                              text: `🚨 *CRASH ATTACK BLOCKED!* 🚨\n\n@${_0x133a07.split('@')[0]}, your message was blocked.\nReason: ${detection.reason}\n\nThis incident has been logged.`,
+                              mentions: [_0x133a07]
+                          }, { quoted: _0x24b35c });
+                      }
+                  }
+              } else if (antiMalware.sendWarning) {
                   let warningMessage = `⚠️ *SECURITY ALERT!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been blocked!\n\n*Reason:* ${detection.reason}\n\n`;
-                  if (detection.type === 'unicode_flood_crash' || detection.type === 'crash_attack') {
-                      warningMessage += `*🚨 CRASH ATTACK DETECTED!* This is a serious violation!\n`;
-                  }
-                  if (shouldBan && antiMalware.autoBlock) {
-                      warningMessage += `*🔒 ACTION TAKEN:* Your account has been blocked for sending malicious content.\n`;
-                  }
-                  warningMessage += `\n🛡️ *RAHMANI-XMD SECURITY SYSTEM* 🛡️`;
+                  if (isCrashAttack) warningMessage += `*🚨 CRASH ATTACK DETECTED!* This is a serious violation!\n`;
+                  warningMessage += `\n🛡️ *RAHMANI-XMD SECURITY*`;
                   await _0x243e88.sendMessage(_0xbaefcb, { text: warningMessage, mentions: [_0x133a07] }, { quoted: _0x24b35c });
               }
               
-              if (antiMalware.autoBlock && (shouldBan || detection.type === 'unicode_flood_crash' || detection.type === 'crash_attack')) {
-                  try {
-                      const blocked = await antiMalware.blockUser(_0x243e88, _0x133a07, detection.reason);
-                      if (blocked) {
-                          console.log(`✅ User ${_0x133a07} BLOCKED for sending crash attack`);
-                          const ownerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
-                          await _0x243e88.sendMessage(ownerJid, {
-                              text: `🚨 *USER BLOCKED!* 🚨\n\nUser: @${_0x133a07.split('@')[0]}\nReason: ${detection.reason}\nLocation: ${_0x37f41c ? 'Group: ' + _0x878d70 : 'DM'}\n\n🛡️ Auto-blocked by security system`,
-                              mentions: [_0x133a07]
-                          });
-                      }
-                  } catch(e) {}
-              }
-              
               if (antiMalware.autoBan && shouldBan && _0x37f41c && !_0x62654f) {
-                  try {
-                      await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-                  } catch(e) {}
+                  try { await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove"); } catch(e) {}
               }
               return;
           }
       }
-      // ============= END ANTI-MALWARE INTEGRATION =============
+      // ============= END ANTI-MALWARE =============
       
       function _0x521d5b(_0x49b667) {
         let _0x55b787 = [];
@@ -912,7 +933,7 @@ setTimeout(() => {
       // ============= ANTI-BUG COMMANDS =============
       if (_0x375469 === 'antibug') {
           if (!_0x34fccb) {
-              await _0x243e88.sendMessage(_0xbaefcb, { text: '🔒 *Access Denied!*\n\nOnly bot owners can control the Anti-Bug system.' }, { quoted: _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '🔒 *Access Denied!*\n\nOnly bot owners can control Anti-Bug system.' }, { quoted: _0x24b35c });
               return;
           }
           const args = _0x43a440;
@@ -923,25 +944,25 @@ setTimeout(() => {
               antiMalware.autoDelete = true;
               antiMalware.sendWarning = true;
               antiMalware.autoBlock = true;
-              await _0x243e88.sendMessage(_0xbaefcb, { text: '✅ *ANTI-BUG SYSTEM ACTIVATED!* ✅\n\n🛡️ Security Features NOW ACTIVE:\n✓ Crash Attack Prevention\n✓ Malicious File Blocking\n✓ Spam Protection\n✓ Auto-block for crash attacks\n\nUse .antibug off to deactivate' }, { quoted: _0x24b35c });
-              antiMalware.logSecurityEvent('ANTIBUG_ACTIVATED', _0x133a07, _0x37f41c ? _0x878d70 : 'DM', 'System activated');
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '✅ *ANTI-BUG ACTIVATED!*\n\n🛡️ Auto-delete: ON\n🚫 Auto-block: ON\n⚠️ Warnings: ON\n\nUse .antibug off to deactivate' }, { quoted: _0x24b35c });
+              antiMalware.logSecurityEvent('ANTIBUG_ON', _0x133a07, _0x37f41c ? _0x878d70 : 'DM', 'System activated');
           } else if (action === 'off' || action === 'zima') {
               antiMalware.enabled = false;
-              await _0x243e88.sendMessage(_0xbaefcb, { text: '⚠️ *ANTI-BUG SYSTEM DEACTIVATED!* ⚠️\n\n🔴 WARNING: Your bot is now VULNERABLE!\n\n✅ To Reactivate: .antibug on' }, { quoted: _0x24b35c });
-              antiMalware.logSecurityEvent('ANTIBUG_DEACTIVATED', _0x133a07, _0x37f41c ? _0x878d70 : 'DM', 'System deactivated');
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '⚠️ *ANTI-BUG DEACTIVATED!*\n\n🔴 Bot is now VULNERABLE!\n\nUse .antibug on to reactivate' }, { quoted: _0x24b35c });
+              antiMalware.logSecurityEvent('ANTIBUG_OFF', _0x133a07, _0x37f41c ? _0x878d70 : 'DM', 'System deactivated');
           } else if (action === 'status') {
               const status = antiMalware.enabled ? '🟢 ACTIVE' : '🔴 DEACTIVATED';
-              await _0x243e88.sendMessage(_0xbaefcb, { text: `🛡️ *ANTI-BUG STATUS* 🛡️\n\n📊 System: ${status}\n📝 Attacks Blocked: ${antiMalware.securityLogs.length}\n👤 Blocked Users: ${antiMalware.blockedUsers.size}\n\nUse .blocked to see blocked users\nUse .antibug on/off to control` }, { quoted: _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { text: `🛡️ *ANTI-BUG STATUS*\n\n📊 System: ${status}\n📝 Attacks: ${antiMalware.securityLogs.length}\n👤 Blocked: ${antiMalware.blockedUsers.size}\n\nCommands: .antibug on/off, .blocked, .unblock` }, { quoted: _0x24b35c });
           } else {
               const status = antiMalware.enabled ? '🟢 ACTIVE' : '🔴 DEACTIVATED';
-              await _0x243e88.sendMessage(_0xbaefcb, { text: `🛡️ *ANTI-BUG SYSTEM* 🛡️\n\n📊 Status: ${status}\n\nCommands:\n🔒 .antibug on - Activate\n🔓 .antibug off - Deactivate\n📊 .antibug status - Show status\n🚫 .blocked - List blocked users\n🔓 .unblock [number] - Unblock user` }, { quoted: _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { text: `🛡️ *ANTI-BUG SYSTEM*\n\n📊 Status: ${status}\n\n🔒 .antibug on - Activate\n🔓 .antibug off - Deactivate\n📊 .antibug status - Show status\n🚫 .blocked - List blocked\n🔓 .unblock [number] - Unblock` }, { quoted: _0x24b35c });
           }
           return;
       }
       
       if (_0x375469 === 'bugstatus') {
           const status = antiMalware.enabled ? '🟢 ACTIVE' : '🔴 DEACTIVATED';
-          await _0x243e88.sendMessage(_0xbaefcb, { text: `🛡️ *ANTI-BUG STATUS*\n\n🔰 System: ${status}\n📝 Blocked: ${antiMalware.securityLogs.length}\n👤 Blocked: ${antiMalware.blockedUsers.size}\n\nUse .antibug on/off` }, { quoted: _0x24b35c });
+          await _0x243e88.sendMessage(_0xbaefcb, { text: `🛡️ *STATUS*\n🔰 System: ${status}\n📝 Blocked: ${antiMalware.securityLogs.length}\n👤 Blocked Users: ${antiMalware.blockedUsers.size}` }, { quoted: _0x24b35c });
           return;
       }
       
@@ -951,17 +972,17 @@ setTimeout(() => {
               return;
           }
           if (antiMalware.blockedUsers.size === 0) {
-              await _0x243e88.sendMessage(_0xbaefcb, { text: '📋 No users are currently blocked.' }, { quoted: _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '📋 No users blocked.' }, { quoted: _0x24b35c });
               return;
           }
-          let message = '🚫 *BLOCKED USERS* 🚫\n\n';
-          let count = 1;
+          let msg = '🚫 *BLOCKED USERS*\n\n';
+          let i = 1;
           for (let [user, data] of antiMalware.blockedUsers.entries()) {
-              message += `${count}. @${user.split('@')[0]}\n   Reason: ${data.reason}\n   Date: ${new Date(data.timestamp).toLocaleString()}\n\n`;
-              count++;
+              msg += `${i}. @${user.split('@')[0]}\n   Reason: ${data.reason}\n   Date: ${new Date(data.timestamp).toLocaleString()}\n\n`;
+              i++;
           }
-          message += `\nTotal: ${antiMalware.blockedUsers.size}\nUse .unblock [number] to unblock`;
-          await _0x243e88.sendMessage(_0xbaefcb, { text: message, mentions: Array.from(antiMalware.blockedUsers.keys()) }, { quoted: _0x24b35c });
+          msg += `Total: ${antiMalware.blockedUsers.size}\nUse .unblock [number] to unblock`;
+          await _0x243e88.sendMessage(_0xbaefcb, { text: msg, mentions: Array.from(antiMalware.blockedUsers.keys()) }, { quoted: _0x24b35c });
           return;
       }
       
@@ -991,13 +1012,12 @@ setTimeout(() => {
       if (_0x375469 === 'security' && _0x34fccb) {
           const logs = antiMalware.securityLogs.slice(0, 10);
           if (logs.length === 0) {
-              await _0x243e88.sendMessage(_0xbaefcb, { text: '🔒 No security incidents detected.' }, { quoted: _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { text: '🔒 No security incidents.' }, { quoted: _0x24b35c });
           } else {
-              let report = '🔒 *SECURITY REPORT* 🔒\n\n';
-              report += `Total incidents: ${antiMalware.securityLogs.length}\n`;
-              report += `Blocked users: ${antiMalware.blockedUsers.size}\n\n*Recent:*\n`;
+              let report = '🔒 *SECURITY REPORT*\n\n';
+              report += `Total: ${antiMalware.securityLogs.length}\nBlocked: ${antiMalware.blockedUsers.size}\n\n*Recent:*\n`;
               for (let log of logs) {
-                  report += `\n⏰ ${log.timestamp}\n📌 ${log.type}\n👤 ${log.sender.split('@')[0]}\n📝 ${log.details.substring(0, 80)}\n`;
+                  report += `\n⏰ ${log.timestamp}\n📌 ${log.type}\n👤 ${log.sender.split('@')[0]}\n📝 ${log.details.substring(0, 60)}\n`;
               }
               await _0x243e88.sendMessage(_0xbaefcb, { text: report }, { quoted: _0x24b35c });
           }
@@ -1076,14 +1096,14 @@ setTimeout(() => {
           try { await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete }); } catch(e) {}
           const action = await recupererActionJid(_0xbaefcb);
           if (action === 'remove') {
-            await _0x243e88.sendMessage(_0xbaefcb, { 'text': `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} removed for sending links.`, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
+            await _0x243e88.sendMessage(_0xbaefcb, { 'text': `🚨 *LINK DETECTED!* @${_0x133a07.split('@')[0]} removed.`, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
             try { await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove"); } catch(e) {}
           } else if (action === 'warn') {
             const { getWarnCountByJID, ajouterUtilisateurAvecWarnCount } = require("./bdd/warn");
             let warnCount = await getWarnCountByJID(_0x133a07);
             let maxWarns = conf.WARN_COUNT || 3;
             if (warnCount >= maxWarns) {
-              await _0x243e88.sendMessage(_0xbaefcb, { 'text': `⚠️ *FINAL WARNING!* @${_0x133a07.split('@')[0]} removed after ${maxWarns} warnings.`, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
+              await _0x243e88.sendMessage(_0xbaefcb, { 'text': `⚠️ *FINAL WARNING!* @${_0x133a07.split('@')[0]} removed.`, 'mentions': [_0x133a07] }, { 'quoted': _0x24b35c });
               try { await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove"); } catch(e) {}
             } else {
               await ajouterUtilisateurAvecWarnCount(_0x133a07);
