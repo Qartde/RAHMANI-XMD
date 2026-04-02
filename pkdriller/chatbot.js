@@ -1,8 +1,6 @@
 const { zokou } = require("../framework/zokou");
 const axios = require("axios");
-
-const GEMINI_API_KEY = "AIzaSyCjl6tq_XaQ-5We9pRPPg2DSDoIYp1MNU4";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+const conf = require("../set");
 
 // Memory ya mazungumzo kwa kila mtumiaji
 const chatHistory = new Map();
@@ -17,9 +15,17 @@ zokou(
   async (origineMessage, zk, commandeOptions) => {
     const { ms, repondre, arg, auteurMessage, nomAuteurMessage } = commandeOptions;
 
+    // Soma key kutoka set.js
+    const GEMINI_API_KEY = conf.GEMINI_KEY;
+    if (!GEMINI_API_KEY) {
+      return repondre("❌ GEMINI_KEY haijawekwa kwenye set.js!");
+    }
+
+    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
     if (!arg || arg.length === 0) {
       return repondre(
-        `🤖 *RAHMANI XMD - AI CHATBOT*\n\n` +
+        `🤖 *RAHMANI MD - AI CHATBOT*\n\n` +
         `Tumia: *.ai [swali lako]*\n\n` +
         `Mfano:\n` +
         `• *.ai Habari yako?*\n` +
