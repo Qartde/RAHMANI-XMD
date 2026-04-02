@@ -1,7 +1,7 @@
 const { zokou } = require("../framework/zokou");
 const axios = require("axios");
 
-const GEMINI_API_KEY = "AIzaSyAxVVBtGdO8Mc35b4fMtJ1Sp2Xj7G5QMWQ";
+const GEMINI_API_KEY = "AIzaSyCjl6tq_XaQ-5We9pRPPg2DSDoIYp1MNU4";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 // Memory ya mazungumzo kwa kila mtumiaji
