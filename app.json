@@ -73,7 +73,7 @@
     },
     "HEROKU_API_KEY": {
       "description": "insert your heroku api-key (this is optionnal)",
-      "value": "HRKU-AAQPoYGGfQNPP3uRWw49F_SVJQAh79RHKBDullybNtRA_____w6AXu9tpPY_",
+      "value": "",
       "required": false
     },
     "HEROKU_APP_NAME": {
@@ -88,19 +88,19 @@
     },
     "OWNER_NAME":
     {
-      "desc": "Your name",
+      "description": "Your name",
       "required": false,
       "value": "Rahmany"
     },
     "NUMERO_OWNER":
     {
-      "desc": "Your number , dont put '+' and put you area code(exemple of kenya '254')",
+      "description": "Your number , dont put '+' and put you area code(exemple of kenya '254')",
       "required":true,
       "value": "255693629079"
     },
     "WARN_COUNT":
     {
-      "desc": "this is the limit of warn for warning commandes",
+      "description": "this is the limit of warn for warning commandes",
       "required": false,
       "value": "2"
     },
@@ -119,6 +119,11 @@
       "description": "if you want to enable anti delete message put yes else put no",
       "value": "no",
       "required": true
+    },
+    "CHATBOT": {
+      "description": "Enable or disable the chatbot. Type yes to activate or no to deactivate (don't write in capital letter)",
+      "value": "yes",
+      "required": false
     }
   },
   "buildpacks": [
