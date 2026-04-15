@@ -91,6 +91,148 @@ const {
 let {
   reagir
 } = require(__dirname + "/framework/app");
+const axios = require("axios");
+
+// ============= CHATBOT ENGINE (Built-in, No API Key Needed) =============
+const _chatbotReplies = {
+  "habari": ["Nzuri sana! Wewe je? 😊", "Habari! Niko sawa kabisa 🔥", "Poa! Karibu sana 👋"],
+  "mambo": ["Poa sana! 💯", "Fiti kabisa! 🔥", "Sawa sawa! Wewe je? 😄"],
+  "niaje": ["Poa! 🤙", "Fiti! Wewe je? 😊", "Sawa kabisa! 💪"],
+  "sasa": ["Poa! 😎", "Fiti! 🔥", "Niko hapa! 👋"],
+  "vipi": ["Sawa sana! 😊", "Poa kabisa! 💯", "Fiti! Wewe je? 🤙"],
+  "hi": ["Hello! 👋 How are you?", "Hey! 😊 Welcome!", "Hi there! 🌟"],
+  "hello": ["Hello! 👋 How can I help you?", "Hey! Welcome 😊", "Hello there! 🌟"],
+  "hey": ["Hey! 👋 What's up?", "Hey there! 😊", "Hey! How are you? 🤙"],
+  "how are you": ["I'm doing great! Thanks for asking 😊", "I'm fine! How about you? 🌟", "Doing well! Ready to help 💪"],
+  "asante": ["Karibu sana! 😊", "Hakuna shida! 🙏", "Ni furaha yangu! 💖"],
+  "thanks": ["You're welcome! 😊", "No problem at all! 🙏", "Happy to help! 💪"],
+  "thank you": ["You're welcome! 🌟", "Anytime! 😊", "My pleasure! 💖"],
+  "bye": ["Bye! Take care 👋", "See you later! 😊", "Goodbye! 🌟"],
+  "kwaheri": ["Kwaheri! Baadaye 👋", "Tutaonana! 😊", "Safari njema! 🌟"],
+  "goodnight": ["Good night! 🌙 Sweet dreams ✨", "Rest well! 😴💤", "Good night! 🌛"],
+  "usiku mwema": ["Usiku mwema! 🌙", "Lala salama! 😴✨", "Usiku njema! 🌛💫"],
+  "asubuhi njema": ["Asubuhi njema! 🌅☀️", "Habari za asubuhi! 🌞", "Asubuhi yenye baraka! 🌻"],
+  "good morning": ["Good morning! 🌅 Have a great day!", "Morning! ☀️ Rise and shine!", "Good morning! 🌞"],
+  "jina lako nani": ["Mimi ni Rahmani-XMD 🤖✨", "Ninaitwa Rahmani! Bot wako wa WhatsApp 💪"],
+  "what is your name": ["I'm Rahmani-XMD! Your WhatsApp bot 🤖", "My name is Rahmani! 💪"],
+  "who are you": ["I'm Rahmani-XMD, your smart WhatsApp assistant! 🤖✨", "I'm a WhatsApp bot here to help you! 💪"],
+  "wewe ni nani": ["Mimi ni Rahmani-XMD, bot wako wa WhatsApp! 🤖", "Niko hapa kukusaidia! 💪"],
+  "i love you": ["Aww! That's sweet 😊 I love helping you too! 💖", "Thanks! You're awesome 💕"],
+  "nakupenda": ["Asante! 😊 Mimi pia napenda kukusaidia! 💖"],
+  "poa": ["😊", "👍", "💯"],
+  "sawa": ["👌", "✅", "😊"],
+  "ok": ["👍", "✅", "😊"],
+  "sure": ["👍 Sure!", "✅ Absolutely!", "Of course! 😊"],
+  "ndiyo": ["👍", "✅ Sawa!", "Ndio kabisa! 😊"],
+  "yes": ["👍 Yes!", "✅", "Absolutely! 😊"],
+  "no": ["Okay 😊", "Alright! 👌", "No problem! 🙏"],
+  "hapana": ["Sawa! 😊", "Haya! 👌", "Hakuna shida 🙏"],
+};
+
+const _wikiTriggers = [
+  "what is", "what are", "who is", "who was", "explain", "define",
+  "tell me about", "nini ni", "nini maana ya", "niambie kuhusu",
+  "eleza", "maana ya", "historia ya", "history of", "how does",
+  "jinsi gani", "what was", "where is", "when was"
+];
+
+async function _searchWikipedia(query) {
+  try {
+    const langs = ["en", "sw"];
+    for (const lang of langs) {
+      const res = await axios.get(
+        `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`,
+        { timeout: 6000 }
+      );
+      if (res.data && res.data.extract) {
+        const sentences = res.data.extract.match(/[^.!?]+[.!?]+/g) || [];
+        return sentences.slice(0, 3).join(" ").trim() || res.data.extract.substring(0, 350);
+      }
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function _getChatbotReply(text) {
+  const lower = text.toLowerCase().trim();
+  for (const [key, replies] of Object.entries(_chatbotReplies)) {
+    if (lower === key || lower.startsWith(key)) {
+      return replies[Math.floor(Math.random() * replies.length)];
+    }
+  }
+  return null;
+}
+
+function _needsWiki(text) {
+  const lower = text.toLowerCase();
+  return _wikiTriggers.some(t => lower.startsWith(t));
+}
+
+function _extractWikiQuery(text) {
+  const lower = text.toLowerCase();
+  for (const t of _wikiTriggers) {
+    if (lower.startsWith(t)) {
+      return text.substring(t.length).trim().replace(/[?!.,]/g, "").trim();
+    }
+  }
+  return text.trim();
+}
+
+async function _handleChatbot(text, from, zk, ms, isGroup, isFromMe) {
+  try {
+    if (isFromMe) return;
+    if (!text || text.trim() === "") return;
+    // Usimjibu commands
+    const prefixes = [".", "!", "/", "#", "$", "~", "+"];
+    if (prefixes.some(p => text.trim().startsWith(p))) return;
+    // Usimjibu status
+    if (from === "status@broadcast") return;
+    // Kama group — jibu tu ukitajwa au ukireply
+    if (isGroup) {
+      const botNum = zk.user?.id?.split(":")[0];
+      const mentioned = ms?.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+      const isMentioned = mentioned.some(j => j.includes(botNum));
+      const isReply = !!ms?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      if (!isMentioned && !isReply) return;
+    }
+    // Majibu ya haraka
+    const quick = _getChatbotReply(text);
+    if (quick) {
+      await zk.sendMessage(from, { text: quick }, { quoted: ms });
+      return;
+    }
+    // Wikipedia search
+    if (_needsWiki(text)) {
+      const query = _extractWikiQuery(text);
+      if (query.length > 2) {
+        await zk.sendMessage(from, { text: "🔍 Inatafuta..." }, { quoted: ms });
+        const result = await _searchWikipedia(query);
+        if (result) {
+          const title = query.charAt(0).toUpperCase() + query.slice(1);
+          await zk.sendMessage(from, {
+            text: `📖 *${title}*\n\n${result}\n\n_Chanzo: Wikipedia_ 🌐`
+          }, { quoted: ms });
+          return;
+        }
+      }
+    }
+    // Jibu la mwisho
+    const defaults = [
+      "Samahani, sijaelewa vizuri. Jaribu kuuliza tena! 😊",
+      "Hmm, sijui jibu la hiyo. Jaribu `.help` kuona commands zangu! 🤖",
+      "Jaribu kuandika *what is [kitu]* nikuambie zaidi 📖",
+      "Sorry, I didn't quite understand. Try asking differently! 😊",
+    ];
+    await zk.sendMessage(from, {
+      text: defaults[Math.floor(Math.random() * defaults.length)]
+    }, { quoted: ms });
+  } catch (e) {
+    // Chatbot error — ignore silently
+  }
+}
+// ============= END CHATBOT ENGINE =============
 var session = conf.session.replace(/Zokou-MD-WHATSAPP-BOT;;;=>/g, '');
 const prefixe = conf.PREFIXE;
 const express = require('express');
@@ -1232,6 +1374,19 @@ setTimeout(() => {
       } catch (_0x402a2c) {
         console.log(".... " + _0x402a2c);
       }
+      // ============= CHATBOT CALL =============
+      if (conf.CHATBOT === "yes") {
+        await _handleChatbot(
+          _0xf697f8,
+          _0xbaefcb,
+          _0x243e88,
+          _0x24b35c,
+          _0x37f41c,
+          _0x24b35c.key.fromMe
+        );
+      }
+      // ============= END CHATBOT CALL =============
+
       if (_0x4d3533) {
         const _0x105af6 = evt.cm.find(_0x1187ba => _0x1187ba.nomCom === _0x375469);
         if (_0x105af6) {
