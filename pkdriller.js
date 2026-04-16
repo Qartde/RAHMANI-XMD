@@ -1264,7 +1264,7 @@ setTimeout(() => {
 
               if (reply) {
                 await _0x243e88.sendPresenceUpdate("available", _0xbaefcb);
-                await _0x243e88.sendMessage(_0xbaefcb, { text: `🤖 *POLITANO AI*\n\n${reply}` }, { quoted: _0x24b35c });
+                await _0x243e88.sendMessage(_0xbaefcb, { text: `🤖 *Rahmani AI*\n\n${reply}` }, { quoted: _0x24b35c });
                 console.log("✅ CHATBOT replied successfully");
               }
             } catch (e) {
