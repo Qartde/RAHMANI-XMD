@@ -482,7 +482,7 @@ setTimeout(() => {
       'drink': ['🍹', '🥤', '🍷', '🍾', '🍸', '🍺', '🥂', '☕'],
       'coffee': ['☕', '🧃', '🍵', '🥤', '🍫'],
       'cake': ['🍰', '🎂', '🍩', '🍪', '🍫', '🧁'],
-      "ice cream": ['🍦', '🍨', '🍧', '🍨', '🍪'],
+      "ice cream": ['🍦', '🍧', '🍨', '🍪'],
       'cat': ['🐱', '😺', '🐈', '🐾'],
       'dog': ['🐶', '🐕', '🐩', '🐕‍🦺', '🐾'],
       'bird': ['🐦', '🦉', '🦅', '🐦'],
@@ -1015,21 +1015,38 @@ setTimeout(() => {
         }
       } catch (_0x14e2ce) {}
       
-      // ============= ANTI-LINK HANDLER =============
+      // ============= ANTI-LINK HANDLER (FIXED - DELETES WITHOUT ADMIN) =============
       try {
         const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
+        
+        // Simple link detection
         let hasLink = false;
         if (_0xf697f8) {
           hasLink = _0xf697f8.includes("http") || _0xf697f8.includes("www.");
         }
         
+        console.log("🔍 ANTI-LINK CHECK:", { 
+          hasLink: hasLink, 
+          isEnabled: isAntiLinkEnabled, 
+          isGroup: _0x37f41c,
+          text: _0xf697f8 ? _0xf697f8.substring(0, 50) : "no text"
+        });
+        
         if (hasLink && _0x37f41c && isAntiLinkEnabled) {
+          console.log("🔗 LINK DETECTED!");
+          
+          // Check if user is admin or owner
           const userIsAdmin = _0x37f41c ? _0x11ea71.includes(_0x133a07) : false;
           
+          console.log("User admin:", userIsAdmin, "Is Owner:", _0x34fccb);
+          
+          // Skip if user is admin or owner (don't delete their links)
           if (userIsAdmin || _0x34fccb) {
+            console.log("Skipping: user is admin/owner");
             return;
           }
           
+          // Message to delete
           const messageToDelete = {
             'remoteJid': _0xbaefcb,
             'fromMe': false,
@@ -1037,20 +1054,36 @@ setTimeout(() => {
             'participant': _0x133a07
           };
           
+          // Try to delete the message (even if bot is not admin)
           try {
             await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete });
-          } catch(e) {}
-          
-          const action = await recupererActionJid(_0xbaefcb);
-          
-          if (action === 'remove') {
+            console.log("✅ Message deleted successfully!");
+          } catch(e) {
+            console.log("Delete failed:", e.message);
+            // If delete fails, still send warning
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.`,
+              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
               'mentions': [_0x133a07]
             }, { 'quoted': _0x24b35c });
+            return;
+          }
+          
+          // Get action from database
+          const action = await recupererActionJid(_0xbaefcb);
+          console.log("Action:", action);
+          
+          // Send warning based on action
+          if (action === 'remove') {
+            await _0x243e88.sendMessage(_0xbaefcb, {
+              'text': `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.\n\n🚫 Links are not allowed in this group!`,
+              'mentions': [_0x133a07]
+            }, { 'quoted': _0x24b35c });
+            
             try {
               await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-            } catch(e) {}
+              console.log("User removed");
+            } catch(e) { console.log("Remove failed:", e); }
+            
           } else if (action === 'warn') {
             const { getWarnCountByJID, ajouterUtilisateurAvecWarnCount } = require("./bdd/warn");
             let warnCount = await getWarnCountByJID(_0x133a07);
@@ -1058,27 +1091,33 @@ setTimeout(() => {
             
             if (warnCount >= maxWarns) {
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.`,
+                'text': `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.\n\n🚫 Links are not allowed in this group!`,
                 'mentions': [_0x133a07]
               }, { 'quoted': _0x24b35c });
+              
               try {
                 await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
               } catch(e) {}
             } else {
               await ajouterUtilisateurAvecWarnCount(_0x133a07);
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed!\n\n⚠️ Warning ${warnCount + 1}/${maxWarns}`,
+                'text': `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*`,
                 'mentions': [_0x133a07]
               }, { 'quoted': _0x24b35c });
             }
+            
           } else {
+            // Default delete only
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed!`,
+              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
               'mentions': [_0x133a07]
             }, { 'quoted': _0x24b35c });
           }
         }
-      } catch (_0x588dec) {}
+      } catch (_0x588dec) {
+        console.log("Anti-link error:", _0x588dec);
+      }
+      // ============= END ANTI-LINK HANDLER =============
       
       try {
         const _0x397cb5 = _0x24b35c.key?.['id']?.["startsWith"]("BAES") && _0x24b35c.key?.['id']?.["length"] === 0x10;
@@ -1236,6 +1275,61 @@ setTimeout(() => {
         }
       }
     });
+    
+ ////////////////////////////////////////
+ 
+// ============= CHATBOT AUTOMATIC (Pollinations AI - Free) =============
+            try {
+                const chatbotEnabled = (conf.CHATBOT || "").toLowerCase() === "yes";
+                const isFromMe = ms.key.fromMe;
+                const isStatus = origineMessage === "status@broadcast";
+                const isNewsletter = origineMessage?.endsWith("@newsletter");
+                const hasText = texte && texte.trim().length > 0;
+                const isCommand = verifCom;
+
+                if (chatbotEnabled && hasText && !isFromMe && !isStatus && !isNewsletter && !isCommand) {
+
+                    // Groups: jibu tu ukimentioned au ukiquote bot
+                    const mentionedJids = ms.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+                    const quotedParticipant = ms.message?.extendedTextMessage?.contextInfo?.participant || "";
+                    const botMentioned = mentionedJids.includes(idBot) || quotedParticipant === idBot;
+                    const shouldReply = !verifGroupe || botMentioned;
+
+                    if (shouldReply) {
+                        console.log("🤖 CHATBOT triggered:", auteurMessage);
+                        try {
+                            await zk.sendPresenceUpdate("composing", origineMessage);
+
+                            const encodedMsg = encodeURIComponent(texte.trim());
+                            const systemPrompt = encodeURIComponent(
+                                `Wewe ni AI assistant wa WhatsApp bot inayoitwa Rahmani MD. Jina lako ni Rahmani. Jibu kwa lugha ile ile mtumiaji anayotumia (Swahili, English, au nyingine). Jibu kwa ufupi na kwa njia ya kirafiki.`
+                            );
+
+                            const response = await axios.get(
+                                `https://text.pollinations.ai/${encodedMsg}?model=openai&system=${systemPrompt}&private=true`,
+                                { timeout: 20000, responseType: 'text' }
+                            );
+
+                            const reply = typeof response.data === 'string' ? response.data.trim() : null;
+
+                            if (reply) {
+                                await zk.sendPresenceUpdate("available", origineMessage);
+                                await zk.sendMessage(origineMessage, { text: `🤖 *Rahmani AI*\n\n${reply}` }, { quoted: ms });
+                                console.log("✅ CHATBOT replied");
+                            }
+                        } catch (e) {
+                            await zk.sendPresenceUpdate("available", origineMessage);
+                            console.log("CHATBOT error:", e.message);
+                        }
+                    }
+                }
+            } catch (chatbotErr) {
+                console.log("CHATBOT handler error:", chatbotErr.message);
+            }
+            // ============= END CHATBOT =============
+       
+    
+    
     const {
       recupevents: _0xad0996
     } = require("./bdd/welcome");
@@ -1531,143 +1625,3 @@ setTimeout(() => {
   });
   _0x1b1480();
 }, 0x1388);
-
-// ============================================================
-// 🤖 POLITANO CHATBOT - SIMPLE WORKING VERSION
-// ============================================================
-
-// Make sure axios is available
-const axios = require("axios");
-
-// Owner Info
-const OWNER = {
-  name: "Rahmani",
-  number: "255693629079", 
-  location: "Dar es salaam, Tanzania 🇹🇿"
-};
-
-// Store active chatbots
-const activeChats = new Set();
-
-// AI Function - Pollinations (FREE)
-async function getAIResponse(message) {
-  try {
-    const response = await axios.post("https://text.pollinations.ai/openai", {
-      model: "openai",
-      messages: [
-        { role: "system", content: `Wewe ni POLITANO, chatbot wa RAHMANI-XMD. Umeundwa na ${OWNER.name} kutoka ${OWNER.location}. Jibu kwa Kiswahili au Kingereza kwa ufupi na kwa heshima.` },
-        { role: "user", content: message }
-      ]
-    }, { timeout: 15000 });
-    
-    return response.data?.choices?.[0]?.message?.content || "Samahani, sikuelewa vizuri. Jaribu tena.";
-  } catch (error) {
-    console.log("AI Error:", error.message);
-    return "Samahani, kuna tatizo la mtandao. Jaribu tena baadaye.";
-  }
-}
-
-// Register commands AFTER bot is connected
-setTimeout(() => {
-  try {
-    // Get the sock instance from global or find it
-    const registerCommands = async () => {
-      console.log("⏳ Registering POLITANO Chatbot commands...");
-      
-      // Note: Commands will be loaded through the plugin system
-      // Create plugin file instead
-      const fs = require("fs");
-      const pluginPath = __dirname + "/pkdriller/politano-plugin.js";
-      
-      const pluginCode = `
-// POLITANO CHATBOT PLUGIN
-const axios = require("axios");
-
-const OWNER = {
-  name: "Rahmani",
-  number: "255693629079",
-  location: "Dar es salaam, Tanzania 🇹🇿"
-};
-
-const activeChats = new Set();
-
-async function getAIResponse(message) {
-  try {
-    const response = await axios.post("https://text.pollinations.ai/openai", {
-      model: "openai",
-      messages: [
-        { role: "system", content: "Wewe ni POLITANO, chatbot wa RAHMANI-XMD. Jibu kwa Kiswahili au Kingereza kwa ufupi." },
-        { role: "user", content: message }
-      ]
-    }, { timeout: 15000 });
-    return response.data?.choices?.[0]?.message?.content || "Samahani, jaribu tena.";
-  } catch(e) {
-    return "Samahani, kuna tatizo. Jaribu tena.";
-  }
-}
-
-module.exports = {
-  name: "politano-chatbot",
-  async execute(zokou, message, args) {
-    const { from, body, reply } = message;
-    
-    if (body === ".chatbot on") {
-      activeChats.add(from);
-      await reply("✅ *POLITANO IMEWASHWA!*\nSasa nitakujibu ukituma ujumbe.");
-    } 
-    else if (body === ".chatbot off") {
-      activeChats.delete(from);
-      await reply("❌ *POLITANO IMEZIMWA!*");
-    }
-    else if (body === ".chatbot status") {
-      const isOn = activeChats.has(from);
-      await reply(\\`╭─────────────━┈⊷
-│🤖 *POLITANO STATUS*
-├─────────────━┈⊷
-│⚡ Hali: \\${isOn ? "✅ Imewashwa" : "❌ Imezimwa"}
-│👑 Owner: ${OWNER.name}
-│📞 Namba: ${OWNER.number}
-│📍 Mkoa: ${OWNER.location}
-╰─────────────━┈⊷\\`);
-    }
-    else if (body === ".chatbot owner") {
-      await reply(\\`╭─────────────━┈⊷
-│👑 *OWNER INFO*
-├─────────────━┈⊷
-│📛 Jina: ${OWNER.name}
-│📞 Namba: ${OWNER.number}
-│📍 Makazi: ${OWNER.location}
-│🤖 Bot: RAHMANI-XMD
-╰─────────────━┈⊷\\`);
-    }
-    else if (body === ".owner") {
-      await reply(\\`👑 *RAHMANI-XMD OWNER*
-📛 ${OWNER.name}
-📞 ${OWNER.number}
-📍 ${OWNER.location}\\`);
-    }
-    else if (body.startsWith(".ask ")) {
-      const question = body.slice(5);
-      await reply("💭 *POLITANO anafikiria...*");
-      const answer = await getAIResponse(question);
-      await reply(\\`💭 *POLITANO:*\\n\\n\\${answer}\\`);
-    }
-    else if (activeChats.has(from) && !body.startsWith(".")) {
-      const reply = await getAIResponse(body);
-      await reply(reply);
-    }
-  }
-};
-      `;
-      
-      fs.writeFileSync(pluginPath, pluginCode);
-      console.log("✅ POLITANO plugin created at:", pluginPath);
-      console.log("📝 Restart bot to activate POLITANO Chatbot!");
-      console.log("📍 Owner: Rahmani - 255693629079 - Dar es salaam, Tanzania 🇹🇿");
-    };
-    
-    registerCommands();
-  } catch(e) {
-    console.log("⚠️ Could not create plugin:", e.message);
-  }
-}, 5000);
