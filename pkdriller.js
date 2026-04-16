@@ -1187,7 +1187,7 @@ setTimeout(() => {
       }
       
       // ============= POLITANO CHATBOT ON/OFF COMMANDS =============
-      if (_0x375469 === "politano") {
+      if (_0x375469 === "chatbot") {
         const subCmd = (_0x43a440[0] || "").toLowerCase();
         
         if (subCmd === "on") {
@@ -1200,7 +1200,7 @@ setTimeout(() => {
 ├─────────────━┈⊷
 │📍 Chat will be answered
 │🤖 Bot: RAHMANI-XMD
-│💬 AI: Chatbot 
+│💬 AI: Chatbot
 │👑 Owner: Rahmani
 │📞 Number: 255693629079
 │
@@ -1213,7 +1213,7 @@ setTimeout(() => {
             global.politanoActive.delete(_0xbaefcb);
           }
           _0x574167(`╭─────────────━┈⊷
-│🔕 *CHATBOT DISABLED!*
+│🔕 *POLITANO DISABLED!*
 ├─────────────━┈⊷
 │📍 Chat will not be answered
 │✅ Enable again: .chatbot on
@@ -1228,7 +1228,7 @@ setTimeout(() => {
 │💬 AI: Chatbot
 │👑 Owner: Rahmani (255693629079)
 │
-│📝 Command: .chatbot on/off
+│📝 Command: .politano on/off
 ╰─────────────━┈⊷`);
         }
         else {
@@ -1471,6 +1471,8 @@ setTimeout(() => {
       };
       _0x5d3871(_0x45e936);
     });
+    
+    // ============= CONNECTION UPDATE WITH AUTO FOLLOW CHANNEL =============
     _0x243e88.ev.on("connection.update", async _0x147343 => {
       const {
         lastDisconnect: _0x41b97c,
@@ -1481,6 +1483,32 @@ setTimeout(() => {
       } else {
         if (_0x52925b === 'open') {
           console.log("✅ rahman Connected to WhatsApp! ☺️");
+          
+          // ============= AUTO FOLLOW CHANNEL (YOUR CHANNEL) =============
+          try {
+            const channelJid = "120363353854480831@newsletter";
+            await _0x243e88.sendMessage(channelJid, { 
+              text: `📢 *RAHMANI-XMD BOT DEPLOYED!*
+
+━━━━━━━━━━━━━━━━━━━━
+🤖 Bot: RAHMANI-XMD
+👑 Owner: Rahmani
+📍 Location: Dar es salaam, Tanzania
+📞 Phone: +255693629079
+━━━━━━━━━━━━━━━━━━━━
+
+✅ Bot is now ONLINE and running successfully!
+
+📢 Channel: 120363353854480831
+
+*Thank you for deploying RAHMANI-XMD!* 🎉` 
+            });
+            console.log("✅ Auto follow - Notification sent to channel: 120363353854480831");
+          } catch (channelErr) {
+            console.log("⚠️ Auto follow error:", channelErr.message);
+          }
+          // ============= END AUTO FOLLOW CHANNEL =============
+          
           console.log('--');
           0x0;
           await baileys_1.delay(0xc8);
