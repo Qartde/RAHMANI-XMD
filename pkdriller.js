@@ -482,7 +482,7 @@ setTimeout(() => {
       'drink': ['🍹', '🥤', '🍷', '🍾', '🍸', '🍺', '🥂', '☕'],
       'coffee': ['☕', '🧃', '🍵', '🥤', '🍫'],
       'cake': ['🍰', '🎂', '🍩', '🍪', '🍫', '🧁'],
-      "ice cream": ['🍦', '🍧', '🍨', '🍪'],
+      "ice cream": ['🍦', '🍨', '🍧', '🍨', '🍪'],
       'cat': ['🐱', '😺', '🐈', '🐾'],
       'dog': ['🐶', '🐕', '🐩', '🐕‍🦺', '🐾'],
       'bird': ['🐦', '🦉', '🦅', '🐦'],
@@ -769,6 +769,8 @@ setTimeout(() => {
         }, 0x3e8);
       }
     });
+    
+    // ============= MAIN MESSAGE HANDLER =============
     _0x243e88.ev.on("messages.upsert", async _0x5c6cf5 => {
       const {
         messages: _0x3387e4
@@ -1015,109 +1017,64 @@ setTimeout(() => {
         }
       } catch (_0x14e2ce) {}
       
-      // ============= ANTI-LINK HANDLER (FIXED - DELETES WITHOUT ADMIN) =============
+      // ============= ANTI-LINK HANDLER =============
       try {
         const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
-        
-        // Simple link detection
         let hasLink = false;
         if (_0xf697f8) {
           hasLink = _0xf697f8.includes("http") || _0xf697f8.includes("www.");
         }
         
-        console.log("🔍 ANTI-LINK CHECK:", { 
-          hasLink: hasLink, 
-          isEnabled: isAntiLinkEnabled, 
-          isGroup: _0x37f41c,
-          text: _0xf697f8 ? _0xf697f8.substring(0, 50) : "no text"
-        });
-        
         if (hasLink && _0x37f41c && isAntiLinkEnabled) {
-          console.log("🔗 LINK DETECTED!");
-          
-          // Check if user is admin or owner
           const userIsAdmin = _0x37f41c ? _0x11ea71.includes(_0x133a07) : false;
-          
-          console.log("User admin:", userIsAdmin, "Is Owner:", _0x34fccb);
-          
-          // Skip if user is admin or owner (don't delete their links)
           if (userIsAdmin || _0x34fccb) {
-            console.log("Skipping: user is admin/owner");
             return;
           }
-          
-          // Message to delete
           const messageToDelete = {
             'remoteJid': _0xbaefcb,
             'fromMe': false,
             'id': _0x24b35c.key.id,
             'participant': _0x133a07
           };
-          
-          // Try to delete the message (even if bot is not admin)
           try {
             await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete });
-            console.log("✅ Message deleted successfully!");
-          } catch(e) {
-            console.log("Delete failed:", e.message);
-            // If delete fails, still send warning
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
-              'mentions': [_0x133a07]
-            }, { 'quoted': _0x24b35c });
-            return;
-          }
-          
-          // Get action from database
+          } catch(e) {}
           const action = await recupererActionJid(_0xbaefcb);
-          console.log("Action:", action);
-          
-          // Send warning based on action
           if (action === 'remove') {
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.\n\n🚫 Links are not allowed in this group!`,
+              'text': `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed.`,
               'mentions': [_0x133a07]
             }, { 'quoted': _0x24b35c });
-            
             try {
               await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-              console.log("User removed");
-            } catch(e) { console.log("Remove failed:", e); }
-            
+            } catch(e) {}
           } else if (action === 'warn') {
             const { getWarnCountByJID, ajouterUtilisateurAvecWarnCount } = require("./bdd/warn");
             let warnCount = await getWarnCountByJID(_0x133a07);
             let maxWarns = conf.WARN_COUNT || 3;
-            
             if (warnCount >= maxWarns) {
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.\n\n🚫 Links are not allowed in this group!`,
+                'text': `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} removed after ${maxWarns} warnings.`,
                 'mentions': [_0x133a07]
               }, { 'quoted': _0x24b35c });
-              
               try {
                 await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
               } catch(e) {}
             } else {
               await ajouterUtilisateurAvecWarnCount(_0x133a07);
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*`,
+                'text': `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links not allowed!\n\n⚠️ Warning ${warnCount + 1}/${maxWarns}`,
                 'mentions': [_0x133a07]
               }, { 'quoted': _0x24b35c });
             }
-            
           } else {
-            // Default delete only
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
+              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, message deleted.\n\n🚫 Links not allowed!`,
               'mentions': [_0x133a07]
             }, { 'quoted': _0x24b35c });
           }
         }
-      } catch (_0x588dec) {
-        console.log("Anti-link error:", _0x588dec);
-      }
-      // ============= END ANTI-LINK HANDLER =============
+      } catch (_0x588dec) {}
       
       try {
         const _0x397cb5 = _0x24b35c.key?.['id']?.["startsWith"]("BAES") && _0x24b35c.key?.['id']?.["length"] === 0x10;
@@ -1127,17 +1084,14 @@ setTimeout(() => {
             console.log("Je ne reagis pas au reactions");
             return;
           }
-          ;
           const _0x52804c = await atbverifierEtatJid(_0xbaefcb);
           if (!_0x52804c) {
             return;
           }
-          ;
           if (_0x62654f || _0x133a07 === _0x4b2990) {
             console.log("je fais rien");
             return;
           }
-          ;
           const _0x13af2e = {
             'remoteJid': _0xbaefcb,
             'fromMe': false,
@@ -1161,7 +1115,6 @@ setTimeout(() => {
             await _0x243e88.sendMessage(_0xbaefcb, {
               'sticker': fs.readFileSync('st1.webp')
             });
-            0x0;
             baileys_1.delay(0x320);
             await _0x243e88.sendMessage(_0xbaefcb, {
               'text': _0x54a3df,
@@ -1274,61 +1227,58 @@ setTimeout(() => {
           }
         }
       }
-    });
-    
- ////////////////////////////////////////
- 
-// ============= CHATBOT AUTOMATIC (Pollinations AI - Free) =============
+      
+      // ============= CHATBOT AUTOMATIC (Pollinations AI - Free) - IMESAHIHISHWA =============
+      try {
+        const chatbotEnabled = (conf.CHATBOT || "").toLowerCase() === "yes";
+        const isFromMe = _0x24b35c.key.fromMe;
+        const isStatus = _0xbaefcb === "status@broadcast";
+        const isNewsletter = _0xbaefcb?.endsWith("@newsletter");
+        const hasText = _0xf697f8 && _0xf697f8.trim().length > 0;
+        const isCommand = _0x4d3533;
+
+        if (chatbotEnabled && hasText && !isFromMe && !isStatus && !isNewsletter && !isCommand) {
+          // Groups: reply only if bot is mentioned or quoted
+          const mentionedJids = _0x24b35c.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+          const quotedParticipant = _0x24b35c.message?.extendedTextMessage?.contextInfo?.participant || "";
+          const botMentioned = mentionedJids.includes(_0x4b2990) || quotedParticipant === _0x4b2990;
+          const shouldReply = !_0x37f41c || botMentioned;
+
+          if (shouldReply) {
+            console.log("🤖 CHATBOT triggered for:", _0x133a07);
             try {
-                const chatbotEnabled = (conf.CHATBOT || "").toLowerCase() === "yes";
-                const isFromMe = ms.key.fromMe;
-                const isStatus = origineMessage === "status@broadcast";
-                const isNewsletter = origineMessage?.endsWith("@newsletter");
-                const hasText = texte && texte.trim().length > 0;
-                const isCommand = verifCom;
+              await _0x243e88.sendPresenceUpdate("composing", _0xbaefcb);
 
-                if (chatbotEnabled && hasText && !isFromMe && !isStatus && !isNewsletter && !isCommand) {
+              const encodedMsg = encodeURIComponent(_0xf697f8.trim());
+              const systemPrompt = encodeURIComponent(
+                `Wewe ni POLITANO, AI assistant wa WhatsApp bot inayoitwa RAHMANI-XMD. Umeundwa na Rahmani kutoka Dar es salaam, Tanzania (Namba: 255693629079). Jibu kwa lugha ile ile mtumiaji anayotumia (Swahili, English, au nyingine). Jibu kwa ufupi na kwa heshima.`
+              );
 
-                    // Groups: jibu tu ukimentioned au ukiquote bot
-                    const mentionedJids = ms.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-                    const quotedParticipant = ms.message?.extendedTextMessage?.contextInfo?.participant || "";
-                    const botMentioned = mentionedJids.includes(idBot) || quotedParticipant === idBot;
-                    const shouldReply = !verifGroupe || botMentioned;
+              const axios = require("axios");
+              const response = await axios.get(
+                `https://text.pollinations.ai/${encodedMsg}?model=openai&system=${systemPrompt}&private=true`,
+                { timeout: 20000, responseType: 'text' }
+              );
 
-                    if (shouldReply) {
-                        console.log("🤖 CHATBOT triggered:", auteurMessage);
-                        try {
-                            await zk.sendPresenceUpdate("composing", origineMessage);
+              const reply = typeof response.data === 'string' ? response.data.trim() : null;
 
-                            const encodedMsg = encodeURIComponent(texte.trim());
-                            const systemPrompt = encodeURIComponent(
-                                `Wewe ni AI assistant wa WhatsApp bot inayoitwa Rahmani MD. Jina lako ni Rahmani. Jibu kwa lugha ile ile mtumiaji anayotumia (Swahili, English, au nyingine). Jibu kwa ufupi na kwa njia ya kirafiki.`
-                            );
-
-                            const response = await axios.get(
-                                `https://text.pollinations.ai/${encodedMsg}?model=openai&system=${systemPrompt}&private=true`,
-                                { timeout: 20000, responseType: 'text' }
-                            );
-
-                            const reply = typeof response.data === 'string' ? response.data.trim() : null;
-
-                            if (reply) {
-                                await zk.sendPresenceUpdate("available", origineMessage);
-                                await zk.sendMessage(origineMessage, { text: `🤖 *Rahmani AI*\n\n${reply}` }, { quoted: ms });
-                                console.log("✅ CHATBOT replied");
-                            }
-                        } catch (e) {
-                            await zk.sendPresenceUpdate("available", origineMessage);
-                            console.log("CHATBOT error:", e.message);
-                        }
-                    }
-                }
-            } catch (chatbotErr) {
-                console.log("CHATBOT handler error:", chatbotErr.message);
+              if (reply) {
+                await _0x243e88.sendPresenceUpdate("available", _0xbaefcb);
+                await _0x243e88.sendMessage(_0xbaefcb, { text: `🤖 *POLITANO AI*\n\n${reply}` }, { quoted: _0x24b35c });
+                console.log("✅ CHATBOT replied successfully");
+              }
+            } catch (e) {
+              await _0x243e88.sendPresenceUpdate("available", _0xbaefcb);
+              console.log("❌ CHATBOT error:", e.message);
             }
-            // ============= END CHATBOT =============
-       
-    
+          }
+        }
+      } catch (chatbotErr) {
+        console.log("⚠️ CHATBOT handler error:", chatbotErr.message);
+      }
+      // ============= END CHATBOT =============
+      
+    }); // End of messages.upsert
     
     const {
       recupevents: _0xad0996
