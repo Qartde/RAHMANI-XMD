@@ -1015,38 +1015,21 @@ setTimeout(() => {
         }
       } catch (_0x14e2ce) {}
       
-      // ============= ANTI-LINK HANDLER (FIXED - DELETES WITHOUT ADMIN) =============
+      // ============= ANTI-LINK HANDLER =============
       try {
         const isAntiLinkEnabled = await verifierEtatJid(_0xbaefcb);
-        
-        // Simple link detection
         let hasLink = false;
         if (_0xf697f8) {
           hasLink = _0xf697f8.includes("http") || _0xf697f8.includes("www.");
         }
         
-        console.log("🔍 ANTI-LINK CHECK:", { 
-          hasLink: hasLink, 
-          isEnabled: isAntiLinkEnabled, 
-          isGroup: _0x37f41c,
-          text: _0xf697f8 ? _0xf697f8.substring(0, 50) : "no text"
-        });
-        
         if (hasLink && _0x37f41c && isAntiLinkEnabled) {
-          console.log("🔗 LINK DETECTED!");
-          
-          // Check if user is admin or owner
           const userIsAdmin = _0x37f41c ? _0x11ea71.includes(_0x133a07) : false;
           
-          console.log("User admin:", userIsAdmin, "Is Owner:", _0x34fccb);
-          
-          // Skip if user is admin or owner (don't delete their links)
           if (userIsAdmin || _0x34fccb) {
-            console.log("Skipping: user is admin/owner");
             return;
           }
           
-          // Message to delete
           const messageToDelete = {
             'remoteJid': _0xbaefcb,
             'fromMe': false,
@@ -1054,36 +1037,20 @@ setTimeout(() => {
             'participant': _0x133a07
           };
           
-          // Try to delete the message (even if bot is not admin)
           try {
             await _0x243e88.sendMessage(_0xbaefcb, { 'delete': messageToDelete });
-            console.log("✅ Message deleted successfully!");
-          } catch(e) {
-            console.log("Delete failed:", e.message);
-            // If delete fails, still send warning
-            await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
-              'mentions': [_0x133a07]
-            }, { 'quoted': _0x24b35c });
-            return;
-          }
+          } catch(e) {}
           
-          // Get action from database
           const action = await recupererActionJid(_0xbaefcb);
-          console.log("Action:", action);
           
-          // Send warning based on action
           if (action === 'remove') {
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.\n\n🚫 Links are not allowed in this group!`,
+              'text': `🚨 *LINK DETECTED!* 🚨\n\n@${_0x133a07.split('@')[0]} has been removed for sending links.`,
               'mentions': [_0x133a07]
             }, { 'quoted': _0x24b35c });
-            
             try {
               await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-              console.log("User removed");
-            } catch(e) { console.log("Remove failed:", e); }
-            
+            } catch(e) {}
           } else if (action === 'warn') {
             const { getWarnCountByJID, ajouterUtilisateurAvecWarnCount } = require("./bdd/warn");
             let warnCount = await getWarnCountByJID(_0x133a07);
@@ -1091,33 +1058,27 @@ setTimeout(() => {
             
             if (warnCount >= maxWarns) {
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.\n\n🚫 Links are not allowed in this group!`,
+                'text': `⚠️ *FINAL WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.`,
                 'mentions': [_0x133a07]
               }, { 'quoted': _0x24b35c });
-              
               try {
                 await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
               } catch(e) {}
             } else {
               await ajouterUtilisateurAvecWarnCount(_0x133a07);
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*`,
+                'text': `⚠️ *WARNING!* ⚠️\n\n@${_0x133a07.split('@')[0]}, links are not allowed!\n\n⚠️ Warning ${warnCount + 1}/${maxWarns}`,
                 'mentions': [_0x133a07]
               }, { 'quoted': _0x24b35c });
             }
-            
           } else {
-            // Default delete only
             await _0x243e88.sendMessage(_0xbaefcb, {
-              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
+              'text': `⚠️ *LINK DETECTED!* ⚠️\n\n@${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 Links are not allowed!`,
               'mentions': [_0x133a07]
             }, { 'quoted': _0x24b35c });
           }
         }
-      } catch (_0x588dec) {
-        console.log("Anti-link error:", _0x588dec);
-      }
-      // ============= END ANTI-LINK HANDLER =============
+      } catch (_0x588dec) {}
       
       try {
         const _0x397cb5 = _0x24b35c.key?.['id']?.["startsWith"]("BAES") && _0x24b35c.key?.['id']?.["length"] === 0x10;
@@ -1572,131 +1533,141 @@ setTimeout(() => {
 }, 0x1388);
 
 // ============================================================
-// 🤖 POLITANO CHATBOT - INTEGRATED DIRECTLY IN INDEX.JS
+// 🤖 POLITANO CHATBOT - SIMPLE WORKING VERSION
 // ============================================================
 
-// POLITANO Chatbot Module
+// Make sure axios is available
 const axios = require("axios");
 
-// Owner Configuration
-const POLITANO_OWNER_NUMBER = "255693629079";
-const POLITANO_OWNER_NAME = "Rahmani";
-const POLITANO_OWNER_LOCATION = "Dar es salaam, Tanzania 🇹🇿";
-const POLITANO_BOT_NAME = "RAHMANI-XMD";
-const POLITANO_CHATBOT_NAME = "POLITANO";
+// Owner Info
+const OWNER = {
+  name: "Rahmani",
+  number: "255693629079", 
+  location: "Dar es salaam, Tanzania 🇹🇿"
+};
 
-// Chatbot storage
-const politanoChatHistories = new Map();
-const politanoActiveChatbots = new Set();
+// Store active chatbots
+const activeChats = new Set();
 
-function politanoGetHistory(jid) {
-  if (!politanoChatHistories.has(jid)) politanoChatHistories.set(jid, []);
-  return politanoChatHistories.get(jid);
-}
-
-function politanoAddToHistory(jid, role, content) {
-  const hist = politanoGetHistory(jid);
-  hist.push({ role, content });
-  if (hist.length > 20) hist.splice(0, 2);
-}
-
-function politanoClearHistory(jid) {
-  politanoChatHistories.set(jid, []);
-}
-
-// Pollinations AI function
-async function politanoAskAI(userMessage) {
+// AI Function - Pollinations (FREE)
+async function getAIResponse(message) {
   try {
-    const systemPrompt = `Wewe ni ${POLITANO_CHATBOT_NAME}, msaidizi wa WhatsApp wa bot ya ${POLITANO_BOT_NAME}. Umeundwa na ${POLITANO_OWNER_NAME} kutoka ${POLITANO_OWNER_LOCATION} (Namba: ${POLITANO_OWNER_NUMBER}). Unajibu kwa Kiswahili na Kingereza. Jibu kwa ufupi, kwa heshima, na kwa msaada. Usijibu mambo ya hatari, ukatili, au ngono.`;
-    
     const response = await axios.post("https://text.pollinations.ai/openai", {
       model: "openai",
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage }
+        { role: "system", content: `Wewe ni POLITANO, chatbot wa RAHMANI-XMD. Umeundwa na ${OWNER.name} kutoka ${OWNER.location}. Jibu kwa Kiswahili au Kingereza kwa ufupi na kwa heshima.` },
+        { role: "user", content: message }
       ]
-    }, { timeout: 20000 });
+    }, { timeout: 15000 });
     
-    return response.data?.choices?.[0]?.message?.content?.trim() || "Samahani, sikupata jibu. Jaribu tena.";
+    return response.data?.choices?.[0]?.message?.content || "Samahani, sikuelewa vizuri. Jaribu tena.";
   } catch (error) {
-    console.error("POLITANO AI Error:", error.message);
-    return "Samahani, kuna hitilafu. Jaribu tena baadaye.";
+    console.log("AI Error:", error.message);
+    return "Samahani, kuna tatizo la mtandao. Jaribu tena baadaye.";
   }
 }
 
-// Register chatbot commands with the existing framework
-try {
-  // Check if zokou framework is available
-  if (typeof zokou !== 'undefined') {
-    // .chatbot command
-    zokou({
-      nomCom: "chatbot",
-      categorie: "AI",
-      reaction: "🤖"
-    }, async (dest, zk, commandeOptions) => {
-      const { repondre, arg, auteurMessage } = commandeOptions;
-      const subCmd = (arg[0] || "").toLowerCase();
-
-      if (subCmd === "on") {
-        politanoActiveChatbots.add(dest);
-        await repondre(`╭─────────────━┈⊷\n│🤖 *${POLITANO_CHATBOT_NAME} IMEWASHWA!*\n├─────────────━┈⊷\n│🤖 Bot: ${POLITANO_BOT_NAME}\n│👑 Owner: ${POLITANO_OWNER_NAME}\n│📞 Namba: ${POLITANO_OWNER_NUMBER}\n│📍 Mkoa: ${POLITANO_OWNER_LOCATION}\n╰─────────────━┈⊷`);
-      } 
-      else if (subCmd === "off") {
-        politanoActiveChatbots.delete(dest);
-        await repondre(`🔕 *${POLITANO_CHATBOT_NAME} IMEZIMWA!* Washa tena kwa *.chatbot on*`);
-      }
-      else if (subCmd === "clear") {
-        politanoClearHistory(auteurMessage);
-        await repondre("🗑️ *Historia imefutwa!*");
-      }
-      else if (subCmd === "status") {
-        const isOn = politanoActiveChatbots.has(dest);
-        await repondre(`╭─────────────━┈⊷\n│🤖 *${POLITANO_BOT_NAME} STATUS*\n├─────────────━┈⊷\n│⚡ Hali: ${isOn ? "✅ Imewashwa" : "❌ Imezimwa"}\n│🧠 Engine: Pollinations AI\n│👑 Owner: ${POLITANO_OWNER_NAME}\n│📞 Namba: ${POLITANO_OWNER_NUMBER}\n╰─────────────━┈⊷`);
-      }
-      else if (subCmd === "owner") {
-        await repondre(`╭─────────────━┈⊷\n│👑 *OWNER INFO*\n├─────────────━┈⊷\n│📛 Jina: ${POLITANO_OWNER_NAME}\n│📞 Namba: ${POLITANO_OWNER_NUMBER}\n│📍 Makazi: ${POLITANO_OWNER_LOCATION}\n│🤖 Bot: ${POLITANO_BOT_NAME}\n╰─────────────━┈⊷`);
-      }
-      else {
-        await repondre(`╭─────────────━┈⊷\n│🤖 *${POLITANO_BOT_NAME} - CHATBOT MSAADA*\n├─────────────━┈⊷\n│▸ *.chatbot on* → Washa\n│▸ *.chatbot off* → Zima\n│▸ *.chatbot status* → Hali\n│▸ *.chatbot owner* → Owner\n│▸ *.chatbot clear* → Futa historia\n│▸ *.ask [swali]* → Uliza\n╰─────────────━┈⊷`);
-      }
-    });
-
-    // .ask command
-    zokou({
-      nomCom: "ask",
-      categorie: "AI",
-      reaction: "💭"
-    }, async (dest, zk, commandeOptions) => {
-      const { repondre, arg, auteurMessage, ms } = commandeOptions;
-      const question = arg.join(" ").trim();
+// Register commands AFTER bot is connected
+setTimeout(() => {
+  try {
+    // Get the sock instance from global or find it
+    const registerCommands = async () => {
+      console.log("⏳ Registering POLITANO Chatbot commands...");
       
-      if (!question) {
-        return repondre(`❓ *Andika swali lako!*\n📝 Mfano: .ask Habari yako?\n👑 Owner: ${POLITANO_OWNER_NAME}`);
-      }
+      // Note: Commands will be loaded through the plugin system
+      // Create plugin file instead
+      const fs = require("fs");
+      const pluginPath = __dirname + "/pkdriller/politano-plugin.js";
       
-      await zk.sendPresenceUpdate("composing", dest);
-      try {
-        const reply = await politanoAskAI(question);
-        await zk.sendMessage(dest, { text: `💭 *${POLITANO_CHATBOT_NAME} AI:*\n\n${reply}` }, { quoted: ms });
-      } catch (err) {
-        await repondre("🥵 Hitilafu imetokea. Jaribu tena.");
-      } finally {
-        await zk.sendPresenceUpdate("paused", dest);
-      }
-    });
+      const pluginCode = `
+// POLITANO CHATBOT PLUGIN
+const axios = require("axios");
 
-    // .owner command
-    zokou({
-      nomCom: "owner",
-      categorie: "General",
-      reaction: "👑"
-    }, async (dest, zk, commandeOptions) => {
-      const { repondre } = commandeOptions;
-      await repondre(`╭─────────────━┈⊷\n│👑 *${POLITANO_BOT_NAME} OWNER*\n├─────────────━┈⊷\n│📛 Jina: ${POLITANO_OWNER_NAME}\n│📞 Namba: ${POLITANO_OWNER_NUMBER}\n│📍 Makazi: ${POLITANO_OWNER_LOCATION}\n╰─────────────━┈⊷\n\n*Asante kwa kutumia ${POLITANO_BOT_NAME}!* 🙏`);
-    });
+const OWNER = {
+  name: "Rahmani",
+  number: "255693629079",
+  location: "Dar es salaam, Tanzania 🇹🇿"
+};
 
-    console.log("✅ POLITANO Chatbot loaded successfully!");
+const activeChats = new Set();
+
+async function getAIResponse(message) {
+  try {
+    const response = await axios.post("https://text.pollinations.ai/openai", {
+      model: "openai",
+      messages: [
+        { role: "system", content: "Wewe ni POLITANO, chatbot wa RAHMANI-XMD. Jibu kwa Kiswahili au Kingereza kwa ufupi." },
+        { role: "user", content: message }
+      ]
+    }, { timeout: 15000 });
+    return response.data?.choices?.[0]?.message?.content || "Samahani, jaribu tena.";
+  } catch(e) {
+    return "Samahani, kuna tatizo. Jaribu tena.";
   }
-} catch(e) {
-  console.log("⚠️ Could not register chatbot commands:", e.message);
 }
+
+module.exports = {
+  name: "politano-chatbot",
+  async execute(zokou, message, args) {
+    const { from, body, reply } = message;
+    
+    if (body === ".chatbot on") {
+      activeChats.add(from);
+      await reply("✅ *POLITANO IMEWASHWA!*\nSasa nitakujibu ukituma ujumbe.");
+    } 
+    else if (body === ".chatbot off") {
+      activeChats.delete(from);
+      await reply("❌ *POLITANO IMEZIMWA!*");
+    }
+    else if (body === ".chatbot status") {
+      const isOn = activeChats.has(from);
+      await reply(\\`╭─────────────━┈⊷
+│🤖 *POLITANO STATUS*
+├─────────────━┈⊷
+│⚡ Hali: \\${isOn ? "✅ Imewashwa" : "❌ Imezimwa"}
+│👑 Owner: ${OWNER.name}
+│📞 Namba: ${OWNER.number}
+│📍 Mkoa: ${OWNER.location}
+╰─────────────━┈⊷\\`);
+    }
+    else if (body === ".chatbot owner") {
+      await reply(\\`╭─────────────━┈⊷
+│👑 *OWNER INFO*
+├─────────────━┈⊷
+│📛 Jina: ${OWNER.name}
+│📞 Namba: ${OWNER.number}
+│📍 Makazi: ${OWNER.location}
+│🤖 Bot: RAHMANI-XMD
+╰─────────────━┈⊷\\`);
+    }
+    else if (body === ".owner") {
+      await reply(\\`👑 *RAHMANI-XMD OWNER*
+📛 ${OWNER.name}
+📞 ${OWNER.number}
+📍 ${OWNER.location}\\`);
+    }
+    else if (body.startsWith(".ask ")) {
+      const question = body.slice(5);
+      await reply("💭 *POLITANO anafikiria...*");
+      const answer = await getAIResponse(question);
+      await reply(\\`💭 *POLITANO:*\\n\\n\\${answer}\\`);
+    }
+    else if (activeChats.has(from) && !body.startsWith(".")) {
+      const reply = await getAIResponse(body);
+      await reply(reply);
+    }
+  }
+};
+      `;
+      
+      fs.writeFileSync(pluginPath, pluginCode);
+      console.log("✅ POLITANO plugin created at:", pluginPath);
+      console.log("📝 Restart bot to activate POLITANO Chatbot!");
+      console.log("📍 Owner: Rahmani - 255693629079 - Dar es salaam, Tanzania 🇹🇿");
+    };
+    
+    registerCommands();
+  } catch(e) {
+    console.log("⚠️ Could not create plugin:", e.message);
+  }
+}, 5000);
