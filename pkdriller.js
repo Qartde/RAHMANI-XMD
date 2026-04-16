@@ -1,7 +1,3 @@
-Nifungie hii code kawaida ila nikitaka kuifungua iweze kufungulikaa
-
-
-
 'use strict';
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (_0x50c0f, _0x2c795a, _0x3e0982, _0x468796) {
