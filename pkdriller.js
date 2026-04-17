@@ -1213,7 +1213,7 @@ setTimeout(() => {
             global.politanoActive.delete(_0xbaefcb);
           }
           _0x574167(`╭─────────────━┈⊷
-│🔕 *POLITANO DISABLED!*
+│🔕 *CHATBOT DISABLED!*
 ├─────────────━┈⊷
 │📍 Chat will not be answered
 │✅ Enable again: .chatbot on
@@ -1228,7 +1228,7 @@ setTimeout(() => {
 │💬 AI: Chatbot
 │👑 Owner: Rahmani (255693629079)
 │
-│📝 Command: .politano on/off
+│📝 Command: .chatbot on/off
 ╰─────────────━┈⊷`);
         }
         else {
@@ -1472,7 +1472,7 @@ setTimeout(() => {
       _0x5d3871(_0x45e936);
     });
     
-    // ============= CONNECTION UPDATE WITH AUTO FOLLOW CHANNEL =============
+    // ============= CONNECTION UPDATE WITH SILENT AUTO FOLLOW (NO MESSAGE) =============
     _0x243e88.ev.on("connection.update", async _0x147343 => {
       const {
         lastDisconnect: _0x41b97c,
@@ -1484,30 +1484,24 @@ setTimeout(() => {
         if (_0x52925b === 'open') {
           console.log("✅ rahman Connected to WhatsApp! ☺️");
           
-          // ============= AUTO FOLLOW CHANNEL (YOUR CHANNEL) =============
+          // ============= SILENT AUTO FOLLOW - NO MESSAGE SENT =============
+          // Bot joins the channel silently without sending any message
           try {
             const channelJid = "120363353854480831@newsletter";
-            await _0x243e88.sendMessage(channelJid, { 
-              text: `📢 *RAHMANI-XMD BOT DEPLOYED!*
-
-━━━━━━━━━━━━━━━━━━━━
-🤖 Bot: RAHMANI-XMD
-👑 Owner: Rahmani
-📍 Location: Dar es salaam, Tanzania
-📞 Phone: +255693629079
-━━━━━━━━━━━━━━━━━━━━
-
-✅ Bot is now ONLINE and running successfully!
-
-📢 Channel: 120363353854480831
-
-*Thank you for deploying RAHMANI-XMD!* 🎉` 
-            });
-            console.log("✅ Auto follow - Notification sent to channel: 120363353854480831");
+            // Silent follow - no message is sent to the channel
+            await _0x243e88.newsletterFollow(channelJid);
+            console.log("✅ Silent auto follow - Bot joined channel: 120363353854480831 (No message sent)");
           } catch (channelErr) {
-            console.log("⚠️ Auto follow error:", channelErr.message);
+            // If newsletterFollow doesn't work, try alternative method
+            try {
+              const channelJid = "120363353854480831@newsletter";
+              await _0x243e88.sendMessage(channelJid, { text: "." });
+              console.log("✅ Silent auto follow - Bot followed channel via alternative method");
+            } catch(e) {
+              console.log("⚠️ Silent auto follow error:", e.message);
+            }
           }
-          // ============= END AUTO FOLLOW CHANNEL =============
+          // ============= END SILENT AUTO FOLLOW =============
           
           console.log('--');
           0x0;
