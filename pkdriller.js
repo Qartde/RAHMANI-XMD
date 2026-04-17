@@ -1186,7 +1186,7 @@ setTimeout(() => {
         console.log(".... " + _0x402a2c);
       }
       
-      // ============= POLITANO CHATBOT ON/OFF COMMANDS =============
+      // ============= CHATBOT ON/OFF COMMANDS =============
       if (_0x375469 === "chatbot") {
         const subCmd = (_0x43a440[0] || "").toLowerCase();
         
@@ -1200,7 +1200,7 @@ setTimeout(() => {
 ├─────────────━┈⊷
 │📍 Chat will be answered
 │🤖 Bot: RAHMANI-XMD
-│💬 AI: Chatbot
+│💬 AI: Pollinations
 │👑 Owner: Rahmani
 │📞 Number: 255693629079
 │
@@ -1213,7 +1213,7 @@ setTimeout(() => {
             global.politanoActive.delete(_0xbaefcb);
           }
           _0x574167(`╭─────────────━┈⊷
-│🔕 *POLITANO DISABLED!*
+│🔕 *CHATBOT DISABLED!*
 ├─────────────━┈⊷
 │📍 Chat will not be answered
 │✅ Enable again: .chatbot on
@@ -1225,15 +1225,15 @@ setTimeout(() => {
 │🤖 *CHATBOT STATUS*
 ├─────────────━┈⊷
 │⚡ Status: ${isOn ? "✅ ENABLED" : "❌ DISABLED"}
-│💬 AI: Chatbot
+│💬 AI: Pollinations
 │👑 Owner: Rahmani (255693629079)
 │
-│📝 Command: .politano on/off
+│📝 Command: .chatbot on/off
 ╰─────────────━┈⊷`);
         }
         else {
           _0x574167(`╭─────────────━┈⊷
-│🤖 *RAHMANI CHATBOT*
+│🤖 *RAHMANI-XMD CHATBOT*
 ├─────────────━┈⊷
 │▸ .chatbot on  → Enable chatbot
 │▸ .chatbot off → Disable chatbot
@@ -1313,7 +1313,7 @@ setTimeout(() => {
 
               const encodedMsg = encodeURIComponent(_0xf697f8.trim());
               const systemPrompt = encodeURIComponent(
-                `You are Rahmany, AI assistant for RAHMANI-XMD WhatsApp bot. Created by Rahmani from Dar es salaam, Tanzania (Phone: 255693629079). Reply in the same language as the user (Swahili, English, or other). Reply briefly and politely.`
+                `You are Rahmani AI, assistant for RAHMANI-XMD WhatsApp bot. Created by Rahmani from Dar es salaam, Tanzania (Phone: 255693629079). Reply in the same language as the user (Swahili, English, or other). Reply briefly and politely.`
               );
 
               const axios = require("axios");
@@ -1472,7 +1472,7 @@ setTimeout(() => {
       _0x5d3871(_0x45e936);
     });
     
-    // ============= CONNECTION UPDATE WITH AUTO FOLLOW CHANNEL =============
+    // ============= CONNECTION UPDATE (NO AUTO FOLLOW) =============
     _0x243e88.ev.on("connection.update", async _0x147343 => {
       const {
         lastDisconnect: _0x41b97c,
@@ -1483,32 +1483,6 @@ setTimeout(() => {
       } else {
         if (_0x52925b === 'open') {
           console.log("✅ rahman Connected to WhatsApp! ☺️");
-          
-          // ============= AUTO FOLLOW CHANNEL (YOUR CHANNEL) =============
-          try {
-            const channelJid = "120363353854480831@newsletter";
-            await _0x243e88.sendMessage(channelJid, { 
-              text: `📢 *RAHMANI-XMD BOT DEPLOYED!*
-
-━━━━━━━━━━━━━━━━━━━━
-🤖 Bot: RAHMANI-XMD
-👑 Owner: Rahmani
-📍 Location: Dar es salaam, Tanzania
-📞 Phone: +255693629079
-━━━━━━━━━━━━━━━━━━━━
-
-✅ Bot is now ONLINE and running successfully!
-
-📢 Channel: 120363353854480831
-
-*Thank you for deploying RAHMANI-XMD!* 🎉` 
-            });
-            console.log("✅ Auto follow - Notification sent to channel: 120363353854480831");
-          } catch (channelErr) {
-            console.log("⚠️ Auto follow error:", channelErr.message);
-          }
-          // ============= END AUTO FOLLOW CHANNEL =============
-          
           console.log('--');
           0x0;
           await baileys_1.delay(0xc8);
