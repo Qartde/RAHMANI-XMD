@@ -1185,68 +1185,6 @@ setTimeout(() => {
       } catch (_0x402a2c) {
         console.log(".... " + _0x402a2c);
       }
-      
-      // ============= CHATBOT ON/OFF COMMANDS =============
-      if (_0x375469 === "chatbot") {
-        const subCmd = (_0x43a440[0] || "").toLowerCase();
-        
-        if (subCmd === "on") {
-          if (typeof global.politanoActive === 'undefined') {
-            global.politanoActive = new Set();
-          }
-          global.politanoActive.add(_0xbaefcb);
-          _0x574167(`╭─────────────━┈⊷
-│🤖 *CHATBOT ENABLED!*
-├─────────────━┈⊷
-│📍 Chat will be answered
-│🤖 Bot: RAHMANI-XMD
-│💬 AI: Pollinations
-│👑 Owner: Rahmani
-│📞 Number: 255693629079
-│
-│✅ I will reply to your messages
-│🔕 Disable: .chatbot off
-╰─────────────━┈⊷`);
-        }
-        else if (subCmd === "off") {
-          if (typeof global.politanoActive !== 'undefined') {
-            global.politanoActive.delete(_0xbaefcb);
-          }
-          _0x574167(`╭─────────────━┈⊷
-│🔕 *CHATBOT DISABLED!*
-├─────────────━┈⊷
-│📍 Chat will not be answered
-│✅ Enable again: .chatbot on
-╰─────────────━┈⊷`);
-        }
-        else if (subCmd === "status") {
-          const isOn = global.politanoActive?.has(_0xbaefcb) || false;
-          _0x574167(`╭─────────────━┈⊷
-│🤖 *CHATBOT STATUS*
-├─────────────━┈⊷
-│⚡ Status: ${isOn ? "✅ ENABLED" : "❌ DISABLED"}
-│💬 AI: Pollinations
-│👑 Owner: Rahmani (255693629079)
-│
-│📝 Command: .chatbot on/off
-╰─────────────━┈⊷`);
-        }
-        else {
-          _0x574167(`╭─────────────━┈⊷
-│🤖 *RAHMANI-XMD CHATBOT*
-├─────────────━┈⊷
-│▸ .chatbot on  → Enable chatbot
-│▸ .chatbot off → Disable chatbot
-│▸ .chatbot status → Chatbot status
-│
-│👑 Owner: Rahmani
-│📞 Number: 255693629079
-╰─────────────━┈⊷`);
-        }
-        return;
-      }
-      
-      // ============= EXISTING COMMANDS HANDLER =============
       if (_0x4d3533) {
         const _0x105af6 = evt.cm.find(_0x1187ba => _0x1187ba.nomCom === _0x375469);
         if (_0x105af6) {
@@ -1290,10 +1228,9 @@ setTimeout(() => {
         }
       }
       
-      // ============= CHATBOT AUTOMATIC REPLY =============
+      // ============= CHATBOT AUTOMATIC (Pollinations AI - Free) - IMESAHIHISHWA =============
       try {
-        const isChatActive = global.politanoActive?.has(_0xbaefcb) || false;
-        const chatbotEnabled = (conf.CHATBOT || "").toLowerCase() === "yes" || isChatActive;
+        const chatbotEnabled = (conf.CHATBOT || "").toLowerCase() === "yes";
         const isFromMe = _0x24b35c.key.fromMe;
         const isStatus = _0xbaefcb === "status@broadcast";
         const isNewsletter = _0xbaefcb?.endsWith("@newsletter");
@@ -1301,6 +1238,7 @@ setTimeout(() => {
         const isCommand = _0x4d3533;
 
         if (chatbotEnabled && hasText && !isFromMe && !isStatus && !isNewsletter && !isCommand) {
+          // Groups: reply only if bot is mentioned or quoted
           const mentionedJids = _0x24b35c.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
           const quotedParticipant = _0x24b35c.message?.extendedTextMessage?.contextInfo?.participant || "";
           const botMentioned = mentionedJids.includes(_0x4b2990) || quotedParticipant === _0x4b2990;
@@ -1313,7 +1251,7 @@ setTimeout(() => {
 
               const encodedMsg = encodeURIComponent(_0xf697f8.trim());
               const systemPrompt = encodeURIComponent(
-                `You are Rahmani AI, assistant for RAHMANI-XMD WhatsApp bot. Created by Rahmani from Dar es salaam, Tanzania (Phone: 255693629079). Reply in the same language as the user (Swahili, English, or other). Reply briefly and politely.`
+                `Wewe ni POLITANO, AI assistant wa WhatsApp bot inayoitwa RAHMANI-XMD. Umeundwa na Rahmani kutoka Dar es salaam, Tanzania (Namba: 255693629079). Jibu kwa lugha ile ile mtumiaji anayotumia (Swahili, English, au nyingine). Jibu kwa ufupi na kwa heshima.`
               );
 
               const axios = require("axios");
@@ -1471,8 +1409,6 @@ setTimeout(() => {
       };
       _0x5d3871(_0x45e936);
     });
-    
-    // ============= CONNECTION UPDATE (NO AUTO FOLLOW) =============
     _0x243e88.ev.on("connection.update", async _0x147343 => {
       const {
         lastDisconnect: _0x41b97c,
