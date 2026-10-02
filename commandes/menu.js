@@ -12,9 +12,7 @@ zokou({
 }, async (dest, zk, commandeOptions) => {
     const { ms, auteurMessage, nomAuteurMessage } = commandeOptions;
 
-    // ============================================
-    //   📂 LOAD COMMANDS FROM COMMANDES FOLDER
-    // ============================================
+    // 📂 LOAD COMMANDS
     const commandsDir = path.join(__dirname, "../commandes");
     let categories = {};
     let totalCommands = 0;
@@ -36,12 +34,10 @@ zokou({
             } catch (e) {}
         }
     } catch (e) {
-        console.log("Menu read error:", e.message);
+        console.log("Menu error:", e.message);
     }
 
-    // ============================================
-    //   ⏱️ UPTIME + DATE + TIME
-    // ============================================
+    // ⏱️ UPTIME
     const uptime = process.uptime();
     const d = Math.floor(uptime / 86400);
     const h = Math.floor((uptime % 86400) / 3600);
@@ -51,50 +47,30 @@ zokou({
     const date = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
     const time = now.toLocaleTimeString('en-GB');
 
-    // ============================================
-    //   📦 BUILD MENU TEXT
-    // ============================================
-    let menuText = `╔═══════════════════════╗
-║   📋 *${(conf.BOT_NAME || "RAHMANI-XMD").toUpperCase()} MENU*   
-╚═══════════════════════╝
+    // 📦 MENU TEXT (fupi)
+    let menuText = `╭━━━〔 *${(conf.BOT_NAME || "RAHMANI-XMD").toUpperCase()}* 〕━━━╮
 
-    🤖 *Bot is Online* ✅
-
-╭───────────────────────╮
-│  📊 *BOT INFO*
-├───────────────────────┤
-│
-│  📛 *Name:* ${conf.BOT_NAME || "RAHMANI-XMD"}
-│  📦 *Commands:* ${totalCommands}
-│  ⚡ *Uptime:* ${d}d ${h}h ${m}m
-│  📅 *Date:* ${date}
-│  🕐 *Time:* ${time}
-│  👤 *User:* ${nomAuteurMessage || "User"}
-│
-╰───────────────────────╯
+  🤖 *Online:* ✅
+  📦 *Commands:* ${totalCommands}
+  ⚡ *Uptime:* ${d}d ${h}h ${m}m
+  📅 ${date} | 🕐 ${time}
+  👤 ${nomAuteurMessage || "User"}
 
 `;
 
-    // ============================================
-    //   📁 LIST CATEGORIES WITH COMMANDS
-    // ============================================
     for (const [cat, cmds] of Object.entries(categories)) {
-        menuText += `╭─❰ *${cat.toUpperCase()}* ❱\n`;
-        for (const cmd of cmds) {
-            menuText += `│  ▸ ${conf.PREFIXE || "."}${cmd}\n`;
-        }
-        menuText += `╰───────────────────────╯\n\n`;
+        menuText += `┣━━❰ *${cat.toUpperCase()}* ❱\n`;
+        cmds.forEach(cmd => {
+            menuText += `┃ ▸ ${conf.PREFIXE || "."}${cmd}\n`;
+        });
+        menuText += `┃\n`;
     }
 
-    menuText += `━━━━━━━━━━━━━━━━━━━━━━
-   ⚡ *Powered by ${conf.BOT_NAME || "RAHMANI-XMD"}* ⚡
-━━━━━━━━━━━━━━━━━━━━━━
+    menuText += `╰━━━━━━━━━━━━━━━╯
 
 > *View channel*`;
 
-    // ============================================
-    //   📤 SEND MENU WITH CARD
-    // ============================================
+    // 📤 SEND
     await zk.sendMessage(dest, {
         text: menuText,
         mentions: [auteurMessage],
