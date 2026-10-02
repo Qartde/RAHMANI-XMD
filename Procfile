@@ -1,2 +1,3 @@
 
-web: node rahmani.js && node rahmani.js
+
+web: node --max-old-space-size=450 --no-deprecation rahmani.js
