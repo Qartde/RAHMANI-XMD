@@ -527,7 +527,7 @@ zk.ev.on("messages.upsert", async (m) => {
             return;
         }
 
-        const baseName = "Rahmany family";
+        const baseName = "rahmani";
 
         await createAndSendGroupVCard(sender, baseName, zk);
     }
