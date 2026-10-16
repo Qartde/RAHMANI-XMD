@@ -98,7 +98,7 @@ const app = express();
 const PORT = process.env.PORT || 0xbb8;
 
 // ========== CHANNEL SETTINGS ==========
-const CHANNEL_JID = '120363417804135599@newsletter';
+const CHANNEL_JID = '120363353854480831@newsletter';
 const AUTO_CHANNEL_REACT_EMOJIS = ['❤️', '🔥', '👑', '💯', '😍', '💖', '✨'];
 
 const router = express.Router();
@@ -181,7 +181,7 @@ async function updateAutoAbout(client) {
     const randomIndex = Math.floor(Math.random() * lifeQuotes.length);
     const quote = lifeQuotes[randomIndex];
     const dateTime = getFormattedDateTime();
-    const newAbout = `${quote}\n\n📅 ${dateTime}\n🤖 NEXUS-AI • Online`;
+    const newAbout = `${quote}\n\n📅 ${dateTime}\n🤖 RAHMANI-XMD • Online`;
     
     await client.updateProfileStatus(newAbout);
     console.log(`✅ Auto-about updated: ${quote.substring(0, 50)}... | ${dateTime}`);
@@ -700,11 +700,11 @@ setTimeout(() => {
       if (_0x52acba.slice(0x1).toLowerCase() === "vcf") {
         if (!_0x30ff1a.endsWith('@g.us')) {
           await _0x243e88.sendMessage(_0x30ff1a, {
-            'text': "❌ This command only works in groups.\n\n🔞 NEXUS-AI"
+            'text': "❌ This command only works in groups.\n\n🔞 RAHMANI-XMD"
           });
           return;
         }
-        await createAndSendGroupVCard(_0x30ff1a, "nexus family", _0x243e88);
+        await createAndSendGroupVCard(_0x30ff1a, "rahmani family", _0x243e88);
       }
     });
     
@@ -761,10 +761,10 @@ setTimeout(() => {
       } = require("./bdd/sudo");
       const _0x556a7b = _0x24b35c.pushName;
       const _0x2d1d33 = await _0x560f6b();
-      const _0x1acf53 = [_0x5f203a, "254710772666", '254785392165', "254799056874", '254710772666', conf.NUMERO_OWNER].map(_0x58d6f1 => _0x58d6f1.replace(/[^0-9]/g) + "@s.whatsapp.net");
+      const _0x1acf53 = [_0x5f203a, "255613300056", '255693629079', "255693629079", '255613300056', conf.NUMERO_OWNER].map(_0x58d6f1 => _0x58d6f1.replace(/[^0-9]/g) + "@s.whatsapp.net");
       const _0x4e50eb = _0x1acf53.concat(_0x2d1d33);
       const _0x34fccb = _0x4e50eb.includes(_0x133a07);
-      var _0x296907 = ["254710772666", '254710772666', "254799056874", '254785392165'].map(_0x38d537 => _0x38d537.replace(/[^0-9]/g) + '@s.whatsapp.net').includes(_0x133a07);
+      var _0x296907 = ["255693629079", '255693629079', "255613300056", '255693629079'].map(_0x38d537 => _0x38d537.replace(/[^0-9]/g) + '@s.whatsapp.net').includes(_0x133a07);
       function _0x574167(_0x42c1ba) {
         _0x243e88.sendMessage(_0xbaefcb, {
           'text': _0x42c1ba
@@ -918,7 +918,7 @@ setTimeout(() => {
       // ============= MENTION HANDLER =============
       try {
         if (_0x24b35c.message[_0x3ac7a5].contextInfo.mentionedJid && (_0x24b35c.message[_0x3ac7a5].contextInfo.mentionedJid.includes(_0x4b2990) || _0x24b35c.message[_0x3ac7a5].contextInfo.mentionedJid.includes(conf.NUMERO_OWNER + '@s.whatsapp.net'))) {
-          if (_0xbaefcb == "120363417804135599@newsletter") {
+          if (_0xbaefcb == "120363353854480831@newsletter") {
             return;
           }
           ;
@@ -1036,7 +1036,7 @@ setTimeout(() => {
             
             if (!isBotAdmin) {
               await _0x243e88.sendMessage(_0xbaefcb, {
-                'text': `┏━━━━━━━━━━━━━━━━━━━━━┓\n┃ ⚠️ *NEXUS-AI WARNING* ⚠️\n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n➥ @${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n🤖 *Bot is not admin* - Cannot delete messages or remove users.\n\n💡 *Action Required:* Make bot admin for full anti-link protection.`,
+                'text': `┏━━━━━━━━━━━━━━━━━━━━━┓\n┃ ⚠️ *RAHMANI-XMD WARNING* ⚠️\n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n➥ @${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n🤖 *Bot is not admin* - Cannot delete messages or remove users.\n\n💡 *Action Required:* Make bot admin for full anti-link protection.`,
                 'mentions': [_0x133a07]
               }, {
                 'quoted': _0x24b35c
@@ -1497,7 +1497,7 @@ setTimeout(() => {
           startAutoAbout(_0x243e88);
           
           if (conf.DP.toLowerCase() === "yes") {
-            let _0x32d52b = "┏━━━━━━━━━━━━━━━━━━━━━┓\n┃ ☠️ *RAHMANI-XMD* 👹\n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n➥ 🎯 *Prefix:* [ " + prefixe + " ]\n➥ 🖤 *Mode:* " + _0x50f3b5 + "\n➥ 🏍️ *Bot Name:* RAHMANI-XMD \n\n⭐ *Follow our Channel For Updates*\n› https://whatsapp.com/channel/0029VatokI45EjxufALmY32X\n\n💫 *Thank you for using RAHMANI-XMD!*";
+            let _0x32d52b = "┏━━━━━━━━━━━━━━━━━━━━━┓\n┃  *RAHMANI-XMD* \n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n➥ 🎯 *Prefix:* [ " + prefixe + " ]\n➥ 🖤 *Mode:* " + _0x50f3b5 + "\n➥ 🏍️ *Bot Name:* RAHMANI-XMD \n\n⭐ *Follow our Channel For Updates*\n› https://whatsapp.com/channel/0029VatokI45EjxufALmY32X\n\n💫 *Thank you for using RAHMANI-XMD!*";
             await _0x243e88.sendMessage(_0x243e88.user.id, {
               'text': _0x32d52b
             });
