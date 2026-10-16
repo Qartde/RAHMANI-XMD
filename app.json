@@ -1,8 +1,8 @@
 {
-  "name":"PK-XMD",
+  "name":"NEXUS-AI",
   "description":"Best whatsapp bot💥 developed by   rahmani",
   "keywords":["bot","node","baileys","whatsapp"],
-  "logo":"https://files.catbox.moe/iad1ju.png",
+  "logo":"https://files.catbox.moe/aktbgo.jpg",
   "repository":"https://github.com/ekitale/maths-project",
   "succes_url":"/",
   "stack":"heroku-24",
@@ -58,7 +58,7 @@
     "BOT_NAME" : {
        
       "description":"put A name for your bot",
-      "value":"NEXUS-AI",
+      "value":"RAHMANI-XMD",
       "required":false
 
     } ,
@@ -97,7 +97,7 @@
     
     "desc": "Your name",
     "required": false,
-    "value": "NEXUS-AI"
+    "value": "RAHMANI-XMD"
   },
     "NUMERO_OWNER":
   {
