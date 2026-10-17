@@ -55,85 +55,94 @@ zokou({
     await repondre("⏳ *Searching and downloading...*");
 
     try {
-        // ==========================================
-        // 🔍 1. TAFUTA YOUTUBE KAMA SI LINK
-        // ==========================================
         let youtubeUrl = query;
+        let title = query;
+        let thumbnail = null;
 
+        // ==========================================
+        // 🔍 1. TAFUTA YOUTUBE (Kama si link)
+        // ==========================================
         if (!query.startsWith("http")) {
             console.log("🔍 Searching YouTube for:", query);
-            const searchApi = `https://api.nyxs.pw/search/yt?q=${encodeURIComponent(query)}`;
-            const searchRes = await axios.get(searchApi, { timeout: 30000 });
+            
+            // Tumia API ya David Cyril kutafuta
+            const searchApi = `https://apis.davidcyril.name.ng/search/youtube?q=${encodeURIComponent(query)}`;
+            const searchRes = await axios.get(searchApi, { timeout: 20000 });
+            
             const firstResult = searchRes.data?.result?.[0] || searchRes.data?.[0];
 
             if (!firstResult) throw new Error("Song not found on YouTube");
+
             youtubeUrl = firstResult.url || firstResult.link;
+            title = firstResult.title || firstResult.name || query;
+            thumbnail = firstResult.thumbnail || firstResult.image;
+            
             console.log("🎯 Found YouTube URL:", youtubeUrl);
         }
 
         // ==========================================
-        // 📥 2. CALL API YAKO
-        // ==========================================
-        const apiUrl = `https://yt-dl.officialhectormanuel.workers.dev/?url=${encodeURIComponent(youtubeUrl)}`;
-        console.log("📥 Calling Music API:", apiUrl);
-        
-        const response = await axios.get(apiUrl, { timeout: 60000 });
-        const data = response.data;
-
-        // Logs za kuona API imerudisha nini hasa
-        console.log("═══════════════════════════════════");
-        console.log("PLAY API RESPONSE:");
-        console.log(JSON.stringify(data, null, 2).substring(0, 1500));
-        console.log("═══════════════════════════════════");
-
-        // ==========================================
-        // 🎯 3. EXTRACT DATA (Smart Way)
+        // 📥 2. DOWNLOAD AUDIO (API 1: Yako)
         // ==========================================
         let audioUrl = null;
-        let title = query;
-        let thumbnail = null;
-
-        // Njia A: Tafuta link moja kwa moja
-        audioUrl = data.audio || data.url || data.link || data.download;
         
-        // Njia B: Kama ipo ndani ya "result"
-        if (!audioUrl && data.result) {
-            audioUrl = data.result.audio || data.result.url || data.result.link || data.result.download || data.result.mp3;
-            title = data.result.title || data.result.name || query;
-            thumbnail = data.result.thumbnail || data.result.thumb || data.result.image;
+        try {
+            const api1 = `https://yt-dl.officialhectormanuel.workers.dev/?url=${encodeURIComponent(youtubeUrl)}`;
+            console.log("📥 Trying API 1 (Yako):", api1);
+            
+            const res1 = await axios.get(api1, { timeout: 30000 });
+            const data1 = res1.data;
+
+            if (typeof data1 === 'string' && data1.startsWith('http')) {
+                audioUrl = data1;
+            } else if (data1.audio) audioUrl = data1.audio;
+            else if (data1.url) audioUrl = data1.url;
+            else if (data1.link) audioUrl = data1.link;
+            else if (data1.result?.audio) audioUrl = data1.result.audio;
+            else if (data1.result?.url) audioUrl = data1.result.url;
+            else if (data1.result?.download) audioUrl = data1.result.download;
+            
+            // Fallback Regex kama haipo
+            if (!audioUrl) {
+                const match = JSON.stringify(data1).match(/https?:\/\/[^"\s]+\.(mp3|m4a|webm|opus)/i);
+                if (match) audioUrl = match[0];
+            }
+
+            if (audioUrl) console.log("✅ API 1 imefanikiwa kupata link!");
+
+        } catch (e) {
+            console.log("⚠️ API 1 imeshindwa au imegoma. Trying API 2 (David Cyril)...");
         }
 
-        // Njia C: Kama API inarudisha "data" ndani ya "data"
-        if (!audioUrl && data.data) {
-            audioUrl = data.data.audio || data.data.url || data.data.link || data.data.download;
-        }
-
-        // Njia D: Tafuta URL yoyote inayoishia na .mp3 au .m4a
+        // ==========================================
+        // 📥 3. DOWNLOAD AUDIO (API 2: David Cyril - Fallback)
+        // ==========================================
         if (!audioUrl) {
-            const jsonStr = JSON.stringify(data);
-            const match = jsonStr.match(/https?:\/\/[^"\s]+\.(mp3|m4a|webm|opus)/i);
-            if (match) audioUrl = match[0];
+            try {
+                const api2 = `https://apis.davidcyril.name.ng/download/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
+                console.log("📥 Trying API 2 (David Cyril):", api2);
+                
+                const res2 = await axios.get(api2, { timeout: 30000 });
+                const data2 = res2.data;
+
+                if (data2.status === true && data2.result) {
+                    audioUrl = data2.result.download_url || data2.result.url || data2.result.audio;
+                    if (!title || title === query) title = data2.result.title || query;
+                    if (!thumbnail) thumbnail = data2.result.thumbnail;
+                } else {
+                    audioUrl = data2.url || data2.link || data2.audio;
+                }
+
+                if (audioUrl) console.log("✅ API 2 (David Cyril) imefanikiwa kupata link!");
+            } catch (e) {
+                console.log("❌ API 2 pia imeshindwa.");
+            }
         }
 
-        // Kama bado haipo
+        // Kama zote zimeshindwa
         if (!audioUrl) {
-            console.error("❌ API HAINA AUDIO LINK!");
-            return repondre(`❌ *FAILED TO GET AUDIO*
-
-┌─────────────────────
-│  ⚠️ API imerudisha data isiyo na link ya mziki.
-│
-│  💡 *Jaribu:*
-│  ▸ Tuma YouTube link moja kwa moja
-│  ▸ .play https://youtu.be/...
-│
-└─────────────────────
-
-> *View channel*`);
+            throw new Error("API zote mbili zimeshindwa kupata mziki. Jaribu tena baadae.");
         }
 
-        console.log("🎵 Audio URL:", audioUrl.substring(0, 100));
-        
         // ==========================================
         // 📤 4. TUMA AUDIO
         // ==========================================
@@ -181,9 +190,9 @@ zokou({
     } catch (error) {
         console.error("❌ Play Error:", error.message);
         
-        // Kama API yako imekataa kwa sababu ya URL
         let errorMsg = error.message;
-        if (error.code === 'ECONNABORTED') errorMsg = "API imechukua muda mrefu (timeout). Jaribu tena.";
+        if (error.code === 'ECONNABORTED') errorMsg = "Request timeout. Jaribu tena.";
+        if (error.message.includes("ENOTFOUND")) errorMsg = "Mtandao umegoma. Jaribu tena.";
 
         await client.sendMessage(dest, {
             text: `❌ *FAILED*
@@ -192,7 +201,8 @@ zokou({
 │  ⚠️ *Error:*
 │  ${errorMsg.substring(0, 100)}
 │
-│  💡 *Tip:* Weka YouTube link moja kwa moja
+│  💡 *Tip:* Weka YouTube link moja kwa moja.
+│  ▸ .play https://youtu.be/...
 │
 └─────────────────────
 
