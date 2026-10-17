@@ -13,9 +13,6 @@ zokou({
 
     const query = (arg || []).join(" ").trim();
 
-    // ═══════════════════════════════════════════
-    //   ✅ CHECK — Query
-    // ═══════════════════════════════════════════
     if (!query) {
         return client.sendMessage(dest, {
             text: `🎵 *${conf.BOT_NAME || "RAHMANI-XMD"} PLAY*
@@ -58,78 +55,92 @@ zokou({
     await repondre("⏳ *Searching and downloading...*");
 
     try {
-        // ═══════════════════════════════════════════
-        //   🔍 SEARCH — YouTube (kama si URL)
-        // ═══════════════════════════════════════════
+        // ==========================================
+        // 🔍 1. TAFUTA YOUTUBE KAMA SI LINK
+        // ==========================================
         let youtubeUrl = query;
 
         if (!query.startsWith("http")) {
+            console.log("🔍 Searching YouTube for:", query);
             const searchApi = `https://api.nyxs.pw/search/yt?q=${encodeURIComponent(query)}`;
             const searchRes = await axios.get(searchApi, { timeout: 30000 });
             const firstResult = searchRes.data?.result?.[0] || searchRes.data?.[0];
-            
+
             if (!firstResult) throw new Error("Song not found on YouTube");
-            
             youtubeUrl = firstResult.url || firstResult.link;
+            console.log("🎯 Found YouTube URL:", youtubeUrl);
         }
 
-        // ═══════════════════════════════════════════
-        //   📥 DOWNLOAD — Kutumia API yako
-        // ═══════════════════════════════════════════
+        // ==========================================
+        // 📥 2. CALL API YAKO
+        // ==========================================
         const apiUrl = `https://yt-dl.officialhectormanuel.workers.dev/?url=${encodeURIComponent(youtubeUrl)}`;
+        console.log("📥 Calling Music API:", apiUrl);
+        
         const response = await axios.get(apiUrl, { timeout: 60000 });
         const data = response.data;
 
-        console.log("PLAY API RESPONSE:", JSON.stringify(data).substring(0, 300));
+        // Logs za kuona API imerudisha nini hasa
+        console.log("═══════════════════════════════════");
+        console.log("PLAY API RESPONSE:");
+        console.log(JSON.stringify(data, null, 2).substring(0, 1500));
+        console.log("═══════════════════════════════════");
 
-        // ═══════════════════════════════════════════
-        //   🎯 EXTRACT — Audio URL
-        // ═══════════════════════════════════════════
+        // ==========================================
+        // 🎯 3. EXTRACT DATA (Smart Way)
+        // ==========================================
         let audioUrl = null;
         let title = query;
         let thumbnail = null;
-        let duration = null;
 
-        // Jaribu kila format inayowezekana
-        if (data.status && data.result) {
-            audioUrl = data.result.audio || 
-                       data.result.download || 
-                       data.result.url || 
-                       data.result.mp3 ||
-                       (data.result.links && data.result.links.mp3);
+        // Njia A: Tafuta link moja kwa moja
+        audioUrl = data.audio || data.url || data.link || data.download;
+        
+        // Njia B: Kama ipo ndani ya "result"
+        if (!audioUrl && data.result) {
+            audioUrl = data.result.audio || data.result.url || data.result.link || data.result.download || data.result.mp3;
             title = data.result.title || data.result.name || query;
             thumbnail = data.result.thumbnail || data.result.thumb || data.result.image;
-            duration = data.result.duration || data.result.durationInSeconds;
-        } else if (data.audio) {
-            audioUrl = data.audio;
-            title = data.title || query;
-            thumbnail = data.thumbnail;
-            duration = data.duration;
-        } else if (data.url) {
-            audioUrl = data.url;
-            title = data.title || query;
-            thumbnail = data.thumbnail;
-        } else if (data.link) {
-            audioUrl = data.link;
-            title = data.title || query;
-            thumbnail = data.thumbnail;
         }
 
+        // Njia C: Kama API inarudisha "data" ndani ya "data"
+        if (!audioUrl && data.data) {
+            audioUrl = data.data.audio || data.data.url || data.data.link || data.data.download;
+        }
+
+        // Njia D: Tafuta URL yoyote inayoishia na .mp3 au .m4a
         if (!audioUrl) {
-            console.error("Full API Response:", JSON.stringify(data));
-            throw new Error("No audio link found in API response");
+            const jsonStr = JSON.stringify(data);
+            const match = jsonStr.match(/https?:\/\/[^"\s]+\.(mp3|m4a|webm|opus)/i);
+            if (match) audioUrl = match[0];
         }
 
-        console.log("AUDIO URL:", audioUrl.substring(0, 100));
+        // Kama bado haipo
+        if (!audioUrl) {
+            console.error("❌ API HAINA AUDIO LINK!");
+            return repondre(`❌ *FAILED TO GET AUDIO*
 
-        // ═══════════════════════════════════════════
-        //   📤 SEND — Audio
-        // ═══════════════════════════════════════════
+┌─────────────────────
+│  ⚠️ API imerudisha data isiyo na link ya mziki.
+│
+│  💡 *Jaribu:*
+│  ▸ Tuma YouTube link moja kwa moja
+│  ▸ .play https://youtu.be/...
+│
+└─────────────────────
+
+> *View channel*`);
+        }
+
+        console.log("🎵 Audio URL:", audioUrl.substring(0, 100));
+        
+        // ==========================================
+        // 📤 4. TUMA AUDIO
+        // ==========================================
         const caption = `🎵 *${conf.BOT_NAME || "RAHMANI-XMD"} PLAY*
 
 ┌─────────────────────
 │  📛 *Title:* ${title.substring(0, 50)}
-│  ⏱️ *Duration:* ${duration || "N/A"}
 │  🎧 *Type:* Audio (MP3)
 │
 └─────────────────────
@@ -138,7 +149,7 @@ zokou({
 
 > *View channel*`;
 
-        const audioOptions = {
+        await client.sendMessage(dest, {
             audio: { url: audioUrl },
             mimetype: "audio/mpeg",
             fileName: `${title.replace(/[^\w\s.-]/g, "").substring(0, 50)}.mp3`,
@@ -163,31 +174,25 @@ zokou({
                     renderLargerThumbnail: true
                 }
             }
-        };
-
-        await client.sendMessage(dest, audioOptions, { quoted: ms });
-
-        // ═══════════════════════════════════════════
-        //   📝 SEND CAPTION (Optional)
-        // ═══════════════════════════════════════════
-        await client.sendMessage(dest, {
-            text: caption,
-            mentions: [auteurMessage]
         }, { quoted: ms });
+
+        console.log("✅ Audio sent successfully!");
 
     } catch (error) {
         console.error("❌ Play Error:", error.message);
         
-        let errorMsg = "Download failed. Try again.";
-        if (error.code === 'ECONNABORTED') errorMsg = "Request timeout. Try again.";
-        if (error.message.includes("not found")) errorMsg = "Song not found. Try another name.";
-        
+        // Kama API yako imekataa kwa sababu ya URL
+        let errorMsg = error.message;
+        if (error.code === 'ECONNABORTED') errorMsg = "API imechukua muda mrefu (timeout). Jaribu tena.";
+
         await client.sendMessage(dest, {
-            text: `❌ *IMESHINDWA*
+            text: `❌ *FAILED*
 
 ┌─────────────────────
 │  ⚠️ *Error:*
-│  ${errorMsg}
+│  ${errorMsg.substring(0, 100)}
+│
+│  💡 *Tip:* Weka YouTube link moja kwa moja
 │
 └─────────────────────
 
