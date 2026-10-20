@@ -1,213 +1,236 @@
 const { zokou } = require("../framework/zokou");
 const conf = require("../set");
 const axios = require("axios");
+const yts = require("yt-search");
 
+// ═══════════════════════════════════════════════
+//   ⚡ RAHMANI-XMD : MEDIA ENGINE
+// ═══════════════════════════════════════════════
+
+const botUI = {
+    channelJid: "120363353854480831@newsletter",
+    channelLink: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
+    thumbnail: "https://files.catbox.moe/aktbgo.jpg",
+    botName: () => conf.BOT_NAME || "RAHMANI-XMD"
+};
+
+async function fetchMedia(query, type) {
+    // 1. Search YouTube
+    const ytSearch = await yts(query);
+    if (!ytSearch.videos || ytSearch.videos.length === 0) {
+        throw new Error("No results found on YouTube.");
+    }
+    
+    const bestMatch = ytSearch.videos[0];
+    const ytUrl = bestMatch.url;
+
+    // 2. Choose API based on type
+    let apiEndpoint = type === "audio" 
+        ? "https://apiziaul.vercel.app/api/downloader/ytplaymp3"
+        : "https://apiziaul.vercel.app/api/downloader/ytmp4";
+        
+    let params = type === "audio" ? { query: query } : { url: ytUrl };
+
+    // 3. Fetch data from API
+    const response = await axios.get(apiEndpoint, { params, timeout: 45000 });
+    const json = response.data;
+
+    if (!json.status || !json.result || !json.result.downloadUrl) {
+        throw new Error("API failed to return a valid download link.");
+    }
+
+    return {
+        downloadUrl: json.result.downloadUrl,
+        title: json.result.title || bestMatch.title,
+        duration: bestMatch.timestamp,
+        thumbnail: bestMatch.thumbnail,
+        ytUrl: ytUrl
+    };
+}
+
+function generateCaption(media, type) {
+    const isAudio = type === "audio";
+    return `${isAudio ? "🎵" : "🎥"} *${botUI.botName()} ${isAudio ? "AUDIO" : "VIDEO"}*
+
+┌─────────────────────
+│  📛 *Title:* ${media.title.substring(0, 45)}
+│  ⏱️ *Duration:* ${media.duration}
+│  📦 *Format:* ${isAudio ? "MP3" : "MP4"}
+│
+└─────────────────────
+
+⚡ *Powered by ${botUI.botName()}*
+
+> *View channel*`;
+}
+
+function buildUsageMessage(type) {
+    const isAudio = type === "audio";
+    return `${isAudio ? "🎵" : "🎥"} *${botUI.botName()} ${isAudio ? "PLAY" : "VIDEO"}*
+
+┌─────────────────────
+│  📖 *Usage:*
+│  ▸ .${isAudio ? "play" : "video"} <${isAudio ? "song name" : "video name"}>
+│  ▸ .${isAudio ? "play" : "video"} <youtube link>
+│
+│  💡 *Example:*
+│  ▸ .${isAudio ? "play" : "video"} ${isAudio ? "Faded Alan Walker" : "Despacito"}
+│
+└─────────────────────
+
+> *View channel*`;
+}
+
+function buildErrorBox(errorMsg) {
+    return `❌ *FAILED*
+
+┌─────────────────────
+│  ⚠️ *Error:*
+│  ${errorMsg.substring(0, 150)}
+│
+└─────────────────────
+
+> *View channel*`;
+}
+
+function getContextInfo(media) {
+    return {
+        forwardingScore: 999, 
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: { 
+            newsletterJid: botUI.channelJid, 
+            newsletterName: botUI.botName(), 
+            serverMessageId: 143 
+        },
+        externalAdReply: { 
+            title: `🎵 ${media.title.substring(0, 40)}`, 
+            body: `Downloaded via ${botUI.botName()}`, 
+            mediaType: 1, 
+            mediaUrl: media.ytUrl, 
+            sourceUrl: media.ytUrl, 
+            thumbnailUrl: media.thumbnail || botUI.thumbnail, 
+            showAdAttribution: false, 
+            renderLargerThumbnail: true 
+        }
+    };
+}
+
+// ═══════════════════════════════════════════════
+//   🎵 COMMAND: .play
+// ═══════════════════════════════════════════════
 zokou({
     nomCom: "play",
     categorie: "Download",
     reaction: "🎵",
     desc: "Download audio from YouTube",
     fromMe: false
-}, async (dest, client, commandeOptions) => {
-    const { repondre, arg, ms, auteurMessage } = commandeOptions;
-
+}, async (dest, client, cmd) => {
+    const { arg, ms, repondre, auteurMessage } = cmd;
     const query = (arg || []).join(" ").trim();
 
     if (!query) {
         return client.sendMessage(dest, {
-            text: `🎵 *${conf.BOT_NAME || "RAHMANI-XMD"} PLAY*
-
-┌─────────────────────
-│  📖 *Usage:*
-│  ▸ .play <song name>
-│  ▸ .play <youtube link>
-│
-│  💡 *Examples:*
-│  ▸ .play Faded Alan Walker
-│  ▸ .play https://youtu.be/...
-│
-└─────────────────────
-
-> *View channel*`,
+            text: buildUsageMessage("audio"),
             mentions: [auteurMessage],
             contextInfo: {
-                forwardingScore: 999,
+                forwardingScore: 999, 
                 isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: "120363353854480831@newsletter",
-                    newsletterName: conf.BOT_NAME || "RAHMANI-XMD",
-                    serverMessageId: 143
+                forwardedNewsletterMessageInfo: { 
+                    newsletterJid: botUI.channelJid, 
+                    newsletterName: botUI.botName(), 
+                    serverMessageId: 143 
                 },
-                externalAdReply: {
-                    title: `🎵 ${conf.BOT_NAME || "RAHMANI-XMD"} PLAY`,
-                    body: "Download any song 🎧",
-                    mediaType: 1,
-                    mediaUrl: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
-                    sourceUrl: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
-                    thumbnailUrl: "https://files.catbox.moe/aktbgo.jpg",
-                    showAdAttribution: false,
-                    renderLargerThumbnail: true
+                externalAdReply: { 
+                    title: `🎵 ${botUI.botName()} PLAY`, 
+                    body: "Download any song 🎧", 
+                    mediaType: 1, 
+                    mediaUrl: botUI.channelLink, 
+                    sourceUrl: botUI.channelLink, 
+                    thumbnailUrl: botUI.thumbnail, 
+                    showAdAttribution: false, 
+                    renderLargerThumbnail: true 
                 }
             }
         }, { quoted: ms });
     }
 
-    await repondre("⏳ *Searching and downloading...*");
+    await repondre("⏳ *Searching for your song...*");
 
     try {
-        let youtubeUrl = query;
-        let title = query;
-        let thumbnail = null;
-
-        // ==========================================
-        // 🔍 1. TAFUTA YOUTUBE (Kama si link)
-        // ==========================================
-        if (!query.startsWith("http")) {
-            console.log("🔍 Searching YouTube for:", query);
-            
-            // Tumia API ya David Cyril kutafuta
-            const searchApi = `https://apis.davidcyril.name.ng/search/youtube?q=${encodeURIComponent(query)}`;
-            const searchRes = await axios.get(searchApi, { timeout: 20000 });
-            
-            const firstResult = searchRes.data?.result?.[0] || searchRes.data?.[0];
-
-            if (!firstResult) throw new Error("Song not found on YouTube");
-
-            youtubeUrl = firstResult.url || firstResult.link;
-            title = firstResult.title || firstResult.name || query;
-            thumbnail = firstResult.thumbnail || firstResult.image;
-            
-            console.log("🎯 Found YouTube URL:", youtubeUrl);
-        }
-
-        // ==========================================
-        // 📥 2. DOWNLOAD AUDIO (API 1: Yako)
-        // ==========================================
-        let audioUrl = null;
-        
-        try {
-            const api1 = `https://yt-dl.officialhectormanuel.workers.dev/?url=${encodeURIComponent(youtubeUrl)}`;
-            console.log("📥 Trying API 1 (Yako):", api1);
-            
-            const res1 = await axios.get(api1, { timeout: 30000 });
-            const data1 = res1.data;
-
-            if (typeof data1 === 'string' && data1.startsWith('http')) {
-                audioUrl = data1;
-            } else if (data1.audio) audioUrl = data1.audio;
-            else if (data1.url) audioUrl = data1.url;
-            else if (data1.link) audioUrl = data1.link;
-            else if (data1.result?.audio) audioUrl = data1.result.audio;
-            else if (data1.result?.url) audioUrl = data1.result.url;
-            else if (data1.result?.download) audioUrl = data1.result.download;
-            
-            // Fallback Regex kama haipo
-            if (!audioUrl) {
-                const match = JSON.stringify(data1).match(/https?:\/\/[^"\s]+\.(mp3|m4a|webm|opus)/i);
-                if (match) audioUrl = match[0];
-            }
-
-            if (audioUrl) console.log("✅ API 1 imefanikiwa kupata link!");
-
-        } catch (e) {
-            console.log("⚠️ API 1 imeshindwa au imegoma. Trying API 2 (David Cyril)...");
-        }
-
-        // ==========================================
-        // 📥 3. DOWNLOAD AUDIO (API 2: David Cyril - Fallback)
-        // ==========================================
-        if (!audioUrl) {
-            try {
-                const api2 = `https://apis.davidcyril.name.ng/download/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
-                console.log("📥 Trying API 2 (David Cyril):", api2);
-                
-                const res2 = await axios.get(api2, { timeout: 30000 });
-                const data2 = res2.data;
-
-                if (data2.status === true && data2.result) {
-                    audioUrl = data2.result.download_url || data2.result.url || data2.result.audio;
-                    if (!title || title === query) title = data2.result.title || query;
-                    if (!thumbnail) thumbnail = data2.result.thumbnail;
-                } else {
-                    audioUrl = data2.url || data2.link || data2.audio;
-                }
-
-                if (audioUrl) console.log("✅ API 2 (David Cyril) imefanikiwa kupata link!");
-            } catch (e) {
-                console.log("❌ API 2 pia imeshindwa.");
-            }
-        }
-
-        // Kama zote zimeshindwa
-        if (!audioUrl) {
-            throw new Error("API zote mbili zimeshindwa kupata mziki. Jaribu tena baadae.");
-        }
-
-        // ==========================================
-        // 📤 4. TUMA AUDIO
-        // ==========================================
-        const caption = `🎵 *${conf.BOT_NAME || "RAHMANI-XMD"} PLAY*
-
-┌─────────────────────
-│  📛 *Title:* ${title.substring(0, 50)}
-│  🎧 *Type:* Audio (MP3)
-│
-└─────────────────────
-
-⚡ *Powered by ${conf.BOT_NAME || "RAHMANI-XMD"}*
-
-> *View channel*`;
+        const media = await fetchMedia(query, "audio");
+        const caption = generateCaption(media, "audio");
 
         await client.sendMessage(dest, {
-            audio: { url: audioUrl },
+            audio: { url: media.downloadUrl },
             mimetype: "audio/mpeg",
-            fileName: `${title.replace(/[^\w\s.-]/g, "").substring(0, 50)}.mp3`,
+            fileName: `${media.title.replace(/[^\w\s.-]/g, "").substring(0, 45)}.mp3`,
             ptt: false,
             mentions: [auteurMessage],
+            contextInfo: getContextInfo(media)
+        }, { quoted: ms });
+
+    } catch (err) {
+        console.error("❌ Play Error:", err.message);
+        await repondre(buildErrorBox(err.message));
+    }
+});
+
+// ═══════════════════════════════════════════════
+//   🎥 COMMAND: .video
+// ═══════════════════════════════════════════════
+zokou({
+    nomCom: "video",
+    categorie: "Download",
+    reaction: "🎥",
+    desc: "Download video from YouTube",
+    fromMe: false
+}, async (dest, client, cmd) => {
+    const { arg, ms, repondre, auteurMessage } = cmd;
+    const query = (arg || []).join(" ").trim();
+
+    if (!query) {
+        return client.sendMessage(dest, {
+            text: buildUsageMessage("video"),
+            mentions: [auteurMessage],
             contextInfo: {
-                forwardingScore: 999,
+                forwardingScore: 999, 
                 isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: "120363353854480831@newsletter",
-                    newsletterName: conf.BOT_NAME || "RAHMANI-XMD",
-                    serverMessageId: 143
+                forwardedNewsletterMessageInfo: { 
+                    newsletterJid: botUI.channelJid, 
+                    newsletterName: botUI.botName(), 
+                    serverMessageId: 143 
                 },
-                externalAdReply: {
-                    title: `🎵 ${title.substring(0, 40)}`,
-                    body: `Downloaded via ${conf.BOT_NAME || "RAHMANI-XMD"}`,
-                    mediaType: 1,
-                    mediaUrl: youtubeUrl,
-                    sourceUrl: youtubeUrl,
-                    thumbnailUrl: thumbnail || "https://files.catbox.moe/aktbgo.jpg",
-                    showAdAttribution: false,
-                    renderLargerThumbnail: true
+                externalAdReply: { 
+                    title: `🎥 ${botUI.botName()} VIDEO`, 
+                    body: "Download any video 🎬", 
+                    mediaType: 1, 
+                    mediaUrl: botUI.channelLink, 
+                    sourceUrl: botUI.channelLink, 
+                    thumbnailUrl: botUI.thumbnail, 
+                    showAdAttribution: false, 
+                    renderLargerThumbnail: true 
                 }
             }
         }, { quoted: ms });
+    }
 
-        console.log("✅ Audio sent successfully!");
+    await repondre("⏳ *Searching for your video...*");
 
-    } catch (error) {
-        console.error("❌ Play Error:", error.message);
-        
-        let errorMsg = error.message;
-        if (error.code === 'ECONNABORTED') errorMsg = "Request timeout. Jaribu tena.";
-        if (error.message.includes("ENOTFOUND")) errorMsg = "Mtandao umegoma. Jaribu tena.";
+    try {
+        const media = await fetchMedia(query, "video");
+        const caption = generateCaption(media, "video");
 
         await client.sendMessage(dest, {
-            text: `❌ *FAILED*
-
-┌─────────────────────
-│  ⚠️ *Error:*
-│  ${errorMsg.substring(0, 100)}
-│
-│  💡 *Tip:* Weka YouTube link moja kwa moja.
-│  ▸ .play https://youtu.be/...
-│
-└─────────────────────
-
-> *View channel*`,
-            mentions: [auteurMessage]
+            video: { url: media.downloadUrl },
+            mimetype: "video/mp4",
+            fileName: `${media.title.replace(/[^\w\s.-]/g, "").substring(0, 45)}.mp4`,
+            caption: caption,
+            mentions: [auteurMessage],
+            contextInfo: getContextInfo(media)
         }, { quoted: ms });
+
+    } catch (err) {
+        console.error("❌ Video Error:", err.message);
+        await repondre(buildErrorBox(err.message));
     }
 });
