@@ -1,153 +1,205 @@
-<p align="center">
-  <img src="https://files.catbox.moe/aktbgo.jpg" alt="RAHMANI-XMD BOT" width="400"/>
-</p>
+<div align="center">
 
-<h1 align="center">🤖 RAHMANI-XMD BOT 🤖</h1>
+<img src="https://files.catbox.moe/aktbgo.jpg" alt="RAHMANI-XMD BOT" width="100%" style="border-radius: 20px; box-shadow: 0 0 30px #00ffcc;"/>
 
-<p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=1000&color=F70000&center=true&vCenter=true&width=435&lines=POWERFUL+WHATSAPP+BOT;GROUP+MANAGEMENT;MEDIA+DOWNLOADER;AI+FEATURES;24%2F7+ACTIVE" alt="Typing SVG" />
-</p>
+<br/>
 
-<p align="center">
-  <a href="https://whatsapp.com/channel/0029VatokI45EjxufALmY32X">
-    <img src="https://img.shields.io/badge/Join%20Our%20Channel-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="Channel"/>
-  </a>
-  <a href="https://wa.me/255760164530">
-    <img src="https://img.shields.io/badge/Contact%20Owner-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="Owner"/>
-  </a>
-  <a href="https://github.com/Qartde/RAHMANI-XMD">
-    <img src="https://img.shields.io/badge/GitHub-Repo-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"/>
-  </a>
-</p>
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=900&size=40&duration=3000&pause=800&color=00FFCC&center=true&vCenter=true&width=700&lines=RAHMANI-XMD+BOT;POWERFUL+WHATSAPP+BOT;24%2F7+ACTIVE+%E2%9A%A1;MADE+WITH+%E2%9D%A4%EF%B8%8F+IN+TANZANIA" alt="Typing SVG" />
 
-<p align="center">
-  <img src="https://img.shields.io/github/stars/Qartde/RAHMANI-XMD?style=for-the-badge&color=yellow" alt="Stars"/>
-  <img src="https://img.shields.io/github/forks/Qartde/RAHMANI-XMD?style=for-the-badge&color=green" alt="Forks"/>
-  <img src="https://img.shields.io/github/watchers/Qartde/RAHMANI-XMD?style=for-the-badge&color=blue" alt="Watchers"/>
-  <img src="https://img.shields.io/github/license/Qartde/RAHMANI-XMD?style=for-the-badge&color=purple" alt="License"/>
-</p>
+<br/>
 
-<hr>
+<h3>🚀 Bot Yenye Nguvu, Haraka na Rahisi Kusimika 🚀</h3>
 
-<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
-
-
-<h2 align="center">ENJOY THE UPDATES 🤠</h2>
-
-<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
-
-## 📋 **DEPLOYMENT STEPS**
-
-### **STEP 1: Fork This Repository**
-
-<p align="center">
-  <a href='https://github.com/Qartde/RAHMANI-XMD/fork' target="_blank">
-    <img src='https://img.shields.io/badge/FORK%20REPO-blue?style=for-the-badge&logo=github&logoColor=white' width="250"/>
-  </a>
-</p>
+</div>
 
 ---
 
-### **STEP 2: Get Session ID**
+<div align="center">
+
+## 🌐 **UNGANISHA NASI**
+
+<br/>
+
+<a href="https://whatsapp.com/channel/0029VatokI45EjxufALmY32X">
+  <img src="https://img.shields.io/badge/📢_WhatsApp_Channel-25D366?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=075E54" height="45"/>
+</a>
+<a href="https://wa.me/255760164530">
+  <img src="https://img.shields.io/badge/💬_Wasiliana_na_Owner-25D366?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=075E54" height="45"/>
+</a>
+<a href="https://github.com/Qartde/RAHMANI-XMD">
+  <img src="https://img.shields.io/badge/⭐_GitHub_Repo-181717?style=for-the-badge&logo=github&logoColor=white" height="45"/>
+</a>
+
+<br/><br/>
+
+<a href="https://github.com/Qartde/RAHMANI-XMD/stargazers">
+  <img src="https://img.shields.io/github/stars/Qartde/RAHMANI-XMD?style=for-the-badge&color=yellow&logo=github&logoColor=white&label=Stars" height="40"/>
+</a>
+<a href="https://github.com/Qartde/RAHMANI-XMD/network/members">
+  <img src="https://img.shields.io/github/forks/Qartde/RAHMANI-XMD?style=for-the-badge&color=green&logo=github&logoColor=white&label=Forks" height="40"/>
+</a>
+<a href="https://github.com/Qartde/RAHMANI-XMD/watchers">
+  <img src="https://img.shields.io/github/watchers/Qartde/RAHMANI-XMD?style=for-the-badge&color=blue&logo=github&logoColor=white&label=Watchers" height="40"/>
+</a>
+<a href="https://github.com/Qartde/RAHMANI-XMD/blob/main/LICENSE">
+  <img src="https://img.shields.io/github/license/Qartde/RAHMANI-XMD?style=for-the-badge&color=purple&label=License" height="40"/>
+</a>
+<a href="https://github.com/Qartde/RAHMANI-XMD/issues">
+  <img src="https://img.shields.io/github/issues/Qartde/RAHMANI-XMD?style=for-the-badge&color=red&label=Issues" height="40"/>
+</a>
+
+<br/>
+
+<img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="100%"/>
+
+</div>
+
+---
+
+<div align="center">
+
+## 🎯 **VITU MUHIMU**
+
+<table>
+<tr>
+<td align="center" width="25%">
+<img src="https://img.icons8.com/color/96/000000/rocket.png" width="60"/><br/>
+<b>Haraka Sana</b><br/>
+<sub>Bot yenye kasi ya hali ya juu</sub>
+</td>
+<td align="center" width="25%">
+<img src="https://img.icons8.com/color/96/000000/shield.png" width="60"/><br/>
+<b>Salama</b><br/>
+<sub>Anti-bug & Anti-link</sub>
+</td>
+<td align="center" width="25%">
+<img src="https://img.icons8.com/color/96/000000/robot-2.png" width="60"/><br/>
+<b>AI Powered</b><br/>
+<sub>GPT, Bard & DALL-E</sub>
+</td>
+<td align="center" width="25%">
+<img src="https://img.icons8.com/color/96/000000/clock.png" width="60"/><br/>
+<b>24/7 Online</b><br/>
+<sub>Haizimiki kamwe</sub>
+</td>
+</tr>
+</table>
+
+</div>
+
+---
+
+## ✨ **VIPENGELE VYA BOT**
+
+<div align="center">
+
+| 🎨 Kipengele | 📝 Maelezo |
+|:-------------|:-----------|
+| 👥 **Group Management** | Ongeza, toa, promote, demote wanachama |
+| 🚫 **Anti-Link** | Futa links kwenye groups moja kwa moja |
+| 🛡️ **Anti-Bug** | Zuia watu wanaotuma messages hatarishi |
+| 📥 **Media Downloader** | YouTube, TikTok, Instagram, Facebook & zaidi |
+| 🤖 **AI Features** | GPT-4, Bard, DALL-E na AI nyingine |
+| 🎮 **Fun Commands** | Jokes, games, memes na burudani |
+| 👋 **Welcome/Goodbye** | Custom messages za kukaribisha |
+| 📊 **Level System** | Fuatilia shughuli za wanachama |
+| 🎵 **Audio/Video** | Convert, edit na download media |
+| 🔍 **Search Engine** | Tafuta kitu chochote mtandaoni |
+
+</div>
+
+---
+
+<div align="center">
+
+## 🚀 **HATUA ZA KUSIMIKA**
+
+</div>
+
+### 📌 **HATUA 1: Fork Repository**
+
+<p align="center">
+  <a href="https://github.com/Qartde/RAHMANI-XMD/fork" target="_blank">
+    <img src="https://img.shields.io/badge/🍴_FORK_REPOSITORY-FF6B6B?style=for-the-badge&logo=github&logoColor=white&labelColor=C0392B" height="50"/>
+  </a>
+</p>
+
+<p align="center"><i>Bofya kitufe hapo juu kuiga repo kwenye account yako</i></p>
+
+---
+
+### 🔑 **HATUA 2: Pata Session ID**
 
 <p align="center">
   <a href="https://session-id-site-1.onrender.com" target="_blank">
-    <img src="https://img.shields.io/badge/GET%20SESSION%20ID-green?style=for-the-badge&logo=heroku&logoColor=white" width="250"/>
+    <img src="https://img.shields.io/badge/🔐_GET_SESSION_ID-00C9A7?style=for-the-badge&logo=keycdn&logoColor=white&labelColor=007A68" height="50"/>
   </a>
 </p>
 
----
-
-### **STEP 3: Deploy to Cloud**
-
-<table align="center">
-  <tr>
-    <th>Platform</th>
-    <th>Deploy Button</th>
-  </tr>
-  <tr>
-    <td><b>Heroku</b></td>
-    <td>
-      <a href="https://dashboard.heroku.com/new?template=https://github.com/Qartde/RAHMANI-XMD">
-        <img src="https://img.shields.io/badge/DEPLOY%20TO%20HEROKU-blue?style=for-the-badge&logo=heroku" width="200"/>
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td><b>Railway</b></td>
-    <td>
-      <a href="https://railway.app/new/template?template=https://github.com/Qartde/RAHMANI-XMD">
-        <img src="https://img.shields.io/badge/DEPLOY%20TO%20RAILWAY-yellow?style=for-the-badge&logo=railway" width="200"/>
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td><b>Render</b></td>
-    <td>
-      <a href="https://render.com/deploy?repo=https://github.com/Qartde/RAHMANI-XMD">
-        <img src="https://img.shields.io/badge/DEPLOY%20TO%20RENDER-red?style=for-the-badge&logo=render" width="200"/>
-      </a>
-    </td>
-  </tr>
-</table>
+<p align="center"><i>Bofya kuunganisha WhatsApp yako na kupata Session ID</i></p>
 
 ---
 
-### **ONE-CLICK DEPLOYMENT BUTTONS**
+### ☁️ **HATUA 3: Deploy Kwenye Cloud**
 
 <p align="center">
   <a href="https://render.com/deploy?repo=https://github.com/Qartde/RAHMANI-XMD">
-    <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" width="200"/>
+    <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="50"/>
   </a>
+  &nbsp;&nbsp;
   <a href="https://railway.app/new/template?template=https://github.com/Qartde/RAHMANI-XMD">
-    <img src="https://railway.app/button.svg" alt="Deploy on Railway" width="200"/>
+    <img src="https://railway.app/button.svg" alt="Deploy on Railway" height="50"/>
   </a>
+  &nbsp;&nbsp;
   <a href="https://heroku.com/deploy?template=https://github.com/Qartde/RAHMANI-XMD">
-    <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" width="200"/>
+    <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" height="50"/>
   </a>
 </p>
 
-<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
+---
 
-## 🚀 **ABOUT RAHMANI-XMD**
+<div align="center">
 
-**RAHMANI-XMD** is a powerful WhatsApp bot with multiple features to automate tasks, moderate groups, and provide entertainment. Deploy it effortlessly to your favorite cloud hosting platform.
+## 📦 **MAHITAJI**
 
-### ✨ **FEATURES**
+<table>
+<tr>
+<td align="center">
+<img src="https://img.icons8.com/color/96/000000/nodejs.png" width="60"/><br/>
+<b>Node.js 16+</b>
+</td>
+<td align="center">
+<img src="https://img.icons8.com/color/96/000000/whatsapp.png" width="60"/><br/>
+<b>WhatsApp Number</b>
+</td>
+<td align="center">
+<img src="https://img.icons8.com/color/96/000000/git.png" width="60"/><br/>
+<b>Git</b>
+</td>
+<td align="center">
+<img src="https://img.icons8.com/color/96/000000/cloud.png" width="60"/><br/>
+<b>Cloud Account</b>
+</td>
+</tr>
+</table>
 
-| Category | Features |
-|----------|----------|
-| **👥 Group Management** | Add, remove, promote, demote members, group settings |
-| **🔗 Anti-Link** | Automatically delete links in groups |
-| **🛡️ Anti-Bug** | Detect and block users sending harmful messages |
-| **📥 Media Downloader** | Download from YouTube, TikTok, Instagram, etc. |
-| **🤖 AI Features** | GPT, Bard, DALL-E integration |
-| **🎮 Fun Commands** | Jokes, games, and entertainment |
-| **👋 Welcome/Goodbye** | Custom welcome and goodbye messages |
-| **📊 Level System** | Track user activity and ranks |
+</div>
 
-<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
-
-## 📦 **REQUIREMENTS**
-
-- ✅ Node.js 16.x or higher
-- ✅ A WhatsApp number
-- ✅ [Baileys](https://github.com/adiwajshing/Baileys) library dependencies
-
-<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
+---
 
 ## ⚡ **QUICK START (LOCAL)**
 
 ```bash
-# Clone the repository
+# 1️⃣ Clone repository
 git clone https://github.com/Qartde/RAHMANI-XMD.git
 cd RAHMANI-XMD
 
-# Install dependencies
+# 2️⃣ Install dependencies
 npm install
 
-# Configure environment
-# Copy .env.example to .env and fill in the required variables
+# 3️⃣ Configure environment
+cp .env.example .env
+# Fungua .env na uweke SESSION_ID yako
 
-# Start the bot
-node index.js
+# 4️⃣ Anzisha bot
+npm start
