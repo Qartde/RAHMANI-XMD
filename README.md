@@ -85,7 +85,7 @@
 
 ### Step 2: Get Session ID
 <p align="center">
-  <a href="https://session-id-site-1.onrender.com">
+  <a href="https://nexus-ai-site-pairing-9m0t.onrender.com/pair">
     <img src="https://img.shields.io/badge/📱%20GET%20SESSION%20ID-green?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=25D366" width="300"/>
   </a>
 </p>
