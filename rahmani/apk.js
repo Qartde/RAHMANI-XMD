@@ -1,33 +1,44 @@
-const { zokou } = require("../framework/zokou");
-const fs = require('fs-extra');
-const conf = require('../set');
-const axios = require("axios");
+'use strict';
 
-zokou({
-    nomCom: "apk",
-    categorie: "Download",
-    reaction: "🉑",
-    desc: "Download APK from Play Store",
-    fromMe: false
-}, async (dest, client, commandeOptions) => {
-    const { repondre, arg, ms, auteurMessage } = commandeOptions;
+const { zokou } = require(__dirname + "/../framework/zokou");
+const axios = require("axios");
+const moment = require("moment-timezone");
+const conf = require(__dirname + "/../set");
+
+moment.tz.setDefault(conf.TZ || "Africa/Nairobi");
+
+// ═══════════════════════════════════════════════
+//   ⚡ RAHMANI-XMD : APK DOWNLOADER
+// ═══════════════════════════════════════════════
+
+const botSettings = {
+    name: conf.BOT_NAME || "RAHMANI-XMD",
+    channelJid: "120363353854480831@newsletter",
+    channelLink: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
+    defaultThumbnail: "https://files.catbox.moe/aktbgo.jpg"
+};
+
+zokou({ 
+    nomCom: "apk", 
+    categorie: "Download", 
+    reaction: "📱",
+    desc: "Download APK from Play Store"
+}, async (dest, zk, commandeOptions) => {
+    const { ms, arg, auteurMessage } = commandeOptions;
 
     try {
-        // ═══════════════════════════════════════════
-        //   ✅ CHECK — App name
-        // ═══════════════════════════════════════════
-        const appName = (arg || []).join(" ").trim();
-        if (!appName) {
-            return client.sendMessage(dest, {
-                text: `🉑 *${conf.BOT_NAME || "RAHMANI-XMD"} APK*
+        // 1. Check if app name is provided
+        if (!arg || !arg[0]) {
+            return zk.sendMessage(dest, {
+                text: `📱 *${botSettings.name} APK*
 
 ┌─────────────────────
 │  📖 *Usage:*
 │  ▸ .apk <app name>
 │
 │  💡 *Examples:*
+│  ▸ .apk facebook
 │  ▸ .apk whatsapp
-│  ▸ .apk instagram
 │
 └─────────────────────
 
@@ -37,17 +48,17 @@ zokou({
                     forwardingScore: 999,
                     isForwarded: true,
                     forwardedNewsletterMessageInfo: {
-                        newsletterJid: "120363353854480831@newsletter",
-                        newsletterName: conf.BOT_NAME || "RAHMANI-XMD",
+                        newsletterJid: botSettings.channelJid,
+                        newsletterName: botSettings.name,
                         serverMessageId: 143
                     },
                     externalAdReply: {
-                        title: `🉑 ${conf.BOT_NAME || "RAHMANI-XMD"} APK`,
+                        title: `📱 ${botSettings.name} APK`,
                         body: "Download any Android app 🚀",
                         mediaType: 1,
-                        mediaUrl: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
-                        sourceUrl: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
-                        thumbnailUrl: "https://files.catbox.moe/aktbgo.jpg",
+                        mediaUrl: botSettings.channelLink,
+                        sourceUrl: botSettings.channelLink,
+                        thumbnailUrl: botSettings.defaultThumbnail,
                         showAdAttribution: false,
                         renderLargerThumbnail: true
                     }
@@ -55,29 +66,20 @@ zokou({
             }, { quoted: ms });
         }
 
-        await repondre(`⏳ *Searching:* ${appName}...`);
+        // 2. Search APK from API
+        const query = encodeURIComponent(arg.join(" "));
+        const searchUrl = `https://ws75.aptoide.com/api/7/apps/search/query=${query}`;
+        const { data } = await axios.get(searchUrl, { timeout: 30000 });
 
-        // ═══════════════════════════════════════════
-        //   🔍 SEARCH — BK9 API
-        // ═══════════════════════════════════════════
-        const searchResponse = await axios.get(
-            `https://bk9.fun/search/apk?q=${encodeURIComponent(appName)}`,
-            { timeout: 30000 }
-        );
-        const searchData = searchResponse.data;
-
-        if (!searchData.BK9 || searchData.BK9.length === 0) {
-            return client.sendMessage(dest, {
+        if (!data?.datalist?.list?.length) {
+            return zk.sendMessage(dest, {
                 text: `❌ *APP NOT FOUND*
 
 ┌─────────────────────
 │  ⚠️ *Error:*
-│  No app found with that name
+│  App not found: ${arg.join(" ")}
 │
-│  💡 *Try:*
-│  ▸ Check spelling
-│  ▸ Use different name
-│  ▸ Use English name
+│  💡 *Tip:* Try another name
 │
 └─────────────────────
 
@@ -86,24 +88,23 @@ zokou({
             }, { quoted: ms });
         }
 
-        // ═══════════════════════════════════════════
-        //   📦 GET DETAILS
-        // ═══════════════════════════════════════════
-        const appDetailsResponse = await axios.get(
-            `https://bk9.fun/download/apk?id=${searchData.BK9[0].id}`,
-            { timeout: 30000 }
-        );
-        const appDetails = appDetailsResponse.data;
+        // 3. Extract app details
+        const app = data.datalist.list[0];
+        const appName = app.name || "Unknown";
+        const apkUrl = app.file?.path;
+        const version = app.file?.vername || "Unknown";
+        const size = app.file?.filesize 
+            ? `${Math.round(app.file.filesize / 1048576)} MB` 
+            : "Unknown";
 
-        if (!appDetails.BK9 || !appDetails.BK9.dllink) {
-            return client.sendMessage(dest, {
-                text: `❌ *DOWNLOAD LINK NOT AVAILABLE*
+        if (!apkUrl) {
+            return zk.sendMessage(dest, {
+                text: `❌ *DOWNLOAD UNAVAILABLE*
 
 ┌─────────────────────
 │  ⚠️ *Error:*
-│  Link not found for this app
-│
-│  💡 *Try another app*
+│  APK not available for download
+│  📱 App: ${appName}
 │
 └─────────────────────
 
@@ -112,69 +113,63 @@ zokou({
             }, { quoted: ms });
         }
 
-        // ═══════════════════════════════════════════
-        //   📤 SEND APK WITH CARD
-        // ═══════════════════════════════════════════
-        const appData = appDetails.BK9;
-        const caption = `🉑 *${conf.BOT_NAME || "RAHMANI-XMD"} APK*
+        // 4. Prepare Info
+        const time = moment().format("HH:mm:ss");
+        const date = moment().format("DD/MM/YYYY");
+
+        const caption = `📱 *${botSettings.name} APK*
 
 ┌─────────────────────
-│  📛 *Name:* ${appData.name}
-│  📦 *Package:* ${appData.package || "N/A"}
-│  📏 *Size:* ${appData.size || "N/A"}
-│  ⭐ *Rating:* ${appData.rating || "N/A"}
-│  🔗 *Source:* Play Store
+│  📦 *App:* ${appName}
+│  🏷 *Version:* ${version}
+│  📊 *Size:* ${size}
+│
+│  📆 *Date:* ${date}
+│  🕒 *Time:* ${time}
 │
 └─────────────────────
 
-⚡ *Powered by ${conf.BOT_NAME || "RAHMANI-XMD"}*
+⚡ *Powered by ${botSettings.name}*
 
 > *View channel*`;
 
-        await client.sendMessage(
-            dest,
-            {
-                document: { url: appData.dllink },
-                fileName: `${appData.name}.apk`,
-                mimetype: "application/vnd.android.package-archive",
-                caption: caption,
-                mentions: [auteurMessage],
-                contextInfo: {
-                    forwardingScore: 999,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: "120363353854480831@newsletter",
-                        newsletterName: conf.BOT_NAME || "RAHMANI-XMD",
-                        serverMessageId: 143
-                    },
-                    externalAdReply: {
-                        title: `🉑 ${appData.name}`,
-                        body: `Download from Play Store`,
-                        mediaType: 1,
-                        mediaUrl: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
-                        sourceUrl: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
-                        thumbnailUrl: "https://files.catbox.moe/aktbgo.jpg",
-                        showAdAttribution: false,
-                        renderLargerThumbnail: true
-                    }
+        // 5. Send APK
+        await zk.sendMessage(dest, {
+            document: { url: apkUrl },
+            fileName: `${appName}.apk`,
+            mimetype: "application/vnd.android.package-archive",
+            caption: caption,
+            mentions: [auteurMessage],
+            contextInfo: {
+                forwardingScore: 999,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: botSettings.channelJid,
+                    newsletterName: botSettings.name,
+                    serverMessageId: 143
+                },
+                externalAdReply: {
+                    title: `📱 ${appName}`,
+                    body: `Version ${version} • ${size}`,
+                    mediaType: 1,
+                    mediaUrl: botSettings.channelLink,
+                    sourceUrl: botSettings.channelLink,
+                    thumbnailUrl: botSettings.defaultThumbnail,
+                    showAdAttribution: false,
+                    renderLargerThumbnail: true
                 }
-            },
-            { quoted: ms }
-        );
+            }
+        }, { quoted: ms });
 
     } catch (error) {
-        console.error("❌ APK Error:", error.message);
-        
-        let errorMsg = "APK download failed. Try again later.";
-        if (error.code === 'ECONNABORTED') errorMsg = "Request timeout. Try again.";
-        if (error.response?.status === 404) errorMsg = "App not found.";
-        
-        await client.sendMessage(dest, {
-            text: `❌ *IMESHINDWA*
+        console.error("❌ APK Command Error:", error.message);
+
+        await zk.sendMessage(dest, {
+            text: `❌ *FAILED*
 
 ┌─────────────────────
 │  ⚠️ *Error:*
-│  ${errorMsg}
+│  ${error.message.substring(0, 100)}
 │
 └─────────────────────
 
