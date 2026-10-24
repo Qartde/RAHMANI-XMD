@@ -101,6 +101,22 @@ const PORT = process.env.PORT || 0xbb8;
 const CHANNEL_JID = '120363353854480831@newsletter';
 const AUTO_CHANNEL_REACT_EMOJIS = ['❤️', '🔥', '👑', '💯', '😍', '💖', '✨'];
 
+// ========== GROUP METADATA CACHE ==========
+const groupMetadataCache = new Map();
+async function getGroupMetadata(client, groupId) {
+    if (groupMetadataCache.has(groupId)) {
+        return groupMetadataCache.get(groupId);
+    }
+    try {
+        const metadata = await client.groupMetadata(groupId);
+        groupMetadataCache.set(groupId, metadata);
+        setTimeout(() => groupMetadataCache.delete(groupId), 60000); // Cache for 1 minute
+        return metadata;
+    } catch (e) {
+        return null;
+    }
+}
+
 const router = express.Router();
 
 app.use(express['static'](path.join(__dirname, 'public')));
@@ -193,11 +209,12 @@ async function updateAutoAbout(client) {
 let aboutInterval = null;
 function startAutoAbout(client) {
   if (aboutInterval) clearInterval(aboutInterval);
+  // Imebadilishwa kutoka sekunde 30 kwenda dakika 10 ili kupunguza spam
   aboutInterval = setInterval(() => {
     if (client && client.user) {
       updateAutoAbout(client);
     }
-  }, 30000);
+  }, 600000); 
   setTimeout(() => {
     if (client && client.user) {
       updateAutoAbout(client);
@@ -251,12 +268,12 @@ setTimeout(() => {
       'browser': ["RAHMANI-XMD", "Chrome", '1.0.0'],
       'printQRInTerminal': true,
       'fireInitQueries': false,
-      'shouldSyncHistoryMessage': true,
-      'downloadHistory': true,
-      'syncFullHistory': true,
-      'generateHighQualityLinkPreview': true,
+      'shouldSyncHistoryMessage': false, // IMEBADILISHWA
+      'downloadHistory': false,         // IMEBADILISHWA
+      'syncFullHistory': false,         // IMEBADILISHWA KUUONDOA BAD MAC
+      'generateHighQualityLinkPreview': false, // IMEBADILISHWA
       'markOnlineOnConnect': false,
-      'keepAliveIntervalMs': 0x7530,
+      'keepAliveIntervalMs': 15000,     // IMEBADILISHWA
       'auth': {
         'creds': _0xfe616d.creds,
         'keys': baileys_1.makeCacheableSignalKeyStore(_0xfe616d.keys, logger)
@@ -273,37 +290,6 @@ setTimeout(() => {
     };
     const _0x243e88 = baileys_1["default"](_0x34e3ed);
     store.bind(_0x243e88.ev);
-    const _0x32404a = new Map();
-    function _0x507042(_0x3dc481) {
-      const _0x155b79 = Date.now();
-      if (!_0x32404a.has(_0x3dc481)) {
-        _0x32404a.set(_0x3dc481, _0x155b79);
-        return false;
-      }
-      const _0x42a7dd = _0x32404a.get(_0x3dc481);
-      if (_0x155b79 - _0x42a7dd < 0xbb8) {
-        return true;
-      }
-      _0x32404a.set(_0x3dc481, _0x155b79);
-      return false;
-    }
-    const _0xe9147a = new Map();
-    async function _0x29c430(_0x1d4240, _0xd3aa26) {
-      if (_0xe9147a.has(_0xd3aa26)) {
-        return _0xe9147a.get(_0xd3aa26);
-      }
-      try {
-        const _0x461194 = await _0x1d4240.groupMetadata(_0xd3aa26);
-        _0xe9147a.set(_0xd3aa26, _0x461194);
-        setTimeout(() => _0xe9147a['delete'](_0xd3aa26), 0xea60);
-        return _0x461194;
-      } catch (_0xb096db) {
-        if (_0xb096db.message && _0xb096db.message.includes("rate-overlimit")) {
-          await new Promise(_0x277665 => setTimeout(_0x277665, 0x1388));
-        }
-        return null;
-      }
-    }
     
     // ============= FIXED ANTI-DELETE WITH UNIQUE STYLE =============
     _0x243e88.ev.on("messages.upsert", async _0x43b2d7 => {
@@ -340,7 +326,6 @@ setTimeout(() => {
               const _0x388b74 = _0x475212.key.participant || _0x475212.key.remoteJid;
               const _0x22e8bf = conf.NUMERO_OWNER + "@s.whatsapp.net";
               
-              // ===== UNIQUE ANTI-DELETE MESSAGE STYLE =====
               const deleteHeader = `┏━━━━━━━━━━━━━━━━━━━━━┓\n┃ ✨ *RAHMANI-XMD ANTI-DELETE* ✨\n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n`;
               const userMention = `➥ *User:* @${_0x388b74.split('@')[0x0]}`;
               const deleteMsg = `➥ *Action:* 🚫 Message Deleted\n➥ *Status:* 🔍 Recovered by RAHMANI-XMD \n\n`;
@@ -431,17 +416,13 @@ setTimeout(() => {
         } = _0x34d193;
         for (const _0x5b0b1e of _0x494066) {
           if (_0x5b0b1e.key && _0x5b0b1e.key.remoteJid === "status@broadcast") {
-            console.log("📱 Detected status update from:", _0x5b0b1e.key.remoteJid);
             const _0x2826c5 = Date.now();
             if (_0x2826c5 - _0x242b59 < 0x1388) {
-              console.log("⏳ Throttling reactions to prevent overflow.");
               continue;
             }
             const _0x511531 = _0x243e88.user && _0x243e88.user.id ? _0x243e88.user.id.split(':')[0x0] + '@s.whatsapp.net' : null;
-            if (!_0x511531) {
-              console.log("⚠️ Bot's user ID not available. Skipping reaction.");
-              continue;
-            }
+            if (!_0x511531) continue;
+            
             const randomEmoji = statusEmojis[Math.floor(Math.random() * statusEmojis.length)];
             await _0x243e88.sendMessage(_0x5b0b1e.key.remoteJid, {
               'react': {
@@ -452,7 +433,6 @@ setTimeout(() => {
               'statusJidList': [_0x5b0b1e.key.participant, _0x511531]
             });
             _0x242b59 = Date.now();
-            console.log(`✅ Reacted to status with ${randomEmoji} by ${_0x5b0b1e.key.remoteJid}`);
             await _0xe3bf32(0x7d0);
           }
         }
@@ -465,19 +445,11 @@ setTimeout(() => {
       const { messages: _0x494066 } = _0x34d193;
       for (const _0x5b0b1e of _0x494066) {
         if (_0x5b0b1e.key && _0x5b0b1e.key.remoteJid === CHANNEL_JID) {
-          console.log("📢 Detected channel update from:", _0x5b0b1e.key.remoteJid);
-          
           const _0x2826c5 = Date.now();
-          if (_0x2826c5 - _0x242b59 < 0x1388) {
-            console.log("⏳ Throttling channel reactions to prevent overflow.");
-            continue;
-          }
+          if (_0x2826c5 - _0x242b59 < 0x1388) continue;
           
           const _0x511531 = _0x243e88.user && _0x243e88.user.id ? _0x243e88.user.id.split(':')[0x0] + '@s.whatsapp.net' : null;
-          if (!_0x511531) {
-            console.log("⚠️ Bot's user ID not available. Skipping channel reaction.");
-            continue;
-          }
+          if (!_0x511531) continue;
           
           const randomEmoji = AUTO_CHANNEL_REACT_EMOJIS[Math.floor(Math.random() * AUTO_CHANNEL_REACT_EMOJIS.length)];
           
@@ -491,7 +463,6 @@ setTimeout(() => {
           });
           
           _0x242b59 = Date.now();
-          console.log(`✅ Reacted to channel with ${randomEmoji}`);
           await _0xe3bf32(0x7d0);
         }
       }
@@ -675,7 +646,6 @@ setTimeout(() => {
                 }
               }).then(() => {
                 _0x242b59 = Date.now();
-                console.log(`✅ Reacted with '${_0x5761d0}' to message by ${_0x2ecc86.key.remoteJid}`);
               })['catch'](_0x45d35c => {
                 console.error("❌ Failed to send reaction:", _0x45d35c);
               });
@@ -716,6 +686,7 @@ setTimeout(() => {
         await _0x243e88.rejectCall(_0x195ff0, _0x485aee);
         setTimeout(async () => {
           await _0x243e88.sendMessage(_0x485aee, {
+            text: "*_📞 Auto Reject Call Mode Activated_* \n*_📵 No Calls Allowed_*"
           });
         }, 0x3e8);
       }
@@ -747,8 +718,11 @@ setTimeout(() => {
       var _0x4b2990 = _0x26fc14(_0x243e88.user.id);
       var _0x5f203a = _0x4b2990.split('@')[0x0];
       const _0x37f41c = _0xbaefcb?.['endsWith']("@g.us");
-      var _0x2a34d7 = _0x37f41c ? await _0x243e88.groupMetadata(_0xbaefcb) : '';
-      var _0x878d70 = _0x37f41c ? _0x2a34d7.subject : '';
+      
+      // KUTUMIA CACHE BADALA YA KUITA API KILA MARA
+      var _0x2a34d7 = _0x37f41c ? await getGroupMetadata(_0x243e88, _0xbaefcb) : '';
+      
+      var _0x878d70 = _0x37f41c ? (_0x2a34d7 ? _0x2a34d7.subject : '') : '';
       var _0x11e945 = _0x24b35c.message.extendedTextMessage?.["contextInfo"]?.["quotedMessage"];
       var _0x3b005b = _0x26fc14(_0x24b35c.message?.["extendedTextMessage"]?.["contextInfo"]?.["participant"]);
       var _0x133a07 = _0x37f41c ? _0x24b35c.key.participant ? _0x24b35c.key.participant : _0x24b35c.participant : _0xbaefcb;
@@ -772,18 +746,10 @@ setTimeout(() => {
           'quoted': _0x24b35c
         });
       }
-      console.log("\t🌍 RAHMANI-XMD ONLINE 🌍");
-      console.log("=========== Written Message ===========");
-      if (_0x37f41c) {
-        console.log("📱 Message from group: " + _0x878d70);
-      }
-      console.log("👤 Message sent by: [" + _0x556a7b + " : " + _0x133a07.split('@s.whatsapp.net')[0x0] + " ]");
-      console.log("📝 Message type: " + _0x3ac7a5);
-      console.log("------ Content ------");
-      console.log(_0xf697f8);
       
       function _0x521d5b(_0x49b667) {
         let _0x55b787 = [];
+        if (!_0x49b667) return _0x55b787;
         for (_0x5c6cf5 of _0x49b667) {
           if (_0x5c6cf5.admin == null) {
             continue;
@@ -804,7 +770,7 @@ setTimeout(() => {
           await _0x243e88.sendPresenceUpdate("unavailable", _0xbaefcb);
         }
       }
-      const _0x15fef6 = _0x37f41c ? await _0x2a34d7.participants : '';
+      const _0x15fef6 = _0x37f41c && _0x2a34d7 ? _0x2a34d7.participants : '';
       let _0x11ea71 = _0x37f41c ? _0x521d5b(_0x15fef6) : '';
       const _0x62654f = _0x37f41c ? _0x11ea71.includes(_0x133a07) : false;
       var _0x7d8980 = _0x37f41c ? _0x11ea71.includes(_0x4b2990) : false;
@@ -860,44 +826,6 @@ setTimeout(() => {
         await _0x243e88.readMessages([_0x24b35c.key]);
       }
       
-      // ============= AUTO DOWNLOAD STATUS =============
-      if (_0x24b35c.key && _0x24b35c.key.remoteJid === "status@broadcast" && conf.AUTO_DOWNLOAD_STATUS === 'yes') {
-        if (_0x24b35c.message.extendedTextMessage) {
-          var _0x2cea19 = _0x24b35c.message.extendedTextMessage.text;
-          await _0x243e88.sendMessage(_0x4b2990, {
-            'text': _0x2cea19
-          }, {
-            'quoted': _0x24b35c
-          });
-        } else {
-          if (_0x24b35c.message.imageMessage) {
-            var _0x2aebb5 = _0x24b35c.message.imageMessage.caption;
-            var _0x1222c1 = await _0x243e88.downloadAndSaveMediaMessage(_0x24b35c.message.imageMessage);
-            await _0x243e88.sendMessage(_0x4b2990, {
-              'image': {
-                'url': _0x1222c1
-              },
-              'caption': _0x2aebb5
-            }, {
-              'quoted': _0x24b35c
-            });
-          } else {
-            if (_0x24b35c.message.videoMessage) {
-              var _0x2aebb5 = _0x24b35c.message.videoMessage.caption;
-              var _0x4d83aa = await _0x243e88.downloadAndSaveMediaMessage(_0x24b35c.message.videoMessage);
-              await _0x243e88.sendMessage(_0x4b2990, {
-                'video': {
-                  'url': _0x4d83aa
-                },
-                'caption': _0x2aebb5
-              }, {
-                'quoted': _0x24b35c
-              });
-            }
-          }
-        }
-      }
-      
       // ============= RESTRICTED GROUP =============
       if (!_0x296907 && _0xbaefcb == "120363158701337904@g.us") {
         return;
@@ -923,14 +851,12 @@ setTimeout(() => {
           }
           ;
           if (_0x34fccb) {
-            console.log("hummm");
             return;
           }
           let _0x4826b6 = require("./bdd/mention");
           let _0x300c49 = await _0x4826b6.recupererToutesLesValeurs();
           let _0xa3a8cf = _0x300c49[0x0];
           if (_0xa3a8cf.status === "non") {
-            console.log("mention pas actifs");
             return;
           }
           let _0x21e48d;
@@ -1023,14 +949,11 @@ setTimeout(() => {
           }
           
           if (hasLink) {
-            console.log("🔗 LINK DETECTED in group:", _0xbaefcb, "by:", _0x133a07);
-            
             const isBotAdmin = _0x7d8980;
             const isAdmin = _0x62654f;
             const isSuperUser = _0x34fccb;
             
             if (isAdmin || isSuperUser) {
-              console.log("Admin/SuperUser sent link, ignoring...");
               return;
             }
             
@@ -1065,10 +988,7 @@ setTimeout(() => {
               
               try {
                 await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-                console.log(`✅ Removed user ${_0x133a07} for sending link`);
-              } catch (error) {
-                console.log("❌ Anti-link removal error:", error);
-              }
+              } catch (error) {}
               
               await _0x243e88.sendMessage(_0xbaefcb, {
                 'delete': messageToDelete
@@ -1087,7 +1007,6 @@ setTimeout(() => {
               await _0x243e88.sendMessage(_0xbaefcb, {
                 'delete': messageToDelete
               });
-              console.log(`✅ Deleted link message from ${_0x133a07}`);
               
             } else if (action === 'warn') {
               try {
@@ -1098,8 +1017,6 @@ setTimeout(() => {
                 
                 let warnCount = await getWarnCountByJID(_0x133a07);
                 let maxWarns = conf.WARN_COUNT || 3;
-                
-                console.log(`User ${_0x133a07} has ${warnCount}/${maxWarns} warnings`);
                 
                 if (warnCount >= maxWarns) {
                   const removeMsg = `┏━━━━━━━━━━━━━━━━━━━━━┓\n┃ ⚠️ *FINAL WARNING!* ⚠️\n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n➥ @${_0x133a07.split('@')[0]} has been removed after ${maxWarns} warnings.\n\n🚫 *Reason:* Repeatedly sending links in the group.\n📌 *Action:* User removed.\n\n🤖 *RAHMANI-XMD Security System*`;
@@ -1115,7 +1032,6 @@ setTimeout(() => {
                   await _0x243e88.sendMessage(_0xbaefcb, {
                     'delete': messageToDelete
                   });
-                  console.log(`✅ Removed user ${_0x133a07} after ${maxWarns} warnings`);
                 } else {
                   const remainingWarns = maxWarns - warnCount - 1;
                   const warningMsg = `┏━━━━━━━━━━━━━━━━━━━━━┓\n┃ ⚠️ *RAHMANI-XMD WARNING* ⚠️\n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n➥ @${_0x133a07.split('@')[0]}, links are not allowed in this group!\n\n⚠️ *Warning ${warnCount + 1}/${maxWarns}*\n📌 ${remainingWarns} warning(s) remaining before removal.\n🚫 *Action:* Message deleted.\n\n🤖 *RAHMANI-XMD Security System*`;
@@ -1131,10 +1047,8 @@ setTimeout(() => {
                   await _0x243e88.sendMessage(_0xbaefcb, {
                     'delete': messageToDelete
                   });
-                  console.log(`⚠️ Warned user ${_0x133a07} (${warnCount + 1}/${maxWarns}) for link`);
                 }
               } catch (warnError) {
-                console.log("❌ Warning system error:", warnError);
                 const warningMsg = `┏━━━━━━━━━━━━━━━━━━━━━┓\n┃ ⚠️ *RAHMANI-XMD ANTI-LINK* ⚠️\n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n➥ @${_0x133a07.split('@')[0]}, your message has been deleted.\n\n🚫 *Reason:* Links are not allowed in this group!\n\n🤖 *RAHMANI-XMD Security System*`;
                 await _0x243e88.sendMessage(_0xbaefcb, {
                   'text': warningMsg,
@@ -1149,9 +1063,7 @@ setTimeout(() => {
             }
           }
         }
-      } catch (_0x588dec) {
-        console.log("❌ Anti-link error:", _0x588dec);
-      }
+      } catch (_0x588dec) {}
       // ============= END ANTI-LINK HANDLER =============
       
       // ============= ANTI-BOT HANDLER =============
@@ -1160,7 +1072,6 @@ setTimeout(() => {
         const _0x59c5c6 = _0x24b35c.key?.['id']?.["startsWith"]('BAE5') && _0x24b35c.key?.['id']?.["length"] === 0x10;
         if (_0x397cb5 || _0x59c5c6) {
           if (_0x3ac7a5 === 'reactionMessage') {
-            console.log("Je ne reagis pas au reactions");
             return;
           }
           ;
@@ -1170,7 +1081,6 @@ setTimeout(() => {
           }
           ;
           if (_0x62654f || _0x133a07 === _0x4b2990) {
-            console.log("je fais rien");
             return;
           }
           ;
@@ -1182,7 +1092,7 @@ setTimeout(() => {
           };
           var _0x54a3df = "bot detected, \n";
           var _0x577d84 = new Sticker("https://raw.githubusercontent.com/djalega8000/Zokou-MD/main/media/remover.gif", {
-            'pack': "Zoou-Md",
+            'pack': "RAHMANI-XMD",
             'author': conf.OWNER_NAME,
             'type': StickerTypes.FULL,
             'categories': ['🤩', '🎉'],
@@ -1206,9 +1116,7 @@ setTimeout(() => {
             });
             try {
               await _0x243e88.groupParticipantsUpdate(_0xbaefcb, [_0x133a07], "remove");
-            } catch (_0xc9bcd0) {
-              console.log("antibot ") + _0xc9bcd0;
-            }
+            } catch (_0xc9bcd0) {}
             await _0x243e88.sendMessage(_0xbaefcb, {
               'delete': _0x13af2e
             });
@@ -1264,9 +1172,7 @@ setTimeout(() => {
             }
           }
         }
-      } catch (_0x402a2c) {
-        console.log(".... " + _0x402a2c);
-      }
+      } catch (_0x402a2c) {}
       
       // ============= COMMAND HANDLER =============
       if (_0x4d3533) {
@@ -1302,7 +1208,6 @@ setTimeout(() => {
             reagir(_0xbaefcb, _0x243e88, _0x24b35c, _0x105af6.reaction);
             _0x105af6.fonction(_0xbaefcb, _0x243e88, _0x20955d);
           } catch (_0x459532) {
-            console.log("😡😡 " + _0x459532);
             _0x243e88.sendMessage(_0xbaefcb, {
               'text': "😡😡 " + _0x459532
             }, {
@@ -1318,7 +1223,6 @@ setTimeout(() => {
       recupevents: _0xad0996
     } = require("./bdd/welcome");
     _0x243e88.ev.on("group-participants.update", async _0x22fd53 => {
-      console.log("👥 Group participants update:", _0x22fd53);
       let _0x2031b3;
       try {
         _0x2031b3 = await _0x243e88.profilePictureUrl(_0x22fd53.id, 'image');
@@ -1326,7 +1230,9 @@ setTimeout(() => {
         _0x2031b3 = 'https://raw.githubusercontent.com/nexus-ai/media/main/default-group.jpg';
       }
       try {
-        const _0x1c8ad8 = await _0x243e88.groupMetadata(_0x22fd53.id);
+        const _0x1c8ad8 = await getGroupMetadata(_0x243e88, _0x22fd53.id);
+        
+        if (!_0x1c8ad8) return;
         
         // ===== WELCOME MESSAGE - UNIQUE STYLE =====
         if (_0x22fd53.action == 'add' && (await _0xad0996(_0x22fd53.id, 'welcome')) == 'on') {
@@ -1361,8 +1267,7 @@ setTimeout(() => {
         } 
         // ===== ANTI-PROMOTE =====
         else if (_0x22fd53.action == 'promote' && (await _0xad0996(_0x22fd53.id, "antipromote")) == 'on') {
-          if (_0x22fd53.author == _0x1c8ad8.owner || _0x22fd53.author == conf.NUMERO_OWNER + "@s.whatsapp.net" || _0x22fd53.author == decodeJid(_0x243e88.user.id) || _0x22fd53.author == _0x22fd53.participants[0x0]) {
-            console.log("Cas de superUser je fais rien");
+          if (_0x22fd53.author == _0x1c8ad8.owner || _0x22fd53.author == conf.NUMERO_OWNER + "@s.whatsapp.net" || _0x22fd53.author == _0x243e88.user.id || _0x22fd53.author == _0x22fd53.participants[0x0]) {
             return;
           }
           ;
@@ -1374,8 +1279,7 @@ setTimeout(() => {
         } 
         // ===== ANTI-DEMOTE =====
         else if (_0x22fd53.action == "demote" && (await _0xad0996(_0x22fd53.id, 'antidemote')) == 'on') {
-          if (_0x22fd53.author == _0x1c8ad8.owner || _0x22fd53.author == conf.NUMERO_OWNER + "@s.whatsapp.net" || _0x22fd53.author == decodeJid(_0x243e88.user.id) || _0x22fd53.author == _0x22fd53.participants[0x0]) {
-            console.log("Cas de superUser je fais rien");
+          if (_0x22fd53.author == _0x1c8ad8.owner || _0x22fd53.author == conf.NUMERO_OWNER + "@s.whatsapp.net" || _0x22fd53.author == _0x243e88.user.id || _0x22fd53.author == _0x22fd53.participants[0x0]) {
             return;
           }
           ;
@@ -1386,9 +1290,7 @@ setTimeout(() => {
             'mentions': [_0x22fd53.author, _0x22fd53.participants[0x0]]
           });
         }
-      } catch (_0x51b1a3) {
-        console.error("❌ Welcome/Goodbye error:", _0x51b1a3);
-      }
+      } catch (_0x51b1a3) {}
     });
     
     // ============= CRON JOBS =============
@@ -1398,12 +1300,10 @@ setTimeout(() => {
         getCron: _0x22d016
       } = require('./bdd/cron');
       let _0x9418e1 = await _0x22d016();
-      console.log(_0x9418e1);
       if (_0x9418e1.length > 0x0) {
         for (let _0x226f5f = 0x0; _0x226f5f < _0x9418e1.length; _0x226f5f++) {
           if (_0x9418e1[_0x226f5f].mute_at != null) {
             let _0x45a162 = _0x9418e1[_0x226f5f].mute_at.split(':');
-            console.log("⏰ Setting auto-mute for " + _0x9418e1[_0x226f5f].group_id + " at " + _0x45a162[0x0] + "H " + _0x45a162[0x1]);
             _0x25cc58.schedule(_0x45a162[0x1] + " " + _0x45a162[0x0] + " * * *", async () => {
               await _0x243e88.groupSettingUpdate(_0x9418e1[_0x226f5f].group_id, 'announcement');
               _0x243e88.sendMessage(_0x9418e1[_0x226f5f].group_id, {
@@ -1418,7 +1318,6 @@ setTimeout(() => {
           }
           if (_0x9418e1[_0x226f5f].unmute_at != null) {
             let _0x4dc2dd = _0x9418e1[_0x226f5f].unmute_at.split(':');
-            console.log("⏰ Setting auto-unmute for " + _0x4dc2dd[0x0] + "H " + _0x4dc2dd[0x1]);
             _0x25cc58.schedule(_0x4dc2dd[0x1] + " " + _0x4dc2dd[0x0] + " * * *", async () => {
               await _0x243e88.groupSettingUpdate(_0x9418e1[_0x226f5f].group_id, "not_announcement");
               _0x243e88.sendMessage(_0x9418e1[_0x226f5f].group_id, {
@@ -1432,8 +1331,6 @@ setTimeout(() => {
             });
           }
         }
-      } else {
-        console.log("📌 No cron jobs activated");
       }
       return;
     }
@@ -1463,45 +1360,19 @@ setTimeout(() => {
       } else {
         if (_0x52925b === 'open') {
           console.log("✅ RAHMANI-XMD Connected to WhatsApp! ☺️");
-          console.log('--');
-          await baileys_1.delay(0xc8);
-          console.log('------');
-          await baileys_1.delay(0x12c);
-          console.log("------------------/-----");
-          console.log("🤖 RAHMANI-XMD is Online 🕸\n\n");
-          console.log("📦 Loading RAHMANI-XMD Commands ...\n");
+          
           fs.readdirSync(__dirname + "/rahmani").forEach(_0x5c00ae => {
             if (path.extname(_0x5c00ae).toLowerCase() == ".js") {
               try {
                 require(__dirname + "/rahmani/" + _0x5c00ae);
-                console.log("✅ " + _0x5c00ae + " Installed Successfully");
-              } catch (_0x12f781) {
-                console.log("❌ " + _0x5c00ae + " could not be installed due to: " + _0x12f781);
-              }
+              } catch (_0x12f781) {}
               baileys_1.delay(0x12c);
             }
           });
-          baileys_1.delay(0x2bc);
-          var _0x50f3b5;
-          if (conf.MODE.toLocaleLowerCase() === "yes") {
-            _0x50f3b5 = '🌍 Public';
-          } else if (conf.MODE.toLocaleLowerCase() === 'no') {
-            _0x50f3b5 = "🔒 Private";
-          } else {
-            _0x50f3b5 = "❓ Undefined";
-          }
-          console.log("✅ Commands Installation Completed");
-          await _0x1f93c4();
           
-          // Start auto-about rotation
+          await _0x1f93c4();
           startAutoAbout(_0x243e88);
           
-          if (conf.DP.toLowerCase() === "yes") {
-            let _0x32d52b = "┏━━━━━━━━━━━━━━━━━━━━━┓\n┃  *RAHMANI-XMD* \n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n➥ 🎯 *Prefix:* [ " + prefixe + " ]\n➥ 🖤 *Mode:* " + _0x50f3b5 + "\n➥ 🏍️ *Bot Name:* RAHMANI-XMD \n\n⭐ *Follow our Channel For Updates*\n› https://whatsapp.com/channel/0029VatokI45EjxufALmY32X\n\n💫 *Thank you for using RAHMANI-XMD!*";
-            await _0x243e88.sendMessage(_0x243e88.user.id, {
-              'text': _0x32d52b
-            });
-          }
         } else {
           if (_0x52925b == 'close') {
             let _0x46bf7 = new boom_1.Boom(_0x41b97c?.["error"])?.["output"]['statusCode'];
@@ -1509,24 +1380,19 @@ setTimeout(() => {
               console.log("❌ Session id error, rescan again...");
             } else {
               if (_0x46bf7 === baileys_1.DisconnectReason.connectionClosed) {
-                console.log("🔄 Connection closed, reconnecting...");
                 _0x1b1480();
               } else {
                 if (_0x46bf7 === baileys_1.DisconnectReason.connectionLost) {
-                  console.log("🔄 Connection error, trying to reconnect...");
                   _0x1b1480();
                 } else {
                   if (_0x46bf7 === baileys_1.DisconnectReason?.['connectionReplaced']) {
-                    console.log("⚠️ Connection replaced, another session is open!");
                   } else {
                     if (_0x46bf7 === baileys_1.DisconnectReason.loggedOut) {
                       console.log("❌ Logged out, please scan QR again!");
                     } else {
                       if (_0x46bf7 === baileys_1.DisconnectReason.restartRequired) {
-                        console.log("🔄 Restart required, restarting...");
                         _0x1b1480();
                       } else {
-                        console.log("🔄 Restarting due to error:", _0x46bf7);
                         const {
                           exec: _0x5b98ef
                         } = require("child_process");
@@ -1537,7 +1403,6 @@ setTimeout(() => {
                 }
               }
             }
-            console.log("hum " + _0x52925b);
             _0x1b1480();
           }
         }
@@ -1612,12 +1477,13 @@ setTimeout(() => {
     };
     return _0x243e88;
   }
+  
   let _0x5519b4 = require.resolve(__filename);
   fs.watchFile(_0x5519b4, () => {
     fs.unwatchFile(_0x5519b4);
-    console.log("🔄 Update " + __filename);
     delete require.cache[_0x5519b4];
     require(_0x5519b4);
   });
+  
   _0x1b1480();
 }, 0x1388);
