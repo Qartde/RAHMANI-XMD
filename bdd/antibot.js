@@ -1,16 +1,24 @@
 const fs = require('fs');
 const path = require('path');
 
-// Define the path for the JSON file to store data
-const dataFilePath = path.join(__dirname, './xmd/antibot.json');
+// 1. Tengeneza njia ya folda na faili
+const dirPath = path.join(__dirname, './xmd');
+const dataFilePath = path.join(dirPath, 'antibot.json');
+
+// 2. Hakikisha folda lipo kabla ya kufanya kitu kingine chochote
+if (!fs.existsSync(dirPath)) {
+  fs.mkdirSync(dirPath, { recursive: true });
+}
 
 // Function to read data from JSON file
 function readDataFromFile() {
   try {
+    if (!fs.existsSync(dataFilePath)) {
+        return {};
+    }
     const data = fs.readFileSync(dataFilePath, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
-    // If file doesn't exist or there's a read error, return an empty object
     console.error('Error reading data from file:', error);
     return {};
   }
@@ -39,14 +47,11 @@ initializeDataFile();
 function addOrUpdateJidState(jid, etat) {
   const data = readDataFromFile();
   
-  // Add or update the JID entry
   data[jid] = data[jid] || {};
   data[jid].etat = etat;
-  data[jid].action = data[jid].action || 'supp'; // Default action is 'supp' if not present
+  data[jid].action = data[jid].action || 'supp'; 
 
-  // Write updated data back to file
   writeDataToFile(data);
-
   console.log(`JID ${jid} successfully added or updated.`);
 }
 
@@ -54,27 +59,24 @@ function addOrUpdateJidState(jid, etat) {
 function updateJidAction(jid, action) {
   const data = readDataFromFile();
   
-  // Add or update the JID's action
   data[jid] = data[jid] || {};
-  data[jid].etat = data[jid].etat || 'non'; // Default state is 'non' if not present
+  data[jid].etat = data[jid].etat || 'non'; 
   data[jid].action = action;
 
-  // Write updated data back to file
   writeDataToFile(data);
-
   console.log(`Action successfully updated for JID ${jid}.`);
 }
 
 // Function to verify the state of a JID
 function checkJidState(jid) {
   const data = readDataFromFile();
-  return data[jid]?.etat === 'oui'; // Return true if 'etat' is 'oui', false otherwise
+  return data[jid]?.etat === 'oui'; 
 }
 
 // Function to retrieve the action of a JID
 function getJidAction(jid) {
-  const data = readDataFromFile();
-  return data[jid]?.action || 'supp'; // Default action is 'supp' if not present
+  const data = readFromFile();
+  return data[jid]?.action || 'supp'; 
 }
 
 // Export the functions for external use
