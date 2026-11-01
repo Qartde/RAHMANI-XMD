@@ -1,181 +1,67 @@
-const { zokou } = require("../framework/zokou");
-const conf = require("../set");
-const fs = require("fs-extra");
-const path = require("path");
+'use strict';
 
-// ═══════════════════════════════════════════
-//   📁 DB PATH
-// ═══════════════════════════════════════════
-const dbPath = path.join(__dirname, "../bdd/antilien.json");
+const conf = require('../set');
+const {
+  activerAntiLien,
+  desactiverAntiLien,
+  ajouterJid,
+  verifierEtatJid,
+  recupererActionJid
+} = require('../bdd/antilien');
 
-// Initialize DB
-if (!fs.existsSync(dbPath)) {
-    const dir = path.dirname(dbPath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(dbPath, JSON.stringify({}), "utf8");
-}
+module.exports = {
+  nomCom: 'antilink',
+  categorie: 'Group',
+  reaction: '🛡️',
+  
+  // Function hii ndio inayotekeleza amri
+  fonction: async (dest, zk, commandeOptions) => {
+    const { ms, arg, verifGroupe, verifAdmin, superUser, repondre } = commandeOptions;
 
-function loadData() {
-    try {
-        return JSON.parse(fs.readFileSync(dbPath, "utf8"));
-    } catch {
-        return {};
+    // 1. Kagua kama ni group
+    if (!verifGroupe) {
+      return repondre("❌ Amri hii inafanya kazi kwenye magroup tu.");
     }
-}
 
-function saveData(data) {
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), "utf8");
-}
+    // 2. Kagua kama mtumiaji ni Admin au Owner
+    if (!verifAdmin && !superUser) {
+      return repondre("❌ Unahitaji kuwa Admin wa group au Owner wa Bot kutumia amri hii.");
+    }
 
-async function getState(jid) {
-    const data = loadData();
-    return data[jid]?.enabled === true;
-}
-
-async function getAction(jid) {
-    const data = loadData();
-    return data[jid]?.action || "delete";
-}
-
-async function setState(jid, enabled) {
-    const data = loadData();
-    if (!data[jid]) data[jid] = { enabled: false, action: "delete" };
-    data[jid].enabled = enabled === true;
-    saveData(data);
-}
-
-async function setAction(jid, action) {
-    const data = loadData();
-    if (!data[jid]) data[jid] = { enabled: false, action: "delete" };
-    data[jid].action = action;
-    saveData(data);
-}
-
-// ═══════════════════════════════════════════
-//   🛡️ ANTILINK COMMAND
-// ═══════════════════════════════════════════
-zokou({
-    nomCom: "antilink",
-    categorie: "Group",
-    reaction: "🛡️",
-    desc: "Manage anti-link protection",
-    fromMe: false
-}, async (dest, zk, commandeOptions) => {
-    console.log("🛡️ ANTILINK COMMAND TRIGGERED");
-    console.log("   dest:", dest);
-    console.log("   arg:", commandeOptions.arg);
-    console.log("   verifGroupe:", commandeOptions.verifGroupe);
-    console.log("   verifAdmin:", commandeOptions.verifAdmin);
-    console.log("   superUser:", commandeOptions.superUser);
-
-    const { ms, arg, repondre, verifGroupe, verifAdmin, superUser, nomGroupe } = commandeOptions;
+    const action = arg[0] ? arg[0].toLowerCase() : '';
 
     try {
-        // ✅ Group only
-        if (!verifGroupe) {
-            return repondre("❌ *This command only works in groups!*");
+      if (action === 'on') {
+        // Tunajaribu kutumia functions zilizopo kwenye bdd yako
+        if (typeof activerAntiLien === 'function') {
+          await activerAntiLien(dest);
+        } else if (typeof ajouterJid === 'function') {
+          await ajouterJid(dest, 'oui', 'remove'); // Default ni kufuta ujumbe
+        } else {
+          return repondre("❌ Kuna tatizo kwenye mfumo wa database ya antilink (bdd/antilien).");
         }
 
-        // ✅ Admin or Owner only
-        if (!verifAdmin && !superUser) {
-            return repondre("❌ *Only admins or owner can use this command!*");
+        return repondre(`┏━━━━━━━━━━━━━━━━━━━━━┓\n┃ 🛡️ *ANTILINK IMEWASHWA* 🛡️\n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n✅ Bot sasa itafuta link zote zinazotumwa na watu wasio Admin.\n\n🤖 *RAHMANI-XMD*`);
+
+      } else if (action === 'off') {
+        // Tunajaribu kutumia functions zilizopo kwenye bdd yako
+        if (typeof desactiverAntiLien === 'function') {
+          await desactiverAntiLien(dest);
+        } else if (typeof ajouterJid === 'function') {
+          await ajouterJid(dest, 'non', 'remove');
+        } else {
+          return repondre("❌ Kuna tatizo kwenye mfumo wa database ya antilink (bdd/antilien).");
         }
 
-        // 📌 Show status (no args)
-        if (!arg || arg.length === 0) {
-            const isEnabled = await getState(dest);
-            const action = await getAction(dest);
+        return repondre(`┏━━━━━━━━━━━━━━━━━━━━━┓\n┃ 🛡️ *ANTILINK IMEZIMWA* 🛡️\n┗━━━━━━━━━━━━━━━━━━━━━┛\n\n❌ Bot haitafuta link tena kwenye group hili.\n\n🤖 *RAHMANI-XMD*`);
 
-            const statusEmoji = isEnabled ? "🟢" : "🔴";
-            const statusText = isEnabled ? "ENABLED" : "DISABLED";
-
-            let actionText = "None";
-            if (action === "remove") actionText = "🚫 Remove";
-            if (action === "delete") actionText = "🗑️ Delete";
-            if (action === "warn") actionText = "⚠️ Warn";
-
-            return repondre(`🛡️ *ANTI-LINK | RAHMANI-XMD*
-
-📌 *Group:* ${nomGroupe || "This Group"}
-${statusEmoji} *Status:* ${statusText}
-⚙️ *Action:* ${actionText}
-
-📖 *Commands:*
-▸ .antilink on
-▸ .antilink off
-▸ .antilink set remove
-▸ .antilink set delete
-▸ .antilink set warn
-
-> *View channel*`);
-        }
-
-        const action = (arg[0] || "").toLowerCase();
-
-        // 🟢 ON
-        if (action === "on") {
-            await setState(dest, true);
-            return repondre(`🛡️ *ANTI-LINK ENABLED* ✅
-
-📌 *Group:* ${nomGroupe || "This Group"}
-⚙️ *Status:* 🟢 ON
-🔨 *Action:* ${await getAction(dest)}
-
-> *View channel*`);
-        }
-
-        // 🔴 OFF
-        if (action === "off") {
-            await setState(dest, false);
-            return repondre(`🛡️ *ANTI-LINK DISABLED* ❌
-
-📌 *Group:* ${nomGroupe || "This Group"}
-⚙️ *Status:* 🔴 OFF
-
-> *View channel*`);
-        }
-
-        // ⚙️ SET
-        if (action === "set") {
-            const setAction = (arg[1] || "").toLowerCase();
-
-            if (!["remove", "delete", "warn"].includes(setAction)) {
-                return repondre(`❌ *Choose a valid action:*
-
-▸ .antilink set remove
-▸ .antilink set delete
-▸ .antilink set warn
-
-> *View channel*`);
-            }
-
-            await setAction(dest, setAction);
-
-            const emoji = setAction === "remove" ? "🚫" : setAction === "delete" ? "🗑️" : "⚠️";
-
-            return repondre(`🛡️ *ANTI-LINK ACTION SET* ✅
-
-📌 *Group:* ${nomGroupe || "This Group"}
-${emoji} *Action:* ${setAction.toUpperCase()}
-⚙️ *Status:* 🟢 ON
-
-> *View channel*`);
-        }
-
-        // ❓ Unknown
-        return repondre(`❓ *Unknown option*
-
-📖 *Commands:*
-▸ .antilink on
-▸ .antilink off
-▸ .antilink set remove
-▸ .antilink set delete
-▸ .antilink set warn
-
-> *View channel*`);
-
-    } catch (err) {
-        console.error("❌ ANTILINK ERROR:", err);
-        return repondre(`❌ *Error:* ${err.message}`);
+      } else {
+        // Msaada kama hakuandika on/off
+        return repondre(`⚙️ *Matumizi ya Antilink:*\n\n.antilink on  ➔ Kuwasha\n.antilink off ➔ Kuzima\n\n🤖 *RAHMANI-XMD*`);
+      }
+    } catch (error) {
+      console.error("Antilink Command Error:", error);
+      return repondre("❌ Kuna hitilafu imetokea wakati wa kuwasha/kuzima antilink.");
     }
-});
+  }
+};
