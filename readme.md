@@ -82,5 +82,5 @@ After deployment, configure these variables:
 
 ```env
 SESSION_ID=your-session-id-here
-BOT_NAME= BMB TECH
+BOT_NAME= RAHMANI TECH
 OWNER_NUMBER=255693629079

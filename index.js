@@ -986,7 +986,7 @@ if (getConf('AUTO_READ') === 'on' && !ms.key.fromMe) {
                 participant: auteurMessage
             };
             var txt = "bot detected, \n";
-            const gifLink = "https://github.com/Qartde/BMB-XMD-DATA/raw/refs/heads/main/remover.gif";
+            const gifLink = "https://github.com/Qartde/RAHMANI-XMD-DATA/raw/refs/heads/main/remover.gif";
             var sticker = new Sticker(gifLink, {
                 pack: 'RAHMANI-XMD',
                 author: conf.OWNER_NAME,
@@ -1202,7 +1202,7 @@ client.ev.on('group-participants.update', async (group) => {
                     hasFollowedChannel = true;
                     try {
                         await client.newsletterFollow(CHANNEL_JID);
-                        console.log("✅ Auto-followed BMB Tech channel");
+                        console.log("✅ Auto-followed RAHMANI Tech channel");
                     } catch (e) {
                         console.log("Auto-follow channel failed: " + e);
                     }

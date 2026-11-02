@@ -52,7 +52,7 @@ bmbtz({ nomCom: "repo", categorie: "General" }, async (dest, client, commandeOpt
         await client.sendMessage(dest, {
             image: { url: imagePath },
             caption: repoInfo,
-            footer: "*BMB TECH GitHub Repository*",
+            footer: "*RAHMANI TECH GitHub Repository*",
             contextInfo: {
                 forwardingScore: 999,
                 isForwarded: true,

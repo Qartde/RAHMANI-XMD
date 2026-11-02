@@ -99,7 +99,7 @@ bmbtz({
   const imagePath = getRandomScsImage();
   
   // ====== BUILD OPTIONS TEXT ======
-  let optionsText = `📑 *BMB TOOL MENU*\n\n`;
+  let optionsText = `📑 *RAHMANI TOOL MENU*\n\n`;
   optionsText += `Reply with category number:\n\n`;
   
   categories.forEach((cat, index) => {

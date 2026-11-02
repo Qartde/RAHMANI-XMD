@@ -98,7 +98,7 @@ bmbtz(
 🌎 *Country List:*
 ${countryList}
 
-_By BMB-XMD_`;
+_By RAHMANI-XMD_`;
 
       await client.sendMessage(
         dest,

@@ -40,7 +40,7 @@ function performRestart({ env = process.env, exit = (code) => process.exit(code)
   if (mode === "spawn") {
     const child = spawnFn(execPath, argv.slice(1), {
       cwd,
-      env: { ...env, BMB_RESTARTED: "1" },
+      env: { ...env, RAHMANI_RESTARTED: "1" },
       detached: true,
       stdio: "inherit",
     });
