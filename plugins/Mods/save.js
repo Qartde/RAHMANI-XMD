@@ -45,7 +45,7 @@ bmbtz({
         let media = await client.downloadAndSaveMediaMessage(msgRepondu.stickerMessage, '', true, 'sticker');
 
         let stickerMess = new Sticker(media, {
-            pack: 'BMB-TECH',
+            pack: 'RAHMANI-XMD',
             type: StickerTypes.CROPPED,
             categories: ["🤩", "🎉"],
             id: "12345",

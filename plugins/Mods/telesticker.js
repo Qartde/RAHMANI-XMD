@@ -42,7 +42,7 @@ bmbtz({
         let stickers = await axios.get(api);
         let type = (stickers.data.result.is_animated === true || stickers.data.result.is_video === true) ? 'animated sticker' : 'not animated sticker';
 
-        let msg = `   bmb-tech-stickers-dl
+        let msg = `   RAHMANI-XMD-stickers-dl
       
 *Name :* ${stickers.data.result.name}
 *Type :* ${type} 

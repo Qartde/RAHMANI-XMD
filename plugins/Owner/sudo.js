@@ -10,7 +10,7 @@ const sudoLib = require("../../lib/sudo");
 const ownerAccess = require("../../lib/ownerAccess");
 
 const LINE = "━━━━━━━━━━━━━━━━";
-const box = (title, body) => `📌 *${title}*\n${LINE}\n${body}\n${LINE}\n© bmb tech`;
+const box = (title, body) => `📌 *${title}*\n${LINE}\n${body}\n${LINE}\n© Rahmani xmd`;
 
 /** Find the target number from an argument, a mention or a replied-to message. */
 function findTarget(o) {

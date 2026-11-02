@@ -11,7 +11,7 @@ const { getAllowed, getFlag } = require("../../lib/chatbot");
 
 const LINE = "━━━━━━━━━━━━━━━━";
 const fmt = (title, lines) =>
-  `📌 *${title}*\n${LINE}\n${(Array.isArray(lines) ? lines : [lines]).join("\n")}\n${LINE}\n© bmb tech`;
+  `📌 *${title}*\n${LINE}\n${(Array.isArray(lines) ? lines : [lines]).join("\n")}\n${LINE}\n© Rahmani xmd`;
 const ON = new Set(["on", "enable", "enabled", "true", "1", "yes", "start"]);
 const OFF = new Set(["off", "disable", "disabled", "false", "0", "no", "stop"]);
 const isOn = (key) => getFlag(key);

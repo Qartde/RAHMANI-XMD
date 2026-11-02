@@ -3,7 +3,7 @@
  * settings.js
  *
  * Trimmed down to identity/deploy config plus sane starting DEFAULTS for
- * the toggle-style settings — matching BMB-TECH's minimal config/settings.js
+ * the toggle-style settings — matching RAHMANI-XMD's minimal config/settings.js
  * approach. The toggle settings below (ANTICALL, ANTIDELETE, MODE, etc.)
  * are only used as fallbacks now: once a command like .anticall or
  * .setprefix is used, the persisted value in the database (see
@@ -27,9 +27,9 @@ if (fs.existsSync('settings.env')) {
 module.exports = {
     session: process.env.SESSION_ID || '',
     PREFIXE: process.env.PREFIX || ".",
-    OWNER_NAME: process.env.OWNER_NAME || "𝐛𝐦𝐛 𝐭𝐞𝐜𝐡",
+    OWNER_NAME: process.env.OWNER_NAME || "Rahmani xmd",
     NUMERO_OWNER: process.env.NUMERO_OWNER || "",
-    BOT: process.env.BOT_NAME || '𝐛𝐦𝐛 𝐭𝐞𝐜𝐡',
+    BOT: process.env.BOT_NAME || 'Rahmani xmd',
     URL: process.env.BOT_MENU_LINKS || 'https://url.bmbxmd.workers.dev/bmbrepos.png',
 
     // Fallback defaults for the database-backed toggle settings (see

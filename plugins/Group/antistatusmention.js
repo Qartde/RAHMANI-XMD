@@ -5,8 +5,8 @@ const db = require("../../database/db");
 /**
  * antistatusmention
  *
- * Ported from BMB-TECH's updated antistatusmention settings command
- * (4 modes: off/delete/warn/kick), adapted to BMB-TECH's bmbtz()
+ * Ported from RAHMANI-XMD's updated antistatusmention settings command
+ * (4 modes: off/delete/warn/kick), adapted to RAHMANI-XMD's bmbtz()
  * command style and lib/groupProtection.js storage instead of
  * database/config.js's getGroupSettings/updateGroupSetting.
  *
@@ -15,7 +15,7 @@ const db = require("../../database/db");
  * `mtype === 'groupStatusMentionMessage'`.
  */
 function fmt(msg) {
-    return `🛡️ *ANTISTATUSMENTION*\n━━━━━━━━━━━━━━━━\n${msg}\n━━━━━━━━━━━━━━━━\n© bmb tech`;
+    return `🛡️ *ANTISTATUSMENTION*\n━━━━━━━━━━━━━━━━\n${msg}\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`;
 }
 
 bmbtz({

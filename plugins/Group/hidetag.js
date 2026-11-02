@@ -37,7 +37,7 @@ bmbtz({ nomCom: "tag", alias: ["hidetag", "announce"], categorie: 'Group', react
     } else if (msgRepondu.stickerMessage) {
       let media = await client.downloadAndSaveMediaMessage(msgRepondu.stickerMessage, '', true, 'sticker');
       let stickerMess = new Sticker(media, {
-        pack: 'bmb-tech',
+        pack: 'RAHMANI-XMD',
         type: StickerTypes.CROPPED,
         categories: ["🤩", "🎉"],
         id: "12345",

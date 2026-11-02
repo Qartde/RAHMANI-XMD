@@ -20,7 +20,7 @@ try {
 }
 
 /**
- * antilink - with buttons (the same button style as the Bmb-Tech menu)
+ * antilink - with buttons (the same button style as the RAHMANI-XMD menu)
  *
  *   .antilink              -> status + buttons  [Antilink On] [Antilink Off]
  *   [Antilink On]          -> (.antilink on)     asks what to do:  [Antilink Delete] [Antilink Remove]
@@ -59,7 +59,7 @@ bmbtz({ nomCom: "antilink", alias: ["antilinks"], categorie: 'Group', reaction: 
   const sendCard = (body, buttonList) =>
     buttons.sendButtons(client, dest, {
       body,
-      footer: "Antilink • BMB-TECH",
+      footer: "Antilink • RAHMANI-XMD",
       title: "ANTILINK",
       buttons: buttonList,
     });

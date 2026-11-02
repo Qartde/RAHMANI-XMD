@@ -5,7 +5,7 @@
  *   .buttonstyle           shows the style in use
  *   .buttonstyle try       sends one sample card per style, each with its name - look at them and pick
  *   .buttonstyle native    buttons stuck to the message, with a small reply arrow (default, shows everywhere)
- *   .buttonstyle toxic     separate rounded buttons like the Bmb-Tech menu (our own <biz> node)
+ *   .buttonstyle toxic     separate rounded buttons like the RAHMANI-XMD menu (our own <biz> node)
  *   .buttonstyle wrapped   separate rounded buttons, wrapped so the library adds no second <biz> node
  *   .buttonstyle legacy    separate rounded buttons, sent with the library's own buttons API
  *   .buttonstyle text      no buttons, the commands are listed instead
@@ -18,11 +18,11 @@ const { getCachedSettingsSync, updateCachedSetting } = require("../../lib/settin
 const buttons = require("../../lib/buttons");
 
 const LINE = "━━━━━━━━━━━━━━━━";
-const box = (title, body) => `📌 *${title}*\n${LINE}\n${body}\n${LINE}\n© bmb tech`;
+const box = (title, body) => `📌 *${title}*\n${LINE}\n${body}\n${LINE}\n© Rahmani xmd`;
 
 const INFO = {
   native: "Buttons stuck to the message, with a small reply arrow. Known to show.",
-  toxic: "Separate rounded buttons like the Bmb-Tech menu (our own <biz> node).",
+  toxic: "Separate rounded buttons like the RAHMANI-XMD menu (our own <biz> node).",
   wrapped: "Separate rounded buttons, wrapped so the library adds no second <biz> node.",
   legacy: "Separate rounded buttons, sent with the library's own buttons API.",
   text: "No buttons. The options are listed as commands to type.",
@@ -55,7 +55,7 @@ bmbtz({
       `If you can not see a card at all, send ${p}buttonstyle native.`));
   }
 
-  // One sample card per style: look at them and keep the one that looks like Bmb-Tech.
+  // One sample card per style: look at them and keep the one that looks like RAHMANI-XMD.
   if (wanted === "try") {
     await repondre(box("BUTTON STYLE",
       `Sending ${buttons.STYLES.length - 1} sample cards, one per style.\n` +
@@ -67,7 +67,7 @@ bmbtz({
           style,
           mybotpic,
           body: `${LINE}\n🔘 Style: *${style.toUpperCase()}*\n${INFO[style]}\n\nPick it with:\n${p}buttonstyle ${style}\n${LINE}`,
-          footer: `Style ${style} • BMB-TECH`,
+          footer: `Style ${style} • RAHMANI-XMD`,
           title: style.toUpperCase(),
           buttons: sampleButtons(p),
         });
@@ -81,7 +81,7 @@ bmbtz({
     const used = await buttons.sendButtons(client, dest, {
       mybotpic,
       body: `${LINE}\n🔘 Button test\nStyle: ${current.toUpperCase()}\n\nTap a button below.\n${LINE}`,
-      footer: "Button test • BMB-TECH",
+      footer: "Button test • RAHMANI-XMD",
       title: "BUTTON TEST",
       buttons: sampleButtons(p),
     });

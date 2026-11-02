@@ -79,7 +79,7 @@ bmbtz({
                 text: infoText
               }),
               footer: proto.Message.InteractiveMessage.Footer.create({
-                text: "© BMB-TECH"
+                text: "© RAHMANI-XMD"
               }),
               header: proto.Message.InteractiveMessage.Header.create(headerProps),
               nativeFlowMessage:

@@ -17,7 +17,7 @@ const quotedContact = {
       vcard: `BEGIN:VCARD
 VERSION:3.0
 FN:B.M.B VERIFIED
-ORG:BMB-TECH BOT;
+ORG:RAHMANI-XMD BOT;
 TEL;type=CELL;type=VOICE;waid=255767862457:+255767862457
 END:VCARD`
     }
@@ -43,8 +43,8 @@ bmbtz(
           from,
           {
             text:
-              `Example:\n${prefixe}fancy 10 bmb tech\n\n` +
-              fancy.list("BMB-TECH", fancy)
+              `Example:\n${prefixe}fancy 10 Rahmani xmd\n\n` +
+              fancy.list("RAHMANI-XMD", fancy)
           },
           { quoted: quotedContact }
         );

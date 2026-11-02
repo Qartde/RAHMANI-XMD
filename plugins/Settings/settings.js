@@ -16,7 +16,7 @@
  *      its .env default on the next restart/redeploy (which on Heroku
  *      happens often). They now persist via database/db.js (through
  *      lib/settingsCache.js's write-through cache), matching how
- *      BMB-TECH keeps bot settings in its database instead of app.json.
+ *      RAHMANI-XMD keeps bot settings in its database instead of app.json.
  *
  * BUTTONS (the same style as .antilink and .welcome):
  *   .anticall (and every other on/off command)  -> status + buttons  [On] [Off]
@@ -80,7 +80,7 @@ async function sendBox(chatId, client, ms, title, message) {
 function sendCard(chatId, client, title, message, buttonList) {
   return buttons.sendButtons(client, chatId, {
     body: boxText(title, message),
-    footer: "Settings • BMB-TECH",
+    footer: "Settings • RAHMANI-XMD",
     title,
     buttons: buttonList,
   });

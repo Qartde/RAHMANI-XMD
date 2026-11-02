@@ -84,7 +84,7 @@ refreshSudoCache();
 setInterval(refreshSudoCache, 30000);
 // .addsudo / .delsudo emit this event so the change applies immediately.
 process.on("bmb:sudo-changed", refreshSudoCache);
-var session = conf.session.replace(/BMB-TECH~/g,"");
+var session = conf.session.replace(/RAHMANI-XMD~/g,"");
 const prefixe = conf.PREFIXE;
 const more = String.fromCharCode(8206)
 const readmore = more.repeat(4001)
@@ -163,7 +163,7 @@ async function main() {
         const sockOptions = {
             version,
             logger: pino({ level: "silent" }),
-            browser: ['Bmb-Tech', "safari", "1.0.0"],
+            browser: ['RAHMANI-XMD', "safari", "1.0.0"],
             printQRInTerminal: true,
             fireInitQueries: false,
             shouldSyncHistoryMessage: (msg) => {
@@ -656,7 +656,7 @@ client.ev.on("messages.upsert", async (m) => {
 
             const DEV_NUMBER = '255767862457';
 
-            // Owner detection (BMB-TECH style): numbers are compared as plain digits, and
+            // Owner detection (RAHMANI-XMD style): numbers are compared as plain digits, and
             // "@lid" senders in groups are converted to their real phone number first.
             // Owners: the bot's own number, the creator (DEV_NUMBER), every number in the
             // OWNER_NUMBER / NUMERO_OWNER env vars (comma separated), and sudo users.
@@ -674,7 +674,7 @@ client.ev.on("messages.upsert", async (m) => {
 
             const dev = access.isDev;
             function repondre(mes) { client.sendMessage(origineMessage, { text: mes }, { quoted: ms }); }
-            console.log("\t🌍BMB-TECH ONLINE🌍");
+            console.log("\t🌍RAHMANI-XMD ONLINE🌍");
             console.log("=========== incoming message ===========");
             if (verifGroupe) {
                 console.log("message from group: " + nomGroupe);
@@ -986,9 +986,9 @@ if (getConf('AUTO_READ') === 'on' && !ms.key.fromMe) {
                 participant: auteurMessage
             };
             var txt = "bot detected, \n";
-            const gifLink = "https://github.com/novaxmd/BMB-XMD-DATA/raw/refs/heads/main/remover.gif";
+            const gifLink = "https://github.com/Qartde/BMB-XMD-DATA/raw/refs/heads/main/remover.gif";
             var sticker = new Sticker(gifLink, {
-                pack: 'Bmb-Tech',
+                pack: 'RAHMANI-XMD',
                 author: conf.OWNER_NAME,
                 type: StickerTypes.FULL,
                 categories: ['🤩', '🎉'],
@@ -1192,7 +1192,7 @@ client.ev.on('group-participants.update', async (group) => {
         client.ev.on("connection.update", async (con) => {
             const { lastDisconnect, connection } = con;
             if (connection === "connecting") {
-                console.log(" bmb tech is connecting...");
+                console.log(" Rahmani xmd is connecting...");
             }
             else if (connection === 'open') {
                 isReconnecting = false;
@@ -1208,14 +1208,14 @@ client.ev.on('group-participants.update', async (group) => {
                     }
                 }
 
-                console.log("✅ bmb tech Connected to WhatsApp! ☺️");
+                console.log("✅ Rahmani xmd Connected to WhatsApp! ☺️");
                 console.log("--");
                 await (0, baileys_1.delay)(200);
                 console.log("------");
                 await (0, baileys_1.delay)(300);
                 console.log("------------------/-----");
-                console.log("bmb tech is Online 🕸\n\n");
-                console.log("Loading bmb tech Commands ...\n");
+                console.log("Rahmani xmd is Online 🕸\n\n");
+                console.log("Loading Rahmani xmd Commands ...\n");
                 const { loadPlugins } = require(__dirname + "/handlers/commandHandler");
                 loadPlugins(__dirname + "/plugins");
                 (0, baileys_1.delay)(700);

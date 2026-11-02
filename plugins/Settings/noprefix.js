@@ -11,7 +11,7 @@ const { getCachedSettingsSync, updateCachedSetting } = require("../../lib/settin
 const noPrefix = require("../../lib/noPrefix");
 
 const LINE = "━━━━━━━━━━━━━━━━";
-const box = (body) => `📌 *NO-PREFIX COMMANDS*\n${LINE}\n${body}\n${LINE}\n© bmb tech`;
+const box = (body) => `📌 *NO-PREFIX COMMANDS*\n${LINE}\n${body}\n${LINE}\n© Rahmani xmd`;
 
 const INFO = {
   on: "Everyone can run any command without the prefix, in groups and private chats.",

@@ -46,6 +46,6 @@ bmbtz({ nomCom: "whoami", alias: ["myid", "checkowner", "whoami2"], categorie: "
   }
 
   await client.sendMessage(dest, {
-    text: `🪪 *WHO AM I*\n${LINE}\n${lines.join("\n")}${tips.length ? "\n\n" + tips.join("\n") : ""}\n${LINE}\n© bmb tech`,
+    text: `🪪 *WHO AM I*\n${LINE}\n${lines.join("\n")}${tips.length ? "\n\n" + tips.join("\n") : ""}\n${LINE}\n© Rahmani xmd`,
   }, { quoted: ms });
 });

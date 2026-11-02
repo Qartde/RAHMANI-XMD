@@ -4,7 +4,7 @@ const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
 /**
  * gstatus
  *
- * Ported from BMB-TECH's plugins/Groups/gstatus.js. Posts media (image,
+ * Ported from RAHMANI-XMD's plugins/Groups/gstatus.js. Posts media (image,
  * video, audio) or plain text into a group as a "silent group status" —
  * a WhatsApp feature that shows the content the same way a status does
  * (contextInfo.isGroupStatus / statusSourceType / statusAttributions),
@@ -57,7 +57,7 @@ bmbtz({
             if (!afterCmd) {
                 await react("❌");
                 return repondre(
-                    `👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\nReply to media and provide a group link or JID.\nExample:\n${prefixe}gstatus https://chat.whatsapp.com/xxxxx\n${prefixe}gstatus 120363@g.us\n━━━━━━━━━━━━━━━━\n© bmb tech`
+                    `👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\nReply to media and provide a group link or JID.\nExample:\n${prefixe}gstatus https://chat.whatsapp.com/xxxxx\n${prefixe}gstatus 120363@g.us\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`
                 );
             }
             const parts = afterCmd.split(/\s+/);
@@ -78,13 +78,13 @@ bmbtz({
                     if (!targetGroupJid) throw new Error("no id");
                 } catch {
                     await react("❌");
-                    return repondre(`👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\nInvalid or expired group link.\n━━━━━━━━━━━━━━━━\n© bmb tech`);
+                    return repondre(`👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\nInvalid or expired group link.\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`);
                 }
             } else if (input.includes("@g.us")) {
                 targetGroupJid = input.trim();
             } else {
                 await react("❌");
-                return repondre(`👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\nInvalid group link or JID.\n━━━━━━━━━━━━━━━━\n© bmb tech`);
+                return repondre(`👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\nInvalid group link or JID.\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`);
             }
 
             inlineText = rest || null;
@@ -133,7 +133,7 @@ bmbtz({
         if (!mediaType && !caption) {
             await react("❌");
             return repondre(
-                `👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\nReply to an image, video, audio, or include text.\nExample: ${prefixe}gstatus Check out this update!\n━━━━━━━━━━━━━━━━\n© bmb tech`
+                `👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\nReply to an image, video, audio, or include text.\nExample: ${prefixe}gstatus Check out this update!\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`
             );
         }
 
@@ -163,11 +163,11 @@ bmbtz({
 
         await react("✅");
         if (!verifGroupe) {
-            return repondre(`👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\n✅ Status posted to group!\n━━━━━━━━━━━━━━━━\n© bmb tech`);
+            return repondre(`👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\n✅ Status posted to group!\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`);
         }
     } catch (error) {
         console.error("GStatus Error:", error);
         await react("❌");
-        return repondre(`👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\nError: ${error.message}\n━━━━━━━━━━━━━━━━\n© bmb tech`);
+        return repondre(`👥 *GROUP STATUS*\n━━━━━━━━━━━━━━━━\nError: ${error.message}\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`);
     }
 });

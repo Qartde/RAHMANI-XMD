@@ -62,7 +62,7 @@ bmbtz({
     return repondre(`🎶 *${title}* - ${artist}\n\n(No lyrics text available for this track — only metadata was found.)`);
   }
 
-  const caption = `🎶 *${title}* - ${artist}\n\n${lyricsText}\n\n*Powered by BMB-TECH*`;
+  const caption = `🎶 *${title}* - ${artist}\n\n${lyricsText}\n\n*Powered by RAHMANI-XMD*`;
   const imageUrl = thumbnail && thumbnail !== "-" ? thumbnail : "https://files.catbox.moe/rpea5k.jpg";
 
   try {
@@ -74,7 +74,7 @@ bmbtz({
       caption,
       contextInfo: {
         externalAdReply: {
-          title: "BMB-TECH Lyrics Finder",
+          title: "RAHMANI-XMD Lyrics Finder",
           body: "Get any song lyrics instantly",
           thumbnail: imageBuffer,
           mediaType: 1,

@@ -46,7 +46,7 @@ bmbtz({
 📄 License: ${data.license?.name || "None"}
 🔗 ${data.html_url}
 ━━━━━━━━━━━━━━━━
-© bmb tech`;
+© Rahmani xmd`;
             await client.sendMessage(dest, { text }, { quoted: ms });
         } else {
             // user lookup
@@ -61,7 +61,7 @@ bmbtz({
 📍 Location: ${data.location || "N/A"}
 🔗 ${data.html_url}
 ━━━━━━━━━━━━━━━━
-© bmb tech`;
+© Rahmani xmd`;
             await client.sendMessage(dest, {
                 image: { url: data.avatar_url },
                 caption: text

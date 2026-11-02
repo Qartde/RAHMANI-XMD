@@ -3,16 +3,16 @@ const { bmbtz } = require("../../devbmb/bmbtz");
 /**
  * owner
  *
- * Ported from BMB-TECH's plugins/General/dev.js (aliased there as
- * 'owner' among others) — replaces BMB-TECH's previous owner.js.
+ * Ported from RAHMANI-XMD's plugins/General/dev.js (aliased there as
+ * 'owner' among others) — replaces RAHMANI-XMD's previous owner.js.
  * Sends an interactive card (title/body/footer + buttons) via
- * relayMessage, followed by a vCard contact, matching BMB-TECH's exact
+ * relayMessage, followed by a vCard contact, matching RAHMANI-XMD's exact
  * output. Falls back to a plain text card + vCard if the interactive
  * message fails to send (e.g. unsupported on the recipient's client).
  */
 const DEV_NUMBER = "255767862457";
-const DEV_NAME = "bmb tech | Bmb Tech Dev";
-const DEV_ORG = "BMB-TECH Bot";
+const DEV_NAME = "Rahmani xmd | Bmb Tech Dev";
+const DEV_ORG = "RAHMANI-XMD Bot";
 
 bmbtz({
     nomCom: "owner",
@@ -39,7 +39,7 @@ bmbtz({
                     text: "*乂  𝗢 𝗪 𝗡 𝗘 𝗥     ◦     𝗜 𝗡 𝗙 𝗢*\n✧ Tag : \n      ◦ @" + DEV_NUMBER + " 🇹🇿\n\n✧ Rules : \n      ◦ _Don't call owner's number_\n      ◦ _Don't talk shit_\n      ◦ _Don't spam_\n      ◦ _Don't goon😡_"
                 },
                 footer: {
-                    text: "bmb tech"
+                    text: "Rahmani xmd"
                 },
                 nativeFlowMessage: {
                     buttons: [
@@ -93,7 +93,7 @@ bmbtz({
         console.error("Owner command error:", error);
         await react("❌");
 
-        const fallbackText = `📌 *DEVELOPER INFO*\n━━━━━━━━━━━━━━━━\n👤 Name: ${DEV_NAME}\n🏢 Project: ${DEV_ORG}\n📞 Contact: +${DEV_NUMBER}\nDon't spam the dev or you'll regret your existence.\nSerious bugs only — no "how do I use this" questions.\n━━━━━━━━━━━━━━━━\n© bmb tech`;
+        const fallbackText = `📌 *DEVELOPER INFO*\n━━━━━━━━━━━━━━━━\n👤 Name: ${DEV_NAME}\n🏢 Project: ${DEV_ORG}\n📞 Contact: +${DEV_NUMBER}\nDon't spam the dev or you'll regret your existence.\nSerious bugs only — no "how do I use this" questions.\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`;
         await repondre(fallbackText);
 
         await client.sendMessage(dest, {

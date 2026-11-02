@@ -41,7 +41,7 @@ bmbtz({
         message: {
             contactMessage: {
                 displayName: "B.M.B VERIFIED ✅",
-                vcard: "BEGIN:VCARD\nVERSION:3.0\nFN:B.M.B VERIFIED ✅\nORG:BMB-TECH BOT;\nTEL;type=CELL;type=VOICE;waid=255767862457:+255767862457\nEND:VCARD"
+                vcard: "BEGIN:VCARD\nVERSION:3.0\nFN:B.M.B VERIFIED ✅\nORG:RAHMANI-XMD BOT;\nTEL;type=CELL;type=VOICE;waid=255767862457:+255767862457\nEND:VCARD"
             }
         }
     };
@@ -79,7 +79,7 @@ bmbtz({
         } else if (msgRepondu.stickerMessage) {
             let media = await client.downloadAndSaveMediaMessage(msgRepondu.stickerMessage, '', true, 'sticker');
             let stickerMess = new Sticker(media, {
-                pack: 'BMB-TECH',
+                pack: 'RAHMANI-XMD',
                 type: StickerTypes.CROPPED,
                 categories: ["🤩", "🎉"],
                 id: "12345",

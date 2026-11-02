@@ -11,7 +11,7 @@ const quotedContact = {
   message: {
     contactMessage: {
       displayName: "B.M.B VERIFIED ✅",
-      vcard: "BEGIN:VCARD\nVERSION:3.0\nFN:B.M.B VERIFIED ✅\nORG:BMB-TECH BOT;\nTEL;type=CELL;type=VOICE;waid=255767862457:+255767862457\nEND:VCARD"
+      vcard: "BEGIN:VCARD\nVERSION:3.0\nFN:B.M.B VERIFIED ✅\nORG:RAHMANI-XMD BOT;\nTEL;type=CELL;type=VOICE;waid=255767862457:+255767862457\nEND:VCARD"
     }
   }
 };
@@ -103,7 +103,7 @@ logoCommands.forEach(({ nomCom, categorie, reaction, makerUrl }) => {
     const { arg, repondre, ms, prefixe } = commandeOptions;
 
     if (!arg || arg == "") {
-      return repondre(`Exemple of using:\n ${prefixe}${nomCom} bmb-tech`);
+      return repondre(`Exemple of using:\n ${prefixe}${nomCom} RAHMANI-XMD`);
     }
 
     try {

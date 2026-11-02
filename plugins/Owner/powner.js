@@ -11,7 +11,7 @@ const { bmbtz } = require("../../devbmb/bmbtz");
 const ownerAccess = require("../../lib/ownerAccess");
 
 const LINE = "━━━━━━━━━━━━━━━━";
-const box = (title, body) => `📌 *${title}*\n${LINE}\n${body}\n${LINE}\n© bmb tech`;
+const box = (title, body) => `📌 *${title}*\n${LINE}\n${body}\n${LINE}\n© Rahmani xmd`;
 
 const isAdminMember = (p) => p && (p.admin === "admin" || p.admin === "superadmin" || p.admin === true);
 const idsOf = (p) =>

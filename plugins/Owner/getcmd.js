@@ -5,19 +5,19 @@ const path = require("path");
 /**
  * getcmd
  *
- * Ported from BMB-TECH's plugins/Owner/getcmd.js. Fetches a plugin
+ * Ported from RAHMANI-XMD's plugins/Owner/getcmd.js. Fetches a plugin
  * file's source code by command name (or alias) and sends it as a
  * document, restricted to the bot developer (dev) only — matching
- * BMB-TECH's hardcoded DEVELOPER-only restriction.
+ * RAHMANI-XMD's hardcoded DEVELOPER-only restriction.
  *
- * This replaces the previous BMB-TECH version, which searched a
+ * This replaces the previous RAHMANI-XMD version, which searched a
  * "../scs" folder that no longer exists (the project moved to
  * plugins/<category>/ a while back) — so it never actually found
  * anything.
  *
  * Category folders are read dynamically from plugins/ instead of a
- * hardcoded list, since BMB-TECH's category names (Group, Download,
- * Search, ...) don't match BMB-TECH's (AI, Anime, Coding, ...).
+ * hardcoded list, since RAHMANI-XMD's category names (Group, Download,
+ * Search, ...) don't match RAHMANI-XMD's (AI, Anime, Coding, ...).
  */
 const PLUGINS_DIR = path.join(__dirname, "..", "..", "plugins");
 
@@ -49,20 +49,20 @@ bmbtz({
 
     await client.sendMessage(dest, { react: { text: "🔍", key: ms.key } }).catch(() => {});
 
-    // Originally dev-only (matching BMB-TECH's hardcoded DEVELOPER
+    // Originally dev-only (matching RAHMANI-XMD's hardcoded DEVELOPER
     // restriction), but this is the bot's own owner/deployer asking to
     // see their own bot's source — reasonable to allow, so superUser
     // (owner/sudo) is granted access too, not just the fixed DEV_NUMBER.
     if (!(dev || superUser)) {
         await client.sendMessage(dest, { react: { text: "❌", key: ms.key } }).catch(() => {});
-        return repondre(`🚫 *ACCESS DENIED*\n━━━━━━━━━━━━━━━━\nThis command is restricted to the bot owner/developer.\n━━━━━━━━━━━━━━━━\n© bmb tech`);
+        return repondre(`🚫 *ACCESS DENIED*\n━━━━━━━━━━━━━━━━\nThis command is restricted to the bot owner/developer.\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`);
     }
 
     const categories = listCategories();
 
     if (!arg[0]) {
         const categoryList = categories.map((c) => `• ${c}`).join("\n");
-        return repondre(`📌 *GETCMD*\n━━━━━━━━━━━━━━━━\nUsage: ${prefixe}getcmd <name>\nCategories:\n${categoryList}\n━━━━━━━━━━━━━━━━\n© bmb tech`);
+        return repondre(`📌 *GETCMD*\n━━━━━━━━━━━━━━━━\nUsage: ${prefixe}getcmd <name>\nCategories:\n${categoryList}\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`);
     }
 
     const rawInput = arg.join(" ").trim().endsWith(".js")
@@ -81,12 +81,12 @@ bmbtz({
             data = fs.readFileSync(filePath, "utf8");
         } catch (err) {
             await client.sendMessage(dest, { react: { text: "❌", key: ms.key } }).catch(() => {});
-            return repondre(`❌ *ERROR*\n━━━━━━━━━━━━━━━━\nError reading file: ${err.message}\n━━━━━━━━━━━━━━━━\n© bmb tech`);
+            return repondre(`❌ *ERROR*\n━━━━━━━━━━━━━━━━\nError reading file: ${err.message}\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`);
         }
 
         const fileBuffer = Buffer.from(data, "utf8");
         const aliasNote = commandName !== rawInput ? `Alias: ${rawInput} → ${commandName}\n` : "";
-        const introText = `📌 *COMMAND FILE*\n━━━━━━━━━━━━━━━━\nFile: ${commandName}.js\nCategory: ${category}\nSize: ${data.length} chars\n${aliasNote}━━━━━━━━━━━━━━━━\n© bmb tech`;
+        const introText = `📌 *COMMAND FILE*\n━━━━━━━━━━━━━━━━\nFile: ${commandName}.js\nCategory: ${category}\nSize: ${data.length} chars\n${aliasNote}━━━━━━━━━━━━━━━━\n© Rahmani xmd`;
 
         await client.sendMessage(dest, { react: { text: "✅", key: ms.key } }).catch(() => {});
 
@@ -109,6 +109,6 @@ bmbtz({
 
     if (!fileFound) {
         await client.sendMessage(dest, { react: { text: "❌", key: ms.key } }).catch(() => {});
-        await repondre(`📌 *NOT FOUND*\n━━━━━━━━━━━━━━━━\n"${rawInput}" not found in any category.\nTip: use ${prefixe}getcmd with no args\nto see all categories.\n━━━━━━━━━━━━━━━━\n© bmb tech`);
+        await repondre(`📌 *NOT FOUND*\n━━━━━━━━━━━━━━━━\n"${rawInput}" not found in any category.\nTip: use ${prefixe}getcmd with no args\nto see all categories.\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`);
     }
 });

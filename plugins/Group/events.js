@@ -92,7 +92,7 @@ bmbtz({
             return buttons.sendButtons(client, dest, {
                 body:
 `${FRAME_TOP(nomCom.toUpperCase())}\n│ Status  : ${isOn ? 'ON ✅' : 'OFF ❌'}\n│ Message : ${hasCustom ? 'Custom' : 'Default'}\n│\n│ Choose an option below, or type:\n│ ${p}${nomCom} on\n│ ${p}${nomCom} off\n│\n│ Change the message:\n│ ${p}set${nomCom} <text>\n${FRAME_BOTTOM}`,
-                footer: `${nomCom.charAt(0).toUpperCase() + nomCom.slice(1)} • BMB-TECH`,
+                footer: `${nomCom.charAt(0).toUpperCase() + nomCom.slice(1)} • RAHMANI-XMD`,
                 title: nomCom.toUpperCase(),
                 buttons: [
                     { text: buttons.boldFont(`${nomCom.charAt(0).toUpperCase() + nomCom.slice(1)} On`), id: `${p}${nomCom} on` },

@@ -94,7 +94,7 @@ const alea = (ext) => {
     }
 
     sticker = new Sticker(buffer, {
-      pack:"Bmb-Tech", // pack stick
+      pack:"RAHMANI-XMD", // pack stick
       author:  nomAuteurMessage, // name of the author of the stick
       type:
         arg.includes("-r") || arg.includes("-c")
@@ -218,7 +218,7 @@ bmbtz({ nomCom: "write", categorie: "Conversion", reaction: "☘️" }, async (o
     // Create the sticker
     const stickerMess = new Sticker(meme, {
       pack: nomAuteurMessage,
-      author: 'Bmb-Tech',
+      author: 'RAHMANI-XMD',
       type: StickerTypes.FULL,
       categories: ["🤩", "🎉"],
       id: "12345",
@@ -312,7 +312,7 @@ async (dest, client, commandeOptions) => {
 
     const stickerMess = new Sticker(gifUrl, {
       pack: packname,
-      author: 'BMB-TECH',
+      author: 'RAHMANI-XMD',
       type: StickerTypes.FULL,
       categories: ["🤩", "🎉"],
       id: "12345",

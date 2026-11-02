@@ -22,7 +22,7 @@ bmbtz({
     const uptime = process.uptime();
     const uptimeStr = `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`;
 
-    const msg = `*📡 BMB-TECH PING*\n` +
+    const msg = `*📡 RAHMANI-XMD PING*\n` +
       `\n` +
       `⏱️ Response: *${ping}ms*\n` +
       `📆 Date: *${date}*\n` +
@@ -38,11 +38,11 @@ bmbtz({
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
           newsletterJid: "120363382023564830@newsletter",
-          newsletterName: "bmb tech",
+          newsletterName: "Rahmani xmd",
           serverMessageId: 143
         },
         externalAdReply: {
-          title: "⚡ BMB-TECH SYSTEM STATUS",
+          title: "⚡ RAHMANI-XMD SYSTEM STATUS",
           body: "Bot is running smoothly 🚀",
           thumbnailUrl: conf.URL,
           sourceUrl: conf.URL,
