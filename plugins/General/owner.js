@@ -10,8 +10,8 @@ const { bmbtz } = require("../../devbmb/bmbtz");
  * output. Falls back to a plain text card + vCard if the interactive
  * message fails to send (e.g. unsupported on the recipient's client).
  */
-const DEV_NUMBER = "255767862457";
-const DEV_NAME = "Rahmani xmd | Bmb Tech Dev";
+const DEV_NUMBER = "255693629079";
+const DEV_NAME = "Rahmani xmd | Rahmani Tech Dev";
 const DEV_ORG = "RAHMANI-XMD Bot";
 
 bmbtz({

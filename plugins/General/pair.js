@@ -9,8 +9,8 @@ const newsletterContext = {
   forwardingScore: 999,
   isForwarded: true,
   forwardedNewsletterMessageInfo: {
-    newsletterJid: "120363382023564830@newsletter",
-    newsletterName: "B.M.B TECH",
+    newsletterJid: "120363353854480831@newsletter",
+    newsletterName: "RAHMANI TECH",
     serverMessageId: 1
   }
 };
@@ -24,12 +24,12 @@ const quotedStatus = {
   },
   message: {
     contactMessage: {
-      displayName: "B.M.B VERIFIED ✅",
+      displayName: "RAHMANI VERIFIED ✅",
       vcard: `BEGIN:VCARD
 VERSION:3.0
-FN:B.M.B VERIFIED
+FN:RAHMANI VERIFIED
 ORG:RAHMANI-XMD;
-TEL;type=CELL;type=VOICE;waid=255767862457:+255767862457
+TEL;type=CELL;type=VOICE;waid=255693629079:+255693629079
 END:VCARD`
     }
   }

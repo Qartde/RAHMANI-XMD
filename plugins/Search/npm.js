@@ -51,8 +51,8 @@ bmbtz({
         forwardingScore: 999,
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
-          newsletterJid: "120363382023564830@newsletter",
-          newsletterName: "𝙱.𝙼.𝙱-𝚇𝙼𝙳",
+          newsletterJid: "120363353854480831@newsletter",
+          newsletterName: "RAHMANI-XMD",
           serverMessageId: 1
         }
       }

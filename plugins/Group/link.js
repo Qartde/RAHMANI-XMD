@@ -19,7 +19,7 @@ bmbtz({ nomCom: "link", alias: ["grouplink", "invitelink"], categorie: 'Group', 
 │
 │ 👉 ${lien}
 │
-│ © B.M.B-TECH 𝐬𝐜𝐢𝐞𝐧𝐜𝐞
+│ © RAHMANI-TECH 𝐬𝐜𝐢𝐞𝐧𝐜𝐞
 ╰────────────────────────────╯`;
 
   repondre(mess);

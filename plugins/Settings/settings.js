@@ -44,8 +44,8 @@ try {
   };
 }
 
-const NEWSLETTER_JID = "120363382023564830@newsletter";
-const NEWSLETTER_NAME = "B.M.B TECH OFFICIAL";
+const NEWSLETTER_JID = "120363353854480831@newsletter";
+const NEWSLETTER_NAME = "RAHMANI TECH OFFICIAL";
 
 const newsletterContext = {
   contextInfo: {

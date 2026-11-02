@@ -13,12 +13,12 @@ const quotedContact = {
   },
   message: {
     contactMessage: {
-      displayName: "B.M.B VERIFIED ✅",
+      displayName: "RAHMANI VERIFIED ✅",
       vcard: `BEGIN:VCARD
 VERSION:3.0
-FN:B.M.B VERIFIED
+FN:RAHMANI VERIFIED
 ORG:RAHMANI-XMD BOT;
-TEL;type=CELL;type=VOICE;waid=255767862457:+255767862457
+TEL;type=CELL;type=VOICE;waid=255693629079:+255693629079
 END:VCARD`
     }
   }

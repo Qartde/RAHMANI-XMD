@@ -3,8 +3,8 @@ const axios = require('axios');
 const yts = require('yt-search');
 
 const BOT_NAME = 'RAHMANI-XMD'; // Change as you want
-const NEWSLETTER_JID = '120363382023564830@newsletter';
-const NEWSLETTER_NAME = 'Bmb Tech Info';
+const NEWSLETTER_JID = '120363353854480831@newsletter';
+const NEWSLETTER_NAME = 'Rahmani Tech Info';
 
 const API_BASE = 'https://apiziaul.vercel.app/api/downloader';
 const API_TIMEOUT_MS = 30000;

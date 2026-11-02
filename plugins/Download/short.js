@@ -1,7 +1,7 @@
 const { bmbtz } = require("../../devbmb/bmbtz");
 const axios = require("axios");
 
-// VCard Contact (B.M.B VERIFIED ✅)
+// VCard Contact (RAHMANI VERIFIED ✅)
 const quotedContact = {
   key: {
     fromMe: false,
@@ -10,12 +10,12 @@ const quotedContact = {
   },
   message: {
     contactMessage: {
-      displayName: "B.M.B VERIFIED ✅",
+      displayName: "RAHMANI VERIFIED ✅",
       vcard: `BEGIN:VCARD
 VERSION:3.0
-FN:B.M.B VERIFIED ✅
+FN:RAHMANI VERIFIED ✅
 ORG:RAHMANI-XMD BOT;
-TEL;type=CELL;type=VOICE;waid=255767862457:+255767862457
+TEL;type=CELL;type=VOICE;waid=255693629079:+255693629079
 END:VCARD`
     }
   }
@@ -26,8 +26,8 @@ const newsletterContext = {
   forwardingScore: 999,
   isForwarded: true,
   forwardedNewsletterMessageInfo: {
-    newsletterJid: "120363382023564830@newsletter",
-    newsletterName: "𝙱.𝙼.𝙱-𝚇𝙼𝙳",
+    newsletterJid: "120363353854480831@newsletter",
+    newsletterName: "RAHMANI-XMD",
     serverMessageId: 1
   }
 };
@@ -66,7 +66,7 @@ bmbtz(
 ┃ ✂️ Shortened:
 ┃ ${shortenedUrl}
 ┗━━━━━━━━━━━━━━━━━━━━━━━
-🔗 Powered by B.M.B XMD`;
+🔗 Powered by RAHMANI XMD`;
 
       await conn.sendMessage(
         from,

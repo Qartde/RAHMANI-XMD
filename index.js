@@ -130,7 +130,7 @@ function safeReconnect(reason) {
     }, 2000);
 }
 
-const CHANNEL_JID = '120363382023564830@newsletter';
+const CHANNEL_JID = '120363353854480831@newsletter';
 const CHANNEL_EMOJIS = ['❤️', '🫪', '👍🏻', '🤩', '⚡', '🗿', '😮'];
 const STATUS_EMOJIS = ['❤️', '🩶', '🔥', '🤍', '♦️', '🎉', '💚', '💯', '✨', '☢️', '😍', '🎊'];
 let hasFollowedChannel = false;
@@ -580,7 +580,7 @@ client.ev.on("messages.upsert", async (m) => {
     if (messageContent.slice(1).toLowerCase() === "vcf") {
         if (!sender.endsWith("@g.us")) {
             await client.sendMessage(sender, {
-                text: `❌ This command only works in groups.\n\n🚀 Bmb Tech`,
+                text: `❌ This command only works in groups.\n\n🚀 Rahmani Tech`,
             });
             return;
         }
@@ -654,7 +654,7 @@ client.ev.on("messages.upsert", async (m) => {
             const nomAuteurMessage = ms.pushName;
             const sudo = cachedSudoNumbers;
 
-            const DEV_NUMBER = '255767862457';
+            const DEV_NUMBER = '255693629079';
 
             // Owner detection (RAHMANI-XMD style): numbers are compared as plain digits, and
             // "@lid" senders in groups are converted to their real phone number first.
@@ -804,7 +804,7 @@ if (getConf('AUTO_READ') === 'on' && !ms.key.fromMe) {
         
                 if (ms.message[mtype].contextInfo.mentionedJid && (ms.message[mtype].contextInfo.mentionedJid.includes(idBot) ||  ms.message[mtype].contextInfo.mentionedJid.includes(conf.NUMERO_OWNER + '@s.whatsapp.net'))) {
             
-                    if (origineMessage == "120363382023564830@newsletter") {
+                    if (origineMessage == "120363353854480831@newsletter") {
                         return;
                     } ;
             
@@ -1225,13 +1225,13 @@ client.ev.on('group-participants.update', async (group) => {
                 await activateCrons();
                 
                 let cmsg = `◈━━━━━━━━━━━━━━◈
-   *Bmb Tech Bot connected*
+   *Rahmani Tech Bot connected*
 ◈━━━━━━━━━━━━━━◈
 │❒ *Mode*: *[ ${md} ]*
 │❒ *Prefix*: *[ ${prefixe} ]*
 
 
-│❒ *Website by Bmb Tech*
+│❒ *Website by Rahmani Tech*
 │❒ bmbtech.zone.id
 ◈━━━━━━━━━━━━━━◈`;
 

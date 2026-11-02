@@ -45,7 +45,7 @@ bmbtz({
         `🔗 ${group.Link}\n\n`;
     }
 
-    text += `━━━━━━━━━━━━━━━━\n⚡ *Powered by B.M.B TECH*`;
+    text += `━━━━━━━━━━━━━━━━\n⚡ *Powered by RAHMANI TECH*`;
 
     await client.sendMessage(dest, { text }, { quoted: ms });
     await client.sendMessage(dest, { react: { text: "✅", key: ms.key } });

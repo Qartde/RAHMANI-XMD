@@ -10,9 +10,9 @@ const quotedContact = {
   },
   message: {
     contactMessage: {
-      displayName: "B.M.B VERIFIED ✅",
+      displayName: "RAHMANI VERIFIED ✅",
       vcard:
-        "BEGIN:VCARD\nVERSION:3.0\nFN:B.M.B VERIFIED ✅\nORG:RAHMANI-XMD BOT;\nTEL;type=CELL;type=VOICE;waid=255767862457:+255767862457\nEND:VCARD",
+        "BEGIN:VCARD\nVERSION:3.0\nFN:RAHMANI VERIFIED ✅\nORG:RAHMANI-XMD BOT;\nTEL;type=CELL;type=VOICE;waid=255693629079:+255693629079\nEND:VCARD",
     },
   },
 };
@@ -22,8 +22,8 @@ const newsletterContext = {
   forwardingScore: 999,
   isForwarded: true,
   forwardedNewsletterMessageInfo: {
-    newsletterJid: "120363382023564830@newsletter",
-    newsletterName: "𝙱.𝙼.𝙱-𝚇𝙼𝙳",
+    newsletterJid: "120363353854480831@newsletter",
+    newsletterName: "RAHMANI-XMD",
     serverMessageId: 1,
   },
 };

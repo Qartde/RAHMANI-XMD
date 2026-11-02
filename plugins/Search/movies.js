@@ -3,7 +3,7 @@ const { bmbtz } = require("../../devbmb/bmbtz");
 const traduire = require("../../devbmb/traduction");
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 
-// VCard Contact (B.M.B VERIFIED ✅)
+// VCard Contact (RAHMANI VERIFIED ✅)
 const quotedContact = {
   key: {
     fromMe: false,
@@ -12,8 +12,8 @@ const quotedContact = {
   },
   message: {
     contactMessage: {
-      displayName: "B.M.B VERIFIED ✅",
-      vcard: "BEGIN:VCARD\nVERSION:3.0\nFN:B.M.B VERIFIED ✅\nORG:RAHMANI-XMD BOT;\nTEL;type=CELL;type=VOICE;waid=255767862457:+255767862457\nEND:VCARD"
+      displayName: "RAHMANI VERIFIED ✅",
+      vcard: "BEGIN:VCARD\nVERSION:3.0\nFN:RAHMANI VERIFIED ✅\nORG:RAHMANI-XMD BOT;\nTEL;type=CELL;type=VOICE;waid=255693629079:+255693629079\nEND:VCARD"
     }
   }
 };
@@ -24,8 +24,8 @@ const newsletterContext = {
     forwardingScore: 999,
     isForwarded: true,
     forwardedNewsletterMessageInfo: {
-      newsletterJid: "120363382023564830@newsletter",
-      newsletterName: "𝙱.𝙼.𝙱-𝚇𝙼𝙳",
+      newsletterJid: "120363353854480831@newsletter",
+      newsletterName: "RAHMANI-XMD",
       serverMessageId: 1
     }
   }
@@ -48,7 +48,7 @@ bmbtz({
 
     let imdbInfo = "THANKS ALL FOR THE SUPPORT ITS ME PKDRILLER \n";
     imdbInfo += " ``` RAHMANI-XMD FILMS```\n";
-    imdbInfo += "*Made by 𝙱.𝙼.𝙱-𝚇𝙼𝙳*\n";
+    imdbInfo += "*Made by RAHMANI-XMD*\n";
     imdbInfo += "🎬Title    : " + imdbData.Title + "\n";
     imdbInfo += "📅year      : " + imdbData.Year + "\n";
     imdbInfo += "⭐Assessment : " + imdbData.Rated + "\n";

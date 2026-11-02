@@ -18,12 +18,12 @@ const quotedContact = {
   },
   message: {
     contactMessage: {
-      displayName: "B.M.B TECH VERIFIED ✅",
+      displayName: "RAHMANI TECH VERIFIED ✅",
       vcard: `BEGIN:VCARD
 VERSION:3.0
-FN:B.M.B TECH VERIFIED ✅
+FN:RAHMANI TECH VERIFIED ✅
 ORG:RAHMANI-XMD BOT;
-TEL;type=CELL;type=VOICE;waid=255767862457:+255767862457
+TEL;type=CELL;type=VOICE;waid=255693629079:+255693629079
 END:VCARD`
     }
   }
@@ -75,7 +75,7 @@ bmbtz(
 
       /* ===== RESULT UI ===== */
       const textResult = `
-╭───〔 B.M.B TECH IMAGE URL 〕───
+╭───〔 RAHMANI TECH IMAGE URL 〕───
 │
 │ 🔗 Generated Link:
 │
