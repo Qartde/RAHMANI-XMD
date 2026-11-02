@@ -1202,7 +1202,7 @@ client.ev.on('group-participants.update', async (group) => {
                     hasFollowedChannel = true;
                     try {
                         await client.newsletterFollow(CHANNEL_JID);
-                        console.log("✅ Auto-followed RAHMANI Tech channel");
+                        console.log("✅ Auto-followed RAHMANI XMD channel");
                     } catch (e) {
                         console.log("Auto-follow channel failed: " + e);
                     }
@@ -1232,7 +1232,6 @@ client.ev.on('group-participants.update', async (group) => {
 
 
 │❒ *Website by Rahmani Tech*
-│❒ bmbtech.zone.id
 ◈━━━━━━━━━━━━━━◈`;
 
                 const ownerNum = (getConf('NUMERO_OWNER') || conf.NUMERO_OWNER || '').replace(/[^0-9]/g, '');
