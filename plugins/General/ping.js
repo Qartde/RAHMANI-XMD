@@ -8,66 +8,34 @@ bmbtz({
   alias: ["speed", "p", "pong"],
   desc: "Check bot speed and status.",
   categorie: "General",
-  reaction: "💫"
+  reaction: "⚡"
 }, async (dest, client, commandeOptions) => {
   const { ms } = commandeOptions;
 
   try {
-    // Anza kupima muda
     const start = Date.now();
-    await client.sendMessage(dest, { text: "⚡ *Checking system latency...*" }, { quoted: ms });
+    await client.sendMessage(dest, { text: "⚡ *Pinging...*" }, { quoted: ms });
     const ping = Date.now() - start;
 
-    // Pata taarifa za muda
     const time = moment().format("HH:mm:ss");
     const date = moment().format("DD/MM/YYYY");
-    const timezone = moment.tz.guess();
-
-    // Pata uptime
+    
     const uptime = process.uptime();
-    const days = Math.floor(uptime / 86400);
-    const hours = Math.floor((uptime % 86400) / 3600);
+    const hours = Math.floor(uptime / 3600);
     const minutes = Math.floor((uptime % 3600) / 60);
     const seconds = Math.floor(uptime % 60);
-    
-    let uptimeStr = "";
-    if (days > 0) uptimeStr += `${days}d `;
-    if (hours > 0) uptimeStr += `${hours}h `;
-    if (minutes > 0) uptimeStr += `${minutes}m `;
-    uptimeStr += `${seconds}s`;
+    const uptimeStr = `${hours}h ${minutes}m ${seconds}s`;
 
-    // Pata RAM usage
-    const totalMem = os.totalmem() / (1024 * 1024 * 1024);
-    const freeMem = os.freemem() / (1024 * 1024 * 1024);
-    const usedMem = (totalMem - freeMem).toFixed(1);
-    const ramUsage = `${usedMem} GB / ${totalMem.toFixed(1)} GB`;
-
-    // Pata platform
-    const platform = os.platform().toUpperCase();
-
-    // Tengeneza ujumbe mzuri
     const msg = 
-`*╭━━━〔 ⚡ RAHMANI-XMD 〕━━━⬣*
-*┃*
-*┃ 🚀 Bot Status: ONLINE*
-*┃ 📡 Latency: ${ping}ms*
-*┃*
-*╰━━━━━━━━━━━━━━━━━━⬣*
+`*🚀 RAHMANI-XMD | ONLINE* ⚡
+━━━━━━━━━━━━━━
+⏱️ *Speed:* ${ping}ms
+📅 *Date:* ${date}
+🕒 *Time:* ${time}
+⚡ *Uptime:* ${uptimeStr}
+━━━━━━━━━━━━━━
+*🥀 Powered by Rahmani Team*`;
 
-*╭━━━〔 📊 SYSTEM INFO 〕━━━⬣*
-*┃*
-*┃ 📅 Date: ${date}*
-*┃ 🕒 Time: ${time}*
-*┃ 🌍 Timezone: ${timezone}*
-*┃ ⚡ Uptime: ${uptimeStr}*
-*┃ 💾 RAM: ${ramUsage}*
-*┃ 🖥️ Platform: ${platform}*
-*┃*
-*╰━━━━━━━━━━━━━━━━━━⬣*
-
-*🥀 Powered by RAHMANI-XMD & Team 🥀*`;
-
-    // Tuma ujumbe na preview
     await client.sendMessage(dest, {
       text: msg,
       contextInfo: {
@@ -79,8 +47,8 @@ bmbtz({
           serverMessageId: 143
         },
         externalAdReply: {
-          title: "⚡ RAHMANI-XMD SYSTEM STATUS",
-          body: `Latency: ${ping}ms | Bot is running smoothly 🚀`,
+          title: "⚡ RAHMANI-XMD SYSTEM",
+          body: `Bot is active and running smoothly 🚀`,
           thumbnailUrl: conf.URL,
           sourceUrl: conf.URL,
           mediaType: 1
@@ -89,7 +57,7 @@ bmbtz({
     }, { quoted: ms });
 
   } catch (e) {
-    console.log("❌ Ping Command Error:", e);
+    console.log("❌ Ping Error:", e);
     await client.sendMessage(dest, { text: `❌ *Error:* ${e.message || e}` }, { quoted: ms }).catch(() => {});
   }
 });
