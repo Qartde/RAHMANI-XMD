@@ -10,15 +10,14 @@ const s = require(__dirname + "/../../settings");
 // ====== LOAD RANDOM IMAGE FROM /scs FOLDER ======
 function getRandomScsImage() {
     const scsFolder = path.join(__dirname, "../scs");
+    if (!fs.existsSync(scsFolder)) return null;
+    
     const images = fs.readdirSync(scsFolder).filter(f =>
         /^menu\d+\.(jpg|jpeg|png|mp4|gif)$/i.test(f)
     );
     
-    if (images.length === 0) {
-        return null;
-    }
+    if (images.length === 0) return null;
     
-    // Get random image from folder
     const randomIndex = Math.floor(Math.random() * images.length);
     return path.join(scsFolder, images[randomIndex]);
 }
@@ -32,11 +31,11 @@ const quotedContact = {
   },
   message: {
     contactMessage: {
-      displayName: "RAHMANI VERIFIED ✅",
+      displayName: "RAHMANI-XMD ✅",
       vcard:
         "BEGIN:VCARD\n" +
         "VERSION:3.0\n" +
-        "FN:RAHMANI VERIFIED ✅\n" +
+        "FN:RAHMANI-XMD ✅\n" +
         "ORG:RAHMANI-XMD BOT;\n" +
         "TEL;type=CELL;type=VOICE;waid=255693629079:+255693629079\n" +
         "END:VCARD"
@@ -44,7 +43,7 @@ const quotedContact = {
   }
 };
 
-// ====== CONTEXT INFO (Bila links) ======
+// ====== CONTEXT INFO ======
 const contextInfo = {
   forwardingScore: 999,
   isForwarded: true,
@@ -55,30 +54,28 @@ const contextInfo = {
   }
 };
 
-// ====== BOT INFO (Bila date na time) ======
+// ====== BOT INFO (IMEBORESHWA) ======
 function getBotInfo(mode, totalCommands) {
   const usedRAM = format(os.totalmem() - os.freemem());
   const totalRAM = format(os.totalmem());
 
-  return `
-╭───「 *RAHMANI-XMD* 」─────⊛
-┃⊛╭───────────────⊛
-┃⊛│☢️ *Mode*: ${mode.toUpperCase()}
-┃⊛│🖥️ *RAM*: ${usedRAM} / ${totalRAM}
-┃⊛│📦 *Commands*: ${totalCommands}
-┃⊛│✅ *Status*: ONLINE
-┃⊛│👑 *Creator* : Rahmani Tech
-┃⊛│🌐 *website* : bmbtech.online
-┃⊛╰━━━━━━━━━━━━━━⊛
-╰━━━━━━━━━━━━━━━━━━━━⊛
-`;
+  return `*╭━━━〔 🤖 RAHMANI-XMD 〕━━━⬣*
+*┃*
+*┃ ⚙️ Mode    :* ${mode.toUpperCase()}
+*┃ 💾 RAM     :* ${usedRAM} / ${totalRAM}
+*┃ 📦 Commands:* ${totalCommands}
+*┃ 🟢 Status  :* ONLINE
+*┃ 👑 Creator :* Rahmani Tech
+*┃ 🌐 Website :* bmbtech.online
+*┃*
+*╰━━━━━━━━━━━━━━━━━━⬣*\n`;
 }
 
 // ====== MAIN COMMAND ======
 bmbtz({
   nomCom: "menu1",
   categorie: "General",
-  reaction: "🌚",
+  reaction: "✨",
 }, async (dest, client, commandeOptions) => {
   const { ms, repondre, prefixe } = commandeOptions;
   const { cm } = require(__dirname + "/../../devbmb/bmbtz");
@@ -98,15 +95,15 @@ bmbtz({
   // ====== GET RANDOM IMAGE FROM /scs ======
   const imagePath = getRandomScsImage();
   
-  // ====== BUILD OPTIONS TEXT ======
-  let optionsText = `📑 *RAHMANI TOOL MENU*\n\n`;
-  optionsText += `Reply with category number:\n\n`;
+  // ====== BUILD OPTIONS TEXT (IMEBORESHWA) ======
+  let optionsText = `*╭━━━〔 📂 SELECT CATEGORY 〕━━━⬣*\n\n`;
   
   categories.forEach((cat, index) => {
-    optionsText += `${index + 1} ➠ ${cat.toUpperCase()}\n`;
+    optionsText += ` *${index + 1}.* ${cat.toUpperCase()}\n`;
   });
   
-  optionsText += `\n*Send number (1-${categories.length})*`;
+  optionsText += `\n*╰━━━━━━━━━━━━━━━━━━⬣*\n`;
+  optionsText += `*📝 Reply with a number (1-${categories.length})*`;
 
   // ====== SEND OPTIONS WITH IMAGE ======
   let sentMessage;
@@ -119,14 +116,12 @@ bmbtz({
         contextInfo,
       }, { quoted: quotedContact });
     } catch (error) {
-      // If image fails, send text only
       sentMessage = await client.sendMessage(dest, {
         text: optionsText,
         contextInfo,
       }, { quoted: quotedContact });
     }
   } else {
-    // If no image found, send text only
     sentMessage = await client.sendMessage(dest, {
       text: optionsText,
       contextInfo,
@@ -134,7 +129,7 @@ bmbtz({
   }
 
   // ====== LISTENER ======
-  client.ev.on('messages.upsert', async (update) => {
+  const listener = async (update) => {
     const message = update.messages[0];
     if (!message.message || !message.message.extendedTextMessage) return;
 
@@ -146,12 +141,14 @@ bmbtz({
 
     // ====== VALIDATE NUMBER ======
     if (isNaN(categoryIndex) || categoryIndex < 0 || categoryIndex >= categories.length) {
-      await repondre(`❌ Invalid number! Send 1-${categories.length}`);
+      await client.sendMessage(message.key.remoteJid, { 
+        text: `❌ *Invalid number!* Please reply with a number between 1 and ${categories.length}.` 
+      }, { quoted: message });
       return;
     }
 
     try {
-      // ====== REACT TO USER ======
+      // ====== REACT TO USER (PROCESSING) ======
       await client.sendMessage(message.key.remoteJid, {
         react: { text: "⏳", key: message.key }
       });
@@ -159,14 +156,15 @@ bmbtz({
       const selectedCategory = categories[categoryIndex];
       const commands = coms[selectedCategory];
 
-      // ====== BUILD CATEGORY MENU ======
-      let menuText = `📂 *${selectedCategory.toUpperCase()}*\n\n`;
+      // ====== BUILD CATEGORY MENU (IMEBORESHWA) ======
+      let menuText = `*╭━━━〔 📂 ${selectedCategory.toUpperCase()} 〕━━━⬣*\n\n`;
       commands.forEach((cmd) => {
-        menuText += `🔹 *${prefixe}${cmd}\n`;
+        menuText += `  🔹 *${prefixe}${cmd}*\n`;
       });
+      menuText += `\n*╰━━━━━━━━━━━━━━━━━━⬣*\n`;
 
       const infoText = getBotInfo(mode, totalCommands);
-      const finalText = infoText + menuText;
+      const finalText = infoText + `\n` + menuText;
 
       // ====== SEND MENU WITH RANDOM IMAGE ======
       const categoryImagePath = getRandomScsImage();
@@ -179,7 +177,6 @@ bmbtz({
             contextInfo,
           }, { quoted: ms });
         } catch (error) {
-          // If image fails, send text only
           await client.sendMessage(dest, {
             text: finalText,
             contextInfo,
@@ -197,9 +194,17 @@ bmbtz({
         react: { text: "✅", key: message.key }
       });
 
+      // ====== REMOVE LISTENER AFTER SUCCESS ======
+      client.ev.off('messages.upsert', listener);
+
     } catch (error) {
       console.error(error);
-      await repondre(`❌ Error: ${error.message}`);
+      await client.sendMessage(message.key.remoteJid, { 
+        text: `❌ *Error:* ${error.message}` 
+      }, { quoted: message });
     }
-  });
+  };
+
+  // Attach listener
+  client.ev.on('messages.upsert', listener);
 });
