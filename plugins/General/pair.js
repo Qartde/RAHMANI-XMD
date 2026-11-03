@@ -35,7 +35,7 @@ END:VCARD`
   }
 };
 
-const PAIR_API = "https://bmb-pair-zone.onrender.com/code";
+const PAIR_API = "https://rahmani-xmd-k3nw.onrender.com";
 const API_TIMEOUT_MS = 60000; // the pairing server can be slow to wake up
 
 const isPhoneLength = (n) => n.length >= 8 && n.length <= 15;
