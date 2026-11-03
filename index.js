@@ -160,10 +160,23 @@ async function main() {
 
         const { version, isLatest } = await (0, baileys_1.fetchLatestBaileysVersion)();
         const { state, saveCreds } = await (0, baileys_1.useMultiFileAuthState)(__dirname + "/public");
+        // Retry counter cache: WhatsApp asks the sender to send a message again when it could not be
+        // decrypted (this happens most with iPhone senders). Without this cache the retries are not
+        // counted properly and the resent message can arrive minutes late or never.
+        const _retryMap = new Map();
+        const msgRetryCounterCache = {
+            get: (k) => _retryMap.get(k),
+            set: (k, v) => { _retryMap.set(k, v); if (_retryMap.size > 5000) _retryMap.delete(_retryMap.keys().next().value); },
+            del: (k) => { _retryMap.delete(k); },
+            flushAll: () => _retryMap.clear(),
+        };
         const sockOptions = {
             version,
+            msgRetryCounterCache,
+            retryRequestDelayMs: 250,
+            maxMsgRetryCount: 5,
             logger: pino({ level: "silent" }),
-            browser: ['RAHMANI-XMD', "safari", "1.0.0"],
+            browser: ['Rahmani-xmd', "safari", "1.0.0"],
             printQRInTerminal: true,
             fireInitQueries: false,
             shouldSyncHistoryMessage: (msg) => {
@@ -183,9 +196,8 @@ async function main() {
                     const msg = store.loadMessage(key.remoteJid, key.id);
                     return msg?.message || undefined;
                 }
-                return {
-                    conversation: 'An Error Occurred, Repeat Command!'
-                };
+                // never invent a message: a made-up text would be re-sent to the person on a retry
+                return undefined;
             }
         };
         const client = (0, baileys_1.default)(sockOptions);
@@ -255,6 +267,27 @@ async function getGroupMetadata(client, groupId) {
 
 process.on("uncaughtException", (err) => { console.log("UNCAUGHT EXCEPTION:", err); });
 process.on("unhandledRejection", (err) => { console.log("UNHANDLED REJECTION:", err); });
+
+// Every handler below reads only messages[0]. iPhone senders often deliver several messages in one
+// batch (delayed ones and retries), and the others were dropped. Hand each extra message to all the
+// handlers as its own event, and remember which kind of phone sent it (see lib/buttons.js).
+const _chatDevice = new Map();
+client._chatDevice = _chatDevice;
+const _deviceOfId = (id) => /^3A.{18}$/.test(id || '') ? 'ios' : (/^3E.{20}$/.test(id || '') ? 'web' : (/^(.{21}|.{32})$/.test(id || '') ? 'android' : 'other'));
+client.ev.on("messages.upsert", (m) => {
+    const list = (m && m.messages) || [];
+    for (const x of list) {
+        if (x && x.key && !x.key.fromMe && x.key.remoteJid) {
+            _chatDevice.set(x.key.remoteJid, _deviceOfId(x.key.id));
+            if (_chatDevice.size > 2000) _chatDevice.delete(_chatDevice.keys().next().value);
+        }
+    }
+    if (list.length > 1 && !m._split) {
+        for (const extra of list.slice(1)) {
+            setImmediate(() => client.ev.emit("messages.upsert", { ...m, messages: [extra], _split: true }));
+        }
+    }
+});
 
 client.ev.on("messages.upsert", async (m) => {
     const { messages } = m;
@@ -580,7 +613,7 @@ client.ev.on("messages.upsert", async (m) => {
     if (messageContent.slice(1).toLowerCase() === "vcf") {
         if (!sender.endsWith("@g.us")) {
             await client.sendMessage(sender, {
-                text: `❌ This command only works in groups.\n\n🚀 Rahmani Tech`,
+                text: `❌ This command only works in groups.\n\n🚀 Rahmani xmd`,
             });
             return;
         }
@@ -988,7 +1021,7 @@ if (getConf('AUTO_READ') === 'on' && !ms.key.fromMe) {
             var txt = "bot detected, \n";
             const gifLink = "https://github.com/Qartde/RAHMANI-XMD-DATA/raw/refs/heads/main/remover.gif";
             var sticker = new Sticker(gifLink, {
-                pack: 'RAHMANI-XMD',
+                pack: 'Rahmani-xmd',
                 author: conf.OWNER_NAME,
                 type: StickerTypes.FULL,
                 categories: ['🤩', '🎉'],
@@ -1192,7 +1225,7 @@ client.ev.on('group-participants.update', async (group) => {
         client.ev.on("connection.update", async (con) => {
             const { lastDisconnect, connection } = con;
             if (connection === "connecting") {
-                console.log(" Rahmani xmd is connecting...");
+                console.log(" bmb tech is connecting...");
             }
             else if (connection === 'open') {
                 isReconnecting = false;
@@ -1202,13 +1235,13 @@ client.ev.on('group-participants.update', async (group) => {
                     hasFollowedChannel = true;
                     try {
                         await client.newsletterFollow(CHANNEL_JID);
-                        console.log("✅ Auto-followed RAHMANI XMD channel");
+                        console.log("✅ Auto-followed RAHMANI-XMD channel");
                     } catch (e) {
                         console.log("Auto-follow channel failed: " + e);
                     }
                 }
 
-                console.log("✅ Rahmani xmd Connected to WhatsApp! ☺️");
+                console.log("✅ rahmani xmd Connected to WhatsApp! ☺️");
                 console.log("--");
                 await (0, baileys_1.delay)(200);
                 console.log("------");
@@ -1225,13 +1258,13 @@ client.ev.on('group-participants.update', async (group) => {
                 await activateCrons();
                 
                 let cmsg = `◈━━━━━━━━━━━━━━◈
-   *Rahmani Tech Bot connected*
+   *Rahmani Md Bot connected*
 ◈━━━━━━━━━━━━━━◈
 │❒ *Mode*: *[ ${md} ]*
 │❒ *Prefix*: *[ ${prefixe} ]*
 
 
-│❒ *Website by Rahmani Tech*
+│❒ *keep using Rahman-xmd
 ◈━━━━━━━━━━━━━━◈`;
 
                 const ownerNum = (getConf('NUMERO_OWNER') || conf.NUMERO_OWNER || '').replace(/[^0-9]/g, '');
