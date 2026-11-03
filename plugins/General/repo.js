@@ -18,54 +18,88 @@ const quotedContact = {
   }
 };
 
+// ====== CONTEXT INFO ======
+const contextInfo = {
+  forwardingScore: 999,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: "120363353854480831@newsletter",
+    newsletterName: "RAHMANI-XMD",
+    serverMessageId: 1
+  }
+};
+
 bmbtz({ nomCom: "repo", categorie: "General" }, async (dest, client, commandeOptions) => {
     let { ms, repondre } = commandeOptions;
 
     const repoUrl = "https://api.github.com/repos/Qartde/RAHMANI-XMD";
 
-    // Random image from /scs folder
+    // ====== RANDOM IMAGE FROM /scs ======
+    let imagePath = null;
     const scsFolder = path.join(__dirname, "../scs");
-    const images = fs.readdirSync(scsFolder).filter(f => /^menu\d+\.jpg$/i.test(f));
-    const randomImage = images[Math.floor(Math.random() * images.length)];
-    const imagePath = path.join(scsFolder, randomImage);
+    
+    if (fs.existsSync(scsFolder)) {
+        const images = fs.readdirSync(scsFolder).filter(f => /^menu\d+\.(jpg|jpeg|png)$/i.test(f));
+        if (images.length > 0) {
+            const randomImage = images[Math.floor(Math.random() * images.length)];
+            imagePath = path.join(scsFolder, randomImage);
+        }
+    }
 
     try {
         const response = await axios.get(repoUrl);
         const repo = response.data;
 
-        let repoInfo = `
-╭══════════════⊷❍
-┃ *RAHMANI TECH REPOSITORY*
-┃══════════════════
-┃ ❏ Repo Link:🔗 *${repo.html_url}*
-┃ ❏ Name: *${repo.name}*
-┃ ❏ Owner: *${repo.owner.login}*
-┃ ❏ Stars: ⭐ *${repo.stargazers_count}*
-┃ ❏ Forks: 🍴 *${repo.forks_count}*
-┃ ❏ Issues: 🛠️ *${repo.open_issues_count}*
-┃ ❏ Watchers: 👀 *${repo.watchers_count}*
-┃ ❏ Updated: 📅 *${new Date(repo.updated_at).toLocaleString()}*
-╰══════════════⊷❍
-        `;
+        // ====== BUILD MESSAGE ======
+        let repoInfo = 
+`*╭━━━〔 📦 RAHMANI-XMD REPO 〕━━━⬣*
+*┃*
+*┃ 📛 Name    :* ${repo.name}
+*┃ 👤 Owner   :* ${repo.owner.login}
+*┃ 🔗 Repo    :* ${repo.html_url}
+*┃*
+*┃ ⭐ Stars   :* ${repo.stargazers_count}
+*┃ 🍴 Forks   :* ${repo.forks_count}
+*┃ 🛠️ Issues  :* ${repo.open_issues_count}
+*┃ 👀 Watchers:* ${repo.watchers_count}
+*┃*
+*┃ 📅 Updated :* ${new Date(repo.updated_at).toLocaleString()}
+*┃*
+*╰━━━━━━━━━━━━━━━━━━⬣*
 
-        // Send repository info with random image
-        await client.sendMessage(dest, {
-            image: { url: imagePath },
-            caption: repoInfo,
-            footer: "*RAHMANI TECH GitHub Repository*",
-            contextInfo: {
-                forwardingScore: 999,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: "120363353854480831@newsletter",
-                    newsletterName: "RAHMANI-XMD",
-                    serverMessageId: 1
+*🥀 Powered by RAHMANI-XMD & Team 🥀*`;
+
+        // ====== SEND WITH IMAGE OR TEXT ======
+        if (imagePath && fs.existsSync(imagePath)) {
+            await client.sendMessage(dest, {
+                image: fs.readFileSync(imagePath),
+                caption: repoInfo,
+                contextInfo,
+                externalAdReply: {
+                    title: "⚡ RAHMANI-XMD REPOSITORY",
+                    body: `⭐ ${repo.stargazers_count} Stars | 🍴 ${repo.forks_count} Forks`,
+                    thumbnailUrl: repo.owner.avatar_url,
+                    sourceUrl: repo.html_url,
+                    mediaType: 1
                 }
-            },
-        }, { quoted: quotedContact });
+            }, { quoted: quotedContact });
+        } else {
+            // Fallback kama picha haipo
+            await client.sendMessage(dest, {
+                text: repoInfo,
+                contextInfo,
+                externalAdReply: {
+                    title: "⚡ RAHMANI-XMD REPOSITORY",
+                    body: `⭐ ${repo.stargazers_count} Stars | 🍴 ${repo.forks_count} Forks`,
+                    thumbnailUrl: repo.owner.avatar_url,
+                    sourceUrl: repo.html_url,
+                    mediaType: 1
+                }
+            }, { quoted: quotedContact });
+        }
 
     } catch (e) {
         console.log("❌ Error fetching repository data: " + e);
-        repondre("❌ Error fetching repository data, please try again later.");
+        repondre("❌ *Error fetching repository data*, please try again later.");
     }
 });
