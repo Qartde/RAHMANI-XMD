@@ -83,7 +83,7 @@ const logoCommands = [
     makerUrl: "https://en.ephoto360.com/matrix-text-effect-154.html"
   },
   {
-    nomCom: "nova",
+    nomCom: "rah",
     categorie: "Logo",
     reaction: "⚗️",
     makerUrl: "https://en.ephoto360.com/1917-style-text-effect-523.html"
@@ -115,14 +115,14 @@ logoCommands.forEach(({ nomCom, categorie, reaction, makerUrl }) => {
         image: { url: img.image },
         caption: `
 ╭──────────━⊷
-║ 𝗕.𝗠.𝗕-𝗧𝗘𝗖𝗛
+║ *ʀᴀʜᴍᴀɴɪ-xᴍᴅ*
 ╰──────────━⊷
 ╭──────────━⊷
-  ʙ.ᴍ.ʙ-ᴛᴇᴄʜ ᴄʜᴀɴɴᴇʟ ᴜᴘᴅᴀᴛᴇs
-  ᴛᴀᴘ: https://bmbtech.zone.id
+ ʀᴀʜᴍᴀɴɪ-xᴍᴅ ᴄʜᴀɴɴᴇʟ ᴜᴘᴅᴀᴛᴇs
+ ᴛᴀᴘ: https://rahmani-xmd-k3nw.onrender.com
 ╰──────────━⊷
 
-> RAHMANI-XMD
+> ʀᴀʜᴍᴀɴɪ-xᴍᴅ
 `,
         contextInfo
       }, { quoted: quotedContact });
