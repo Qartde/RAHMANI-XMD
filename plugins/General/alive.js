@@ -1,145 +1,115 @@
-const { bmbtz } = require('../../devbmb/bmbtz');
-const { addOrUpdateDataInAlive, getDataFromAlive } = require('../../lib/alive');
-const moment = require("moment-timezone");
-const s = require(__dirname + "/../../settings");
-const path = require("path");
-const fs = require("fs");
+const { bmbtz } = require("../../devbmb/bmbtz");
+const conf = require("../../settings");
+const fs = require("fs-extra");
+const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
 
-// ====== VCARD CONTACT ======
-const quotedContact = {
-  key: {
-    fromMe: false,
-    participant: `0@s.whatsapp.net`,
-    remoteJid: "status@broadcast"
-  },
-  message: {
-    contactMessage: {
-      displayName: "RAHMANI VERIFIED ✅",
-      vcard: "BEGIN:VCARD\nVERSION:3.0\nFN:RAHMANI VERIFIED ✅\nORG:RAHMANI-XMD BOT;\nTEL;type=CELL;type=VOICE;waid=255693629079:+255693629079\nEND:VCARD"
-    }
-  }
-};
+bmbtz({
+    nomCom: "vv2",
+    categorie: "General",
+    reaction: "👁️",
+    desc: "Save view once media (sends to owner DM)",
+    fromMe: true
+}, async (dest, client, commandeOptions) => {
+    const { ms, msgRepondu, repondre, auteurMessage } = commandeOptions;
 
-// ====== NEWSLETTER CONTEXT ======
-const newsletterContext = {
-  contextInfo: {
-    forwardingScore: 999,
-    isForwarded: true,
-    forwardedNewsletterMessageInfo: {
-      newsletterJid: "120363353854480831@newsletter",
-      newsletterName: "RAHMANI-XMD",
-      serverMessageId: 1
-    }
-  }
-};
-
-// ====== RANDOM IMAGE FROM /scs ======
-async function sendAliveImage(client, dest, caption, repondre) {
-    const scsFolder = path.join(__dirname, "../scs");
-    
-    if (!fs.existsSync(scsFolder)) {
-        return repondre("📁 `/scs` folder not found.");
-    }
-    
-    const images = fs.readdirSync(scsFolder).filter(f => /^menu\d+\.(jpg|jpeg|png)$/i.test(f));
-    if (images.length === 0) {
-        return repondre("📁 No images found in `/scs` folder.");
+    if (!msgRepondu) {
+        return repondre("❌ *Reply to a view once message!*");
     }
 
-    const randomImage = images[Math.floor(Math.random() * images.length)];
-    const imagePath = path.join(scsFolder, randomImage);
-
-    await client.sendMessage(dest, {
-        image: fs.readFileSync(imagePath),
-        caption: caption,
-        externalAdReply: {
-            title: "🟢 RAHMANI-XMD STATUS",
-            body: "Bot is alive and running smoothly 🚀",
-            thumbnailUrl: s.URL || "",
-            sourceUrl: s.URL || "",
-            mediaType: 1
-        },
-        ...newsletterContext
-    }, { quoted: quotedContact });
-}
-
-// ====== MAIN COMMAND ======
-bmbtz(
-    {
-        nomCom: 'alive',
-        categorie: 'General',
-        reaction: "🟢"
-    },
-    async (dest, client, { ms, arg, repondre, superUser }) => {
-        const data = await getDataFromAlive();
-        const time = moment().tz('Etc/GMT').format('HH:mm:ss');
-        const date = moment().format('DD/MM/YYYY');
-
-        // ====== DISPLAY ALIVE MESSAGE ======
-        if (!arg || !arg[0]) {
-            const aliveMsg = 
-`*╭━━━〔 🟢 RAHMANI-XMD ALIVE 〕━━━⬣*
-*┃*
-*┃ 📅 Date     :* ${date}
-*┃ 🕒 Time     :* ${time}
-*┃ 👑 Owner    :* ${s.OWNER_NAME}
-*┃ 🔵 Platform :* VPS
-*┃ 🟢 Status   :* ONLINE
-*┃*
-*╰━━━━━━━━━━━━━━━━━━⬣*
-
-*🥀 Powered by RAHMANI-XMD & Team 🥀*`;
-
-            try {
-                if (data && data.lien) {
-                    const lien = data.lien;
-                    if (lien.match(/\.(mp4|gif)$/i)) {
-                        await client.sendMessage(dest, {
-                            video: { url: lien },
-                            caption: aliveMsg,
-                            externalAdReply: {
-                                title: "🟢 RAHMANI-XMD STATUS",
-                                body: "Bot is alive and running smoothly 🚀",
-                                thumbnailUrl: s.URL || "",
-                                sourceUrl: s.URL || "",
-                                mediaType: 1
-                            },
-                            ...newsletterContext
-                        }, { quoted: quotedContact });
-                    } else if (lien.match(/\.(jpeg|png|jpg)$/i)) {
-                        await client.sendMessage(dest, {
-                            image: { url: lien },
-                            caption: aliveMsg,
-                            externalAdReply: {
-                                title: "🟢 RAHMANI-XMD STATUS",
-                                body: "Bot is alive and running smoothly 🚀",
-                                thumbnailUrl: s.URL || "",
-                                sourceUrl: s.URL || "",
-                                mediaType: 1
-                            },
-                            ...newsletterContext
-                        }, { quoted: quotedContact });
-                    } else {
-                        await sendAliveImage(client, dest, aliveMsg, repondre);
-                    }
-                } else {
-                    await sendAliveImage(client, dest, aliveMsg, repondre);
-                }
-            } catch (e) {
-                console.error("❌ Alive Error:", e);
-                repondre(`❌ Failed to show Alive Message: ${e.message}`);
-            }
-        } 
-        // ====== UPDATE ALIVE MESSAGE (OWNER ONLY) ======
-        else {
-            if (!superUser) {
-                repondre("❌ Only the owner can update the Alive message.");
-                return;
-            }
-
-            const [texte, tlien] = arg.join(' ').split(';');
-            await addOrUpdateDataInAlive(texte, tlien);
-            repondre(`✅ *Alive message updated successfully!*`);
+    try {
+        let inner = msgRepondu;
+        if (msgRepondu.viewOnceMessage?.message) {
+            inner = msgRepondu.viewOnceMessage.message;
+        } else if (msgRepondu.viewOnceMessageV2?.message) {
+            inner = msgRepondu.viewOnceMessageV2.message;
+        } else if (msgRepondu.viewOnceMessageV2Extension?.message) {
+            inner = msgRepondu.viewOnceMessageV2Extension.message;
         }
+
+        let type = '';
+        let mediaMsg = null;
+
+        if (inner.imageMessage) {
+            type = 'image';
+            mediaMsg = inner.imageMessage;
+        } else if (inner.videoMessage) {
+            type = 'video';
+            mediaMsg = inner.videoMessage;
+        } else if (inner.audioMessage) {
+            type = 'audio';
+            mediaMsg = inner.audioMessage;
+        } else {
+            return repondre("❌ *Not a view once media or unsupported type!*");
+        }
+
+        await repondre(`⏳ *Downloading ${type}...*`);
+
+        const stream = await downloadContentFromMessage(mediaMsg, type);
+        let buffer = Buffer.from([]);
+        for await (const chunk of stream) {
+            buffer = Buffer.concat([buffer, chunk]);
+        }
+
+        if (!buffer || buffer.length === 0) {
+            return repondre("❌ *Download failed!*");
+        }
+
+        const fileSizeMB = (buffer.length / 1024 / 1024).toFixed(2);
+
+        const contextInfo = ms.message?.extendedTextMessage?.contextInfo;
+        const senderJid = contextInfo?.participant || auteurMessage || "";
+        const sender = senderJid ? senderJid.split('@')[0] : "Unknown";
+
+        let ownerNumber = conf.NUMERO_OWNER || "255693629079";
+        ownerNumber = String(ownerNumber).replace(/[^0-9]/g, '');
+        const ownerJid = ownerNumber + "@s.whatsapp.net";
+
+        // ====== CAPTION FUPI ======
+        const caption = `👁️ *View Once ${type.toUpperCase()}*\n👤 @${sender} | 💾 ${fileSizeMB} MB`;
+
+        const contextInfoPreview = {
+            forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+                newsletterJid: "120363353854480831@newsletter",
+                newsletterName: "RAHMANI-XMD",
+                serverMessageId: 1
+            }
+        };
+
+        if (type === 'image') {
+            await client.sendMessage(ownerJid, {
+                image: buffer,
+                caption,
+                mentions: [senderJid],
+                contextInfo: contextInfoPreview
+            });
+        } else if (type === 'video') {
+            await client.sendMessage(ownerJid, {
+                video: buffer,
+                caption,
+                mimetype: mediaMsg.mimetype || 'video/mp4',
+                mentions: [senderJid],
+                contextInfo: contextInfoPreview
+            });
+        } else if (type === 'audio') {
+            await client.sendMessage(ownerJid, {
+                audio: buffer,
+                mimetype: mediaMsg.mimetype || 'audio/mpeg',
+                ptt: false
+            });
+            await client.sendMessage(ownerJid, {
+                text: caption,
+                mentions: [senderJid],
+                contextInfo: contextInfoPreview
+            });
+        }
+
+        // ====== SUCCESS MESSAGE FUPI SANA ======
+        await repondre(`✅ *Success!* ${type} sent to owner DM.`);
+
+    } catch (error) {
+        console.error("❌ VV Error:", error);
+        await repondre(`❌ *Error:* ${error.message}`);
     }
-);
+});
