@@ -3,15 +3,14 @@ const { bmbtz } = require("../../devbmb/bmbtz");
 /**
  * owner
  *
- * Ported from RAHMANI-XMD's plugins/General/dev.js (aliased there as
- * 'owner' among others) — replaces RAHMANI-XMD's previous owner.js.
  * Sends an interactive card (title/body/footer + buttons) via
- * relayMessage, followed by a vCard contact, matching RAHMANI-XMD's exact
- * output. Falls back to a plain text card + vCard if the interactive
+ * relayMessage, followed by a vCard contact.
+ * Falls back to a plain text card + vCard if the interactive
  * message fails to send (e.g. unsupported on the recipient's client).
  */
+
 const DEV_NUMBER = "255693629079";
-const DEV_NAME = "Rahmani xmd | Rahmani Tech Dev";
+const DEV_NAME = "Rahmani xmd | Rahmani Dev";
 const DEV_ORG = "RAHMANI-XMD Bot";
 
 bmbtz({
@@ -22,24 +21,45 @@ bmbtz({
 }, async (dest, client, commandeOptions) => {
     const { ms, repondre } = commandeOptions;
 
-    const react = (emoji) => client.sendMessage(dest, { react: { text: emoji, key: ms.key } }).catch(() => {});
+    const react = (emoji) =>
+        client.sendMessage(dest, { react: { text: emoji, key: ms.key } }).catch(() => {});
 
     const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${DEV_NAME}\nORG:${DEV_ORG};\nTEL;type=CELL;type=VOICE;waid=${DEV_NUMBER}:+${DEV_NUMBER}\nEND:VCARD`;
 
     await react("⌛");
 
     try {
+        // ====== INTERACTIVE CARD ======
         await client.relayMessage(dest, {
             interactiveMessage: {
                 header: {
-                    title: "𝗢 𝗪 𝗡 𝗘 𝗥   ◦   𝗗 𝗘 𝗧 𝗔 𝗜 𝗟 𝗦",
+                    title: "👑 RAHMANI-XMD OWNER",
                     hasMediaAttachment: false
                 },
                 body: {
-                    text: "*乂  𝗢 𝗪 𝗡 𝗘 𝗥     ◦     𝗜 𝗡 𝗙 𝗢*\n✧ Tag : \n      ◦ @" + DEV_NUMBER + " 🇹🇿\n\n✧ Rules : \n      ◦ _Don't call owner's number_\n      ◦ _Don't talk shit_\n      ◦ _Don't spam_\n      ◦ _Don't goon😡_"
+                    text: 
+`*╭━━━〔 👤 OWNER INFO 〕━━━⬣*
+*┃*
+*┃ 🏷️ Tag     :* @${DEV_NUMBER} 🇹🇿
+*┃ 👑 Name    :* Rahmani
+*┃ 🏢 Project :* RAHMANI-XMD
+*┃ 🌍 Country :* Tanzania
+*┃*
+*╰━━━━━━━━━━━━━━━━━━⬣*
+
+*╭━━━〔 ⚠️ RULES 〕━━━⬣*
+*┃*
+*┃ 🚫 Don't call the owner*
+*┃ 🚫 Don't talk shit*
+*┃ 🚫 Don't spam*
+*┃ 🚫 Don't goon 😡*
+*┃*
+*╰━━━━━━━━━━━━━━━━━━⬣*
+
+*🥀 Powered by RAHMANI-XMD 🥀*`
                 },
                 footer: {
-                    text: "Rahmani xmd"
+                    text: "RAHMANI-XMD"
                 },
                 nativeFlowMessage: {
                     buttons: [
@@ -52,17 +72,22 @@ bmbtz({
                                 location: "tech",
                                 booking_url: `https://wa.me/${DEV_NUMBER}`,
                                 phone_number: DEV_NUMBER,
-                                booking_management_url: "https://whatsapp.com/channel/0029VawO6hgF6sn7k3SuVU3z",
-                                description: "*◦ 👤 Name  :*  bmbtech\n*◦ 📞 Number  :*  +" + DEV_NUMBER + "\n*◦ 💭 Bio  :*  tech \n*◦ ⚡ Status  :*  _Developer_\n*◦ Country  :*  Tanzania\n",
-                                email: "bmbxmd@gmail.com",
-                                display_text: "𝐌𝐨𝐫𝐞 𝐎𝐰𝐧𝐞𝐫𝐈𝐧𝐟𝐨",
+                                booking_management_url: "https://whatsapp.com/channel/0029VatokI45EjxufALmY32X",
+                                description: 
+`*◦ 👤 Name    :* Rahmani
+*◦ 📞 Number  :* +${DEV_NUMBER}
+*◦ 💭 Bio     :* xmd
+*◦ ⚡ Status  :* Developer
+*◦ 🌍 Country :* Tanzania`,
+                                email: "R",
+                                display_text: "👑 More Owner Info",
                                 display_content: {
                                     display_language: "en",
-                                    display_meeting_type: "𝐈𝐧𝐟𝐨",
-                                    display_bottom_sheet_header: "々   P R O F I L E     ◦     I N F O   々",
+                                    display_meeting_type: "Info",
+                                    display_bottom_sheet_header: "👑 OWNER PROFILE",
                                     display_add_to_calendar_cta_text: "CALENDAR",
-                                    display_view_on_maps_cta_text: "O W N E R     ◦     C O U N T R Y",
-                                    display_manage_booking_cta_text: "🔥 𝐅𝐨𝐥𝐥𝐨𝐰",
+                                    display_view_on_maps_cta_text: "OWNER COUNTRY",
+                                    display_manage_booking_cta_text: "🔥 Follow",
                                     display_manage_booking_not_supported_text: "OWNER NOT REGISTERED",
                                     display_read_more: "READ MORE"
                                 }
@@ -71,7 +96,7 @@ bmbtz({
                         {
                             name: "cta_url",
                             buttonParamsJson: JSON.stringify({
-                                display_text: "🫆 𝐎𝐰𝐧𝐞𝐫 𝐍𝐮𝐦𝐛𝐞𝐫",
+                                display_text: "📞 Owner Number",
                                 url: `https://wa.me/${DEV_NUMBER}`
                             })
                         }
@@ -86,14 +111,36 @@ bmbtz({
 
         await react("✅");
 
+        // ====== SEND VCARD ======
         await client.sendMessage(dest, {
             contacts: { displayName: DEV_NAME, contacts: [{ vcard }] }
         });
+
     } catch (error) {
         console.error("Owner command error:", error);
         await react("❌");
 
-        const fallbackText = `📌 *DEVELOPER INFO*\n━━━━━━━━━━━━━━━━\n👤 Name: ${DEV_NAME}\n🏢 Project: ${DEV_ORG}\n📞 Contact: +${DEV_NUMBER}\nDon't spam the dev or you'll regret your existence.\nSerious bugs only — no "how do I use this" questions.\n━━━━━━━━━━━━━━━━\n© Rahmani xmd`;
+        // ====== FALLBACK TEXT (KAMA INTERACTIVE IMESHINDWA) ======
+        const fallbackText = 
+`*╭━━━〔 👑 OWNER INFO 〕━━━⬣*
+*┃*
+*┃ 👤 Name    :* ${DEV_NAME}
+*┃ 🏢 Project :* ${DEV_ORG}
+*┃ 📞 Contact :* +${DEV_NUMBER}
+*┃ 🌍 Country :* Tanzania
+*┃*
+*╰━━━━━━━━━━━━━━━━━━⬣*
+
+*╭━━━〔 ⚠️ RULES 〕━━━⬣*
+*┃*
+*┃ 🚫 Don't spam the dev*
+*┃ 🚫 Serious bugs only*
+*┃ 🚫 No "how do I use this" questions*
+*┃*
+*╰━━━━━━━━━━━━━━━━━━⬣*
+
+*🥀 Powered by RAHMANI-XMD 🥀*`;
+
         await repondre(fallbackText);
 
         await client.sendMessage(dest, {
