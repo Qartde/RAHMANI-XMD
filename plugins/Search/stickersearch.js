@@ -1,49 +1,61 @@
-const axios = require("axios");
-const { Sticker, StickerTypes } = require("wa-sticker-formatter");
-const {bmbtz} = require("../../devbmb/bmbtz");
+const { bmbtz } = require("../../devbmb/bmbtz");
+const axios = require('axios');
+const { Sticker, StickerTypes } = require('wa-sticker-formatter'); // Hakikisha ume-install hii
 
 bmbtz({
-  nomCom: "stickersearch",
-  categorie: 'Search',
-  reaction: "🍁"
-},
-async (dest, client, commandeOptions) => {
-  const { repondre, ms, arg, nomAuteurMessage } = commandeOptions;
-
-  if (!arg[0]) {
-    repondre("where is the request ? !");
-    return;
-  }
-
-  const gifSearchTerm = arg.join(" ");
-  const tenorApiKey = "AIzaSyCyouca1_KKy4W_MG1xsPzuku5oa8W358c"; // Remplacez par votre clé d'API Tenor
-
-  try { for ( i = 0 ; i < 5 ; i++) {
-    const gif = await axios.get(
-      `https://tenor.googleapis.com/v2/search?q=${gifSearchTerm}&key=${tenorApiKey}&client_key=my_project&limit=8&media_filter=gif`
-    );
-
-    const gifUrl = gif.data.results[i].media_formats.gif.url;
-
+    nomCom: "stickersearch",
+    alias: ["sticker", "getsticker"],
+    categorie: "Search",
+    reaction: "🩹",
+    desc: "Search and download stickers"
+}, async (dest, client, commandeOptions) => {
+    const { ms, arg, repondre } = commandeOptions;
     
-   
+    // 1. Kagua kama mtumiaji ameandika neno
+    if (!arg[0]) {
+        return repondre("❌ *Tafadhali weka jina la sticker!*\nMfano: `.stickersearch batman`");
+    }
 
-    // Assurez-vous de remplacer les valeurs manquantes dans la création du sticker
-    const packname = nomAuteurMessage; // Remplacez par le nom de votre pack de stickers
+    const query = arg.join(' ');
+    await repondre(`⏳ *Inatafuta sticker za "${query}"...*`);
 
-    const stickerMess = new Sticker(gifUrl, {
-      pack: packname,
-      author: 'RAHMANI-XMD',
-      type: StickerTypes.FULL,
-      categories: ["🤩", "🎉"],
-      id: "12345",
-      quality: 60,
-      background: "transparent",
-    });
-    const stickerBuffer2 = await stickerMess.toBuffer();
-    client.sendMessage(dest, { sticker: stickerBuffer2 }, { quoted: ms }); }
-  } catch (error) {
-    console.error("Erreur lors de la recherche de stickers :", error);
-    repondre("Erreur lors de la recherche de stickers.");
-  }
+    try {
+        // API ya kutafuta stickers (Tenor/Giphy)
+        // Kama API hii imegoma siku zijazo, unaweza kuibadilisha
+        const res = await axios.get(`https://api.nexoracle.com/search/stickers?apikey=free&q=${encodeURIComponent(query)}`);
+        
+        if (!res.data || !res.data.result || res.data.result.length === 0) {
+            return repondre(`❌ *Hakuna sticker zilizopatikana kwa "${query}".* Jaribu neno lingine.`);
+        }
+
+        // Chukua sticker 3 za kwanza
+        const stickers = res.data.result.slice(0, 3); 
+        
+        for (let i = 0; i < stickers.length; i++) {
+            const stickerUrl = stickers[i];
+            
+            try {
+                // Badilisha picha kuwa sticker ya WhatsApp
+                const sticker = new Sticker(stickerUrl, {
+                    pack: 'RAHMANI-XMD',
+                    author: 'Rahmani',
+                    type: StickerTypes.FULL,
+                    quality: 70
+                });
+                
+                const buffer = await sticker.toBuffer();
+                
+                // Tuma sticker
+                await client.sendMessage(dest, { sticker: buffer }, { quoted: ms });
+
+            } catch (err) {
+                console.log("Kosa kwenye kubadilisha sticker:", err);
+            }
+        }
+
+    } catch (error) {
+        console.error("❌ Sticker Search Error:", error);
+        // Hapa ndipo ilipoleta ile error ya Kifaransa, sasa tunaweka ujumbe mzuri
+        await repondre("❌ *Kuna tatizo la mtandao au API imeanguka.* Jaribu tena baada ya muda.");
+    }
 });
