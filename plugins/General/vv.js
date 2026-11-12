@@ -4,7 +4,7 @@ const fs = require("fs-extra");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 
 bmbtz({
-    nomCom: "vv2",
+    nomCom: "vv",
     categorie: "General",
     reaction: "👁️",
     desc: "Save view once media (sends to chat)",
