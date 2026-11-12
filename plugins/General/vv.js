@@ -1,109 +1,115 @@
-const { bmbtz } = require('../../devbmb/bmbtz');
-let { Sticker, StickerTypes } = require('wa-sticker-formatter');
+const { bmbtz } = require("../../devbmb/bmbtz");
+const conf = require("../../settings");
+const fs = require("fs-extra");
+const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 
 bmbtz({
-    nomCom: "vv",
-    alias: ["view", "keep", "grab"],
-    categorie: "General"
+    nomCom: "vv2",
+    categorie: "General",
+    reaction: "👁️",
+    desc: "Save view once media (sends to chat)",
+    fromMe: false 
 }, async (dest, client, commandeOptions) => {
-    const { repondre, msgRepondu, superUser } = commandeOptions;
+    const { ms, msgRepondu, repondre, auteurMessage } = commandeOptions;
 
-    // Check kama ni superUser
-    if (!superUser) {
-        await repondre('❌ Only mods can use this command');
-        return;
-    }
-
-    // Check kama kuna message iliyoreply
     if (!msgRepondu) {
-        await repondre('📥 Reply to the message you want to save');
-        return;
+        return repondre("❌ *Reply to a view once message!*");
     }
-
-    let msg;
-    const contextInfo = {
-        forwardingScore: 999,
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-            newsletterJid: "120363353854480831@newsletter",
-            newsletterName: "RAHMANI-XMD",
-            serverMessageId: 1
-        }
-    };
-
-    // quoted contact kama ile ya awali
-    const quotedContact = {
-        key: {
-            fromMe: false,
-            participant: `0@s.whatsapp.net`,
-            remoteJid: "status@broadcast"
-        },
-        message: {
-            contactMessage: {
-                displayName: "RAHMANI VERIFIED ✅",
-                vcard: "BEGIN:VCARD\nVERSION:3.0\nFN:RAHMANI VERIFIED ✅\nORG:RAHMANI-XMD BOT;\nTEL;type=CELL;type=VOICE;waid=255693629079:+255693629079\nEND:VCARD"
-            }
-        }
-    };
 
     try {
-        // Handle image message
-        if (msgRepondu.imageMessage) {
-            let media = await client.downloadAndSaveMediaMessage(msgRepondu.imageMessage);
-            msg = {
-                image: { url: media },
-                caption: msgRepondu.imageMessage.caption || "",
-                contextInfo
-            };
-
-        // Handle video message
-        } else if (msgRepondu.videoMessage) {
-            let media = await client.downloadAndSaveMediaMessage(msgRepondu.videoMessage);
-            msg = {
-                video: { url: media },
-                caption: msgRepondu.videoMessage.caption || "",
-                gifPlayback: true,
-                contextInfo
-            };
-
-        // Handle audio message
-        } else if (msgRepondu.audioMessage) {
-            let media = await client.downloadAndSaveMediaMessage(msgRepondu.audioMessage);
-            msg = {
-                audio: { url: media },
-                mimetype: 'audio/mp4',
-                contextInfo
-            };
-
-        // Handle sticker message
-        } else if (msgRepondu.stickerMessage) {
-            let media = await client.downloadAndSaveMediaMessage(msgRepondu.stickerMessage, '', true, 'sticker');
-            let stickerMess = new Sticker(media, {
-                pack: 'RAHMANI-XMD',
-                type: StickerTypes.CROPPED,
-                categories: ["🤩", "🎉"],
-                id: "12345",
-                quality: 70,
-                background: "transparent"
-            });
-            const stickerBuffer2 = await stickerMess.toBuffer();
-            msg = { sticker: stickerBuffer2 };
-
-        // Handle text message
-        } else {
-            msg = { 
-                text: msgRepondu.conversation || "📝 Message copied",
-                contextInfo 
-            };
+        // ====== HATUA MUHIMU: Kufungua View Once Message ======
+        // Hii inahakikisha tunapata ujumbe halisi wa media ndani ya "kifuniko" cha view once
+        let messageContent = msgRepondu;
+        if (msgRepondu.viewOnceMessage?.message) {
+            messageContent = msgRepondu.viewOnceMessage.message;
+        } else if (msgRepondu.viewOnceMessageV2?.message) {
+            messageContent = msgRepondu.viewOnceMessageV2.message;
+        } else if (msgRepondu.viewOnceMessageV2Extension?.message) {
+            messageContent = msgRepondu.viewOnceMessageV2Extension.message;
         }
 
-        // Tuma hapo hapo kwenye dest (group au chat) kama vv ya awali
-        await client.sendMessage(dest, msg, { quoted: quotedContact });
-        
-        await repondre('✅ Message saved successfully!');
+        // ====== TAMBUA AINA YA MEDIA ======
+        let type = '';
+        if (messageContent.imageMessage) {
+            type = 'image';
+        } else if (messageContent.videoMessage) {
+            type = 'video';
+        } else if (messageContent.audioMessage) {
+            type = 'audio';
+        } else {
+            return repondre("❌ *Not a view once media or unsupported type!*");
+        }
+
+        await repondre(`⏳ *Downloading ${type}...*`);
+
+        // ====== TUMIA downloadMediaMessage BADALA YA downloadContentFromMessage ======
+        // Hii ni imara zaidi na inashughulikia changamoto za media key
+        const buffer = await downloadMediaMessage(
+            { message: messageContent }, // Tunatuma ujumbe uliofunguliwa
+            'buffer',
+            {},
+            { 
+                logger: console, 
+                reuploadRequest: client.updateMediaMessage 
+            }
+        );
+
+        if (!buffer || buffer.length === 0) {
+            return repondre("❌ *Download failed!*");
+        }
+
+        const fileSizeMB = (buffer.length / 1024 / 1024).toFixed(2);
+
+        // ====== TAARIFA ZA MTUMIAJI ======
+        const contextInfo = ms.message?.extendedTextMessage?.contextInfo;
+        const senderJid = contextInfo?.participant || auteurMessage || "";
+        const sender = senderJid ? senderJid.split('@')[0] : "Unknown";
+
+        // ====== CAPTION FUPI ======
+        const caption = `👁️ *View Once ${type.toUpperCase()}*\n👤 @${sender} | 💾 ${fileSizeMB} MB`;
+
+        const contextInfoPreview = {
+            forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+                newsletterJid: "120363353854480831@newsletter",
+                newsletterName: "RAHMANI-XMD",
+                serverMessageId: 1
+            }
+        };
+
+        // ====== TUMA KWA CHAT YA SASA ======
+        if (type === 'image') {
+            await client.sendMessage(dest, {
+                image: buffer,
+                caption,
+                mentions: [senderJid],
+                contextInfo: contextInfoPreview
+            });
+        } else if (type === 'video') {
+            await client.sendMessage(dest, {
+                video: buffer,
+                caption,
+                mentions: [senderJid],
+                contextInfo: contextInfoPreview
+            });
+        } else if (type === 'audio') {
+            await client.sendMessage(dest, {
+                audio: buffer,
+                mimetype: 'audio/mpeg',
+                ptt: false
+            });
+            await client.sendMessage(dest, {
+                text: caption,
+                mentions: [senderJid],
+                contextInfo: contextInfoPreview
+            });
+        }
+
+        await repondre(`✅ *Success!* ${type} sent.`);
 
     } catch (error) {
-        console.error("Error processing the message:", error);
-        await repondre("❌ Failed to process the message. Try again.");
+        console.error("❌ VV Error:", error);
+        await repondre(`❌ *Error:* ${error.message}`);
     }
 });
