@@ -1,115 +1,132 @@
-const { bmbtz } = require("../../devbmb/bmbtz");
-const conf = require("../../settings");
-const fs = require("fs-extra");
-const { downloadMediaMessage } = require("@whiskeysockets/baileys");
+const { bmbtz } = require('../../devbmb/bmbtz');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+let { Sticker, StickerTypes } = require('wa-sticker-formatter');
 
 bmbtz({
     nomCom: "vv",
-    categorie: "General",
-    reaction: "👁️",
-    desc: "Save view once media (sends to chat)",
-    fromMe: false 
+    alias: ["view", "keep", "grab"],
+    categorie: "General"
 }, async (dest, client, commandeOptions) => {
-    const { ms, msgRepondu, repondre, auteurMessage } = commandeOptions;
+    const { repondre, msgRepondu, superUser } = commandeOptions;
 
-    if (!msgRepondu) {
-        return repondre("❌ *Reply to a view once message!*");
+    // Check kama ni superUser
+    if (!superUser) {
+        await repondre('❌ Only mods can use this command');
+        return;
     }
 
+    // Check kama kuna message iliyoreply
+    if (!msgRepondu) {
+        await repondre('📥 Reply to the message you want to save');
+        return;
+    }
+
+    let msg;
+    const contextInfo = {
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+            newsletterJid: "120363353854480831@newsletter", // Nimebadilisha kuwa yako
+            newsletterName: "RAHMANI-XMD",
+            serverMessageId: 1
+        }
+    };
+
+    // quoted contact
+    const quotedContact = {
+        key: {
+            fromMe: false,
+            participant: `0@s.whatsapp.net`,
+            remoteJid: "status@broadcast"
+        },
+        message: {
+            contactMessage: {
+                displayName: "RAHMANI VERIFIED ✅",
+                vcard: "BEGIN:VCARD\nVERSION:3.0\nFN:RAHMANI VERIFIED ✅\nORG:RAHMANI-XMD BOT;\nTEL;type=CELL;type=VOICE;waid=255693629079:+255693629079\nEND:VCARD"
+            }
+        }
+    };
+
     try {
-        // ====== HATUA MUHIMU: Kufungua View Once Message ======
-        // Hii inahakikisha tunapata ujumbe halisi wa media ndani ya "kifuniko" cha view once
-        let messageContent = msgRepondu;
+        // ====== HATUA MUHIMU: KUFUNGUA KIFUNIKO CHA VIEW ONCE ======
+        let innerMsg = msgRepondu;
         if (msgRepondu.viewOnceMessage?.message) {
-            messageContent = msgRepondu.viewOnceMessage.message;
+            innerMsg = msgRepondu.viewOnceMessage.message;
         } else if (msgRepondu.viewOnceMessageV2?.message) {
-            messageContent = msgRepondu.viewOnceMessageV2.message;
+            innerMsg = msgRepondu.viewOnceMessageV2.message;
         } else if (msgRepondu.viewOnceMessageV2Extension?.message) {
-            messageContent = msgRepondu.viewOnceMessageV2Extension.message;
+            innerMsg = msgRepondu.viewOnceMessageV2Extension.message;
         }
 
-        // ====== TAMBUA AINA YA MEDIA ======
-        let type = '';
-        if (messageContent.imageMessage) {
-            type = 'image';
-        } else if (messageContent.videoMessage) {
-            type = 'video';
-        } else if (messageContent.audioMessage) {
-            type = 'audio';
-        } else {
-            return repondre("❌ *Not a view once media or unsupported type!*");
-        }
+        // Handle image message
+        if (innerMsg.imageMessage) {
+            const stream = await downloadContentFromMessage(innerMsg.imageMessage, 'image');
+            let buffer = Buffer.from([]);
+            for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
 
-        await repondre(`⏳ *Downloading ${type}...*`);
-
-        // ====== TUMIA downloadMediaMessage BADALA YA downloadContentFromMessage ======
-        // Hii ni imara zaidi na inashughulikia changamoto za media key
-        const buffer = await downloadMediaMessage(
-            { message: messageContent }, // Tunatuma ujumbe uliofunguliwa
-            'buffer',
-            {},
-            { 
-                logger: console, 
-                reuploadRequest: client.updateMediaMessage 
-            }
-        );
-
-        if (!buffer || buffer.length === 0) {
-            return repondre("❌ *Download failed!*");
-        }
-
-        const fileSizeMB = (buffer.length / 1024 / 1024).toFixed(2);
-
-        // ====== TAARIFA ZA MTUMIAJI ======
-        const contextInfo = ms.message?.extendedTextMessage?.contextInfo;
-        const senderJid = contextInfo?.participant || auteurMessage || "";
-        const sender = senderJid ? senderJid.split('@')[0] : "Unknown";
-
-        // ====== CAPTION FUPI ======
-        const caption = `👁️ *View Once ${type.toUpperCase()}*\n👤 @${sender} | 💾 ${fileSizeMB} MB`;
-
-        const contextInfoPreview = {
-            forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-                newsletterJid: "120363353854480831@newsletter",
-                newsletterName: "RAHMANI-XMD",
-                serverMessageId: 1
-            }
-        };
-
-        // ====== TUMA KWA CHAT YA SASA ======
-        if (type === 'image') {
-            await client.sendMessage(dest, {
+            msg = {
                 image: buffer,
-                caption,
-                mentions: [senderJid],
-                contextInfo: contextInfoPreview
-            });
-        } else if (type === 'video') {
-            await client.sendMessage(dest, {
+                caption: innerMsg.imageMessage.caption || "",
+                contextInfo
+            };
+
+        // Handle video message
+        } else if (innerMsg.videoMessage) {
+            const stream = await downloadContentFromMessage(innerMsg.videoMessage, 'video');
+            let buffer = Buffer.from([]);
+            for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+
+            msg = {
                 video: buffer,
-                caption,
-                mentions: [senderJid],
-                contextInfo: contextInfoPreview
-            });
-        } else if (type === 'audio') {
-            await client.sendMessage(dest, {
+                caption: innerMsg.videoMessage.caption || "",
+                mimetype: 'video/mp4',
+                contextInfo
+            };
+
+        // Handle audio message
+        } else if (innerMsg.audioMessage) {
+            const stream = await downloadContentFromMessage(innerMsg.audioMessage, 'audio');
+            let buffer = Buffer.from([]);
+            for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+
+            msg = {
                 audio: buffer,
-                mimetype: 'audio/mpeg',
-                ptt: false
+                mimetype: 'audio/mp4',
+                contextInfo
+            };
+
+        // Handle sticker message
+        } else if (innerMsg.stickerMessage) {
+            const stream = await downloadContentFromMessage(innerMsg.stickerMessage, 'sticker');
+            let buffer = Buffer.from([]);
+            for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+
+            let stickerMess = new Sticker(buffer, {
+                pack: 'RAHMANI-XMD',
+                type: StickerTypes.CROPPED,
+                categories: ["🤩", "🎉"],
+                id: "12345",
+                quality: 70,
+                background: "transparent"
             });
-            await client.sendMessage(dest, {
-                text: caption,
-                mentions: [senderJid],
-                contextInfo: contextInfoPreview
-            });
+            const stickerBuffer2 = await stickerMess.toBuffer();
+            msg = { sticker: stickerBuffer2, contextInfo };
+
+        // Handle text message
+        } else {
+            msg = { 
+                text: innerMsg.conversation || innerMsg.extendedTextMessage?.text || "📝 Message copied",
+                contextInfo 
+            };
         }
 
-        await repondre(`✅ *Success!* ${type} sent.`);
+        // Tuma hapo hapo kwenye chat
+        await client.sendMessage(dest, msg, { quoted: quotedContact });
+        
+        await repondre('✅ Message saved successfully!');
 
     } catch (error) {
-        console.error("❌ VV Error:", error);
-        await repondre(`❌ *Error:* ${error.message}`);
+        console.error("Error processing the message:", error);
+        await repondre("❌ Failed to process the message. Try again.");
     }
 });
