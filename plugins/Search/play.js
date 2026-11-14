@@ -2,34 +2,34 @@ const { bmbtz } = require("../../devbmb/bmbtz");
 const axios = require('axios');
 const yts = require('yt-search');
 
-const BOT_NAME = 'RAHMANI-XMD';
-const NEWSLETTER_JID = '120363353854480831@newsletter';
-const NEWSLETTER_NAME = 'Rahmani xmd Info';
+const BOT_NAME = 'BMB-TECH'; // Change as you want
+const NEWSLETTER_JID = '120363382023564830@newsletter';
+const NEWSLETTER_NAME = 'Bmb Tech Info';
 
 /**
  * What the user sees (2 messages, nothing else):
  *   1. the picture with the details, sent as soon as the YouTube search is done
  *   2. the song / video itself
+ *
+ * To make it fast, the download link is requested right after the search, while the picture is sent.
  */
 
-// ====== STYLE MPYA WA CAPTION ======
 const buildCaption = (type, video) => {
-  const banner = type === "video" ? "🎬 VIDEO PLAYER" : "🎵 SONG PLAYER";
+  const banner = type === "video" ? `${BOT_NAME} VIDEO PLAYER` : `${BOT_NAME} SONG PLAYER`;
   return (
-    `*╭━━━〔 ${banner} 〕━━━⬣*\n` +
-    `*┃*\n` +
-    `*┃ 🎵 Title    :* ${video.title}\n` +
-    `*┃ ⏱️ Duration :* ${video.timestamp || 'LIVE'}\n` +
-    `*┃ 👀 Views    :* ${Number(video.views || 0).toLocaleString()}\n` +
-    `*┃ 📅 Uploaded :* ${video.ago || '-'}\n` +
-    `*┃ 📺 Channel  :* ${(video.author && video.author.name) || '-'}\n` +
-    `*┃*\n` +
-    `*╰━━━━━━━━━━━━━━━━━━⬣*\n\n` +
-    `🔗 ${video.url}\n\n` +
-    `*🥀 Powered by ${BOT_NAME} 🥀*`
+    `*${banner}*\n\n` +
+    `╭───────────────◆\n` +
+    `│⿻ *Title:* ${video.title}\n` +
+    `│⿻ *Duration:* ${video.timestamp || 'LIVE'}\n` +
+    `│⿻ *Views:* ${Number(video.views || 0).toLocaleString()}\n` +
+    `│⿻ *Uploaded:* ${video.ago || '-'}\n` +
+    `│⿻ *Channel:* ${(video.author && video.author.name) || '-'}\n` +
+    `╰────────────────◆\n\n` +
+    `🔗 ${video.url}`
   );
 };
 
+// getContextInfo takes the query and the bot name, and includes body and title
 const getContextInfo = (query = '', botName = BOT_NAME) => ({
   forwardingScore: 1,
   isForwarded: true,
@@ -42,20 +42,28 @@ const getContextInfo = (query = '', botName = BOT_NAME) => ({
   title: botName
 });
 
+// Download API: https://apis.davidcyril.name.ng
+// If your key is required, set the DAVIDCYRIL_API_KEY environment variable (sent as the X-API-Key header).
 const API_BASE = 'https://apis.davidcyril.name.ng';
 const API_KEY = process.env.DAVIDCYRIL_API_KEY || '';
+// Converting a video can take much longer than a song, so it gets more time before we give up.
 const API_TIMEOUT_MS = { audio: 30000, video: 90000 };
-const MAX_VIDEO_BYTES = 90 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 90 * 1024 * 1024; // the biggest video the bot downloads itself
 
+/**
+ * The endpoints, tried in this order until one gives a link.
+ *   by "url" -> the YouTube link of the video that was found
+ *   by "q"   -> the title of the video that was found (search endpoint)
+ */
 const SOURCES = {
   audio: [
-    { path: '/download/ytmp3',    by: 'url', pick: (r) => r.download_url },
-    { path: '/download/ytmp3-v2', by: 'url', pick: (r) => r.download },
-    { path: '/play-v2',          by: 'q',   pick: (r) => r.audio && r.audio.url },
+    { path: '/download/ytmp3',    by: 'url', pick: (r) => r.download_url },     // YouTube MP3
+    { path: '/download/ytmp3-v2', by: 'url', pick: (r) => r.download },         // YouTube MP3 V2
+    { path: '/play-v2',          by: 'q',   pick: (r) => r.audio && r.audio.url }, // Play Music V2
   ],
   video: [
-    { path: '/download/ytmp4',   by: 'url', pick: (r) => r.download_url },
-    { path: '/youtube/mp444',    by: 'url', pick: (r) => r.url },
+    { path: '/download/ytmp4',   by: 'url', pick: (r) => r.download_url },     // YouTube MP4
+    { path: '/youtube/mp444',    by: 'url', pick: (r) => r.url },               // YouTube MP4 (V2)
   ],
 };
 
@@ -70,6 +78,7 @@ const shortError = (err) => {
   return `${status ? 'HTTP ' + status + ' ' : ''}${base}${detail ? ' - ' + String(detail).slice(0, 120) : ''}`.slice(0, 220);
 };
 
+/** Asks ONE endpoint for a link. Throws when it has none. */
 async function fetchFromSource(kind, src, video, query) {
   const headers = API_KEY ? { 'X-API-Key': API_KEY } : {};
   const params = src.by === 'q' ? { q: video.title || query } : { url: video.url };
@@ -81,6 +90,10 @@ async function fetchFromSource(kind, src, video, query) {
   return { downloadUrl: link, title: data.result.title || '' };
 }
 
+/**
+ * Gets a download link for the video that was found. kind: "audio" | "video".
+ * Every endpoint is tried once; the next one is used when it fails.
+ */
 async function getLink(kind, video, query) {
   const problems = [];
   for (const src of SOURCES[kind]) {
@@ -96,6 +109,10 @@ async function getLink(kind, video, query) {
   throw error;
 }
 
+/**
+ * Gets a link AND sends the file. If the file can not be sent (the link is dead, blocked, or WhatsApp
+ * could not download it), the next endpoint is tried. `send(result)` does the actual sending.
+ */
 async function sendWithFallback(kind, video, query, send) {
   const problems = [];
   for (const src of SOURCES[kind]) {
@@ -113,6 +130,10 @@ async function sendWithFallback(kind, video, query, send) {
   throw error;
 }
 
+/**
+ * Sends a video. WhatsApp downloads the link itself first; if that fails (some servers refuse it),
+ * the bot downloads the file and sends it from memory.
+ */
 async function sendVideoFile(client, to, ms, result, fallbackName) {
   const fileName = `${result.title || fallbackName}.mp4`;
   try {
@@ -130,6 +151,7 @@ async function sendVideoFile(client, to, ms, result, fallbackName) {
   }
 }
 
+/** Starts a request now and makes sure an early failure can never crash the bot while we wait. */
 function startEarly(promiseFactory) {
   const promise = promiseFactory();
   promise.catch(() => {});
@@ -139,19 +161,26 @@ function startEarly(promiseFactory) {
 const text = (client, to, ms, message) =>
   client.sendMessage(to, { text: message, contextInfo: getContextInfo() }, { quoted: ms });
 
+/**
+ * One implementation for the three commands.
+ *   kind "audio"    -> .play  (audio message)
+ *   kind "document" -> .song  (audio as a file)
+ *   kind "video"    -> .video (mp4)
+ */
 function registerCommand({ nomCom, reaction, kind, askText, label }) {
   bmbtz(
     { nomCom, categorie: "Search", reaction },
     async (origineMessage, client, commandeOptions) => {
       const { ms, arg } = commandeOptions;
       const query = arg.join(' ');
-      if (!query) return text(client, origineMessage, ms, `❓ ${askText}`);
+      if (!query) return text(client, origineMessage, ms, askText);
 
       try {
         const search = await yts(query);
         const video = search.videos[0];
-        if (!video) return text(client, origineMessage, ms, '❌ No results found for your query.');
+        if (!video) return text(client, origineMessage, ms, 'No results found for your query.');
 
+        // The download link is requested right after the search, while the picture is already on its way.
         const linkEarly = startEarly(() => getLink(kind === 'video' ? 'video' : 'audio', video, query));
 
         await client.sendMessage(
@@ -169,7 +198,7 @@ function registerCommand({ nomCom, reaction, kind, askText, label }) {
           result = await linkEarly;
         } catch (err) {
           console.error(`[${nomCom.toUpperCase()}] download link error:`, err && err.message ? err.message : err);
-          return text(client, origineMessage, ms, `❌ Failed to retrieve the ${label} download link.`);
+          return text(client, origineMessage, ms, `Failed to retrieve the ${label} download link.`);
         }
 
         const safeTitle = video.title.replace(/[\\/:*?"<>|]/g, '');
@@ -207,14 +236,21 @@ function registerCommand({ nomCom, reaction, kind, askText, label }) {
         }
       } catch (err) {
         console.error(`[${nomCom.toUpperCase()}] Error:`, err);
-        await text(client, origineMessage, ms, '❌ An error occurred while processing your request.');
+        await text(client, origineMessage, ms, 'An error occurred while processing your request.');
       }
     }
   );
 }
 
+// SONG COMMAND (audio as document) - sends the file straight away
 registerCommand({ nomCom: "song", reaction: "🎶", kind: "document", askText: 'Please provide a song name or keyword.', label: 'MP3' });
 
+// ---------------------------------------------------------------------------
+// PLAY and VIDEO with buttons (Toxic-MD style)
+//   .play <name>  or  .video <name>  -> picture + details + 3 buttons: [🎵 AUDIO] [📄 DOCUMENT] [🎬 VIDEO]
+//   tapping a button sends that format for the song that was found.
+// The buttons carry a short code; the found video is kept in memory for 30 minutes.
+// ---------------------------------------------------------------------------
 let buttons = null;
 try {
   buttons = require('../../lib/buttons');
@@ -223,7 +259,7 @@ try {
 }
 
 const CHOICE_TTL_MS = 30 * 60 * 1000;
-const pending = new Map();
+const pending = new Map(); // code -> { video, query, at }
 
 function rememberChoice(video, query) {
   const now = Date.now();
@@ -240,7 +276,7 @@ async function pictureOf(video) {
     const res = await axios.get(video.thumbnail, { responseType: 'arraybuffer', timeout: 8000 });
     return Buffer.from(res.data);
   } catch (e) {
-    return undefined;
+    return undefined; // the picture from settings.js is used instead
   }
 }
 
@@ -250,13 +286,13 @@ function registerChoice({ nomCom, reaction, askText, banner }) {
     async (origineMessage, client, commandeOptions) => {
       const { ms, arg, prefixe, mybotpic } = commandeOptions;
       const query = arg.join(' ');
-      if (!query) return text(client, origineMessage, ms, `❓ ${askText}`);
+      if (!query) return text(client, origineMessage, ms, askText);
       const p = prefixe || '.';
 
       try {
         const search = await yts(query);
         const video = search.videos[0];
-        if (!video) return text(client, origineMessage, ms, '❌ No results found for your query.');
+        if (!video) return text(client, origineMessage, ms, 'No results found for your query.');
 
         const code = rememberChoice(video, query);
         const list = [
@@ -267,23 +303,24 @@ function registerChoice({ nomCom, reaction, askText, banner }) {
         const body = buildCaption(banner, video);
 
         if (!buttons) {
-          return text(client, origineMessage, ms, `${body}\n\n*📌 Type one of these:*\n${list.map((b) => '• ' + b.id).join('\n')}`);
+          return text(client, origineMessage, ms, `${body}\n\nType one of these:\n${list.map((b) => '• ' + b.id).join('\n')}`);
         }
         await buttons.sendButtons(client, origineMessage, {
           body,
-          title: banner === 'video' ? '🎬 VIDEO PLAYER' : '🎵 SONG PLAYER',
+          title: banner === 'video' ? 'VIDEO PLAYER' : 'SONG PLAYER',
           buttons: list,
           thumbnail: await pictureOf(video),
           mybotpic,
         });
       } catch (err) {
         console.error(`[${nomCom.toUpperCase()}] Error:`, err);
-        await text(client, origineMessage, ms, '❌ An error occurred while processing your request.');
+        await text(client, origineMessage, ms, 'An error occurred while processing your request.');
       }
     }
   );
 }
 
+/** The commands behind the buttons. They are hidden from the menu. */
 function registerDeliver({ nomCom, kind, label, reaction }) {
   bmbtz(
     { nomCom, categorie: "Search", reaction, hidden: true },
@@ -291,13 +328,13 @@ function registerDeliver({ nomCom, kind, label, reaction }) {
       const { ms, arg } = commandeOptions;
       const item = pending.get(String((arg && arg[0]) || '').trim());
       if (!item) {
-        return text(client, origineMessage, ms, '❌ This choice has expired. Search again, for example: .play <song name>');
+        return text(client, origineMessage, ms, 'This choice has expired. Search again, for example: .play <song name>');
       }
       const { video, query } = item;
       const safeTitle = video.title.replace(/[\\/:*?"<>|]/g, '');
       try {
         if (kind === 'video') {
-          await text(client, origineMessage, ms, '⏳ *Preparing your video, please wait...*');
+          await text(client, origineMessage, ms, 'Preparing your video, please wait...');
         }
         await sendWithFallback(kind === 'video' ? 'video' : 'audio', video, query, async (result) => {
           const downloadUrl = result.downloadUrl;
@@ -327,8 +364,8 @@ function registerDeliver({ nomCom, kind, label, reaction }) {
         });
       } catch (err) {
         console.error(`[${nomCom.toUpperCase()}] Error:`, err && err.message ? err.message : err);
-        const why = err && err.details && err.details.length ? `\n\n*⚠️ Reason:*\n${err.details.join('\n')}` : '';
-        await text(client, origineMessage, ms, `❌ Failed to send the ${label} file. Please try again in a moment.${why}`);
+        const why = err && err.details && err.details.length ? `\n\nReason:\n${err.details.join('\n')}` : '';
+        await text(client, origineMessage, ms, `Failed to send the ${label} file. Please try again in a moment.${why}`);
       }
     }
   );
