@@ -1,10 +1,10 @@
 const { bmbtz } = require("../../devbmb/bmbtz");
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require("@whiskeysockets/baileys");
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, generateWAMessageFromContent, proto } = require("@whiskeysockets/baileys");
 const pino = require("pino");
 const fs = require("fs");
 const path = require("path");
 
-// Context ya Newsletter
+// Newsletter Context
 const newsletterContext = {
   forwardingScore: 999,
   isForwarded: true,
@@ -66,11 +66,11 @@ bmbtz({
           const code = await sock.requestPairingCode(phoneNumber);
           const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
 
-          const successMsg = 
+          const captionText = 
 `*╭━━━〔 🔐 PAIR CODE 〕━━━⬣*
 *┃*
-*┃ 📱 Number :* +${phoneNumber}
-*┃ 🔑 Code   :* *${formattedCode}*
+*┃ 📱 *Number:* +${phoneNumber}
+*┃ 🔑 *Code:* ${formattedCode}
 *┃*
 *╰━━━━━━━━━━━━━━━━━━⬣*
 
@@ -82,33 +82,72 @@ bmbtz({
 
 *🥀 Powered by RAHMANI-XMD 🥀*`;
 
-          await client.sendMessage(dest, {
-            text: successMsg,
+          // 4. Generate Interactive Message with Copy Button
+          const buttons = [
+            {
+              name: "cta_copy",
+              buttonParamsJson: JSON.stringify({
+                display_text: "📋 Copy Pair Code",
+                copy_code: code // The raw code without dashes for easy copying
+              })
+            }
+          ];
+
+          const viewOnceMessage = {
+            viewOnceMessage: {
+              message: {
+                messageContextInfo: {
+                  deviceListMetadata: {},
+                  deviceListMetadataVersion: 2
+                },
+                interactiveMessage: proto.Message.InteractiveMessage.create({
+                  body: proto.Message.InteractiveMessage.Body.create({
+                    text: captionText
+                  }),
+                  footer: proto.Message.InteractiveMessage.Footer.create({
+                    text: "RAHMANI-XMD"
+                  }),
+                  header: proto.Message.InteractiveMessage.Header.create({
+                    title: "",
+                    subtitle: "",
+                    hasMediaAttachment: false
+                  }),
+                  nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                    buttons
+                  })
+                })
+              }
+            }
+          };
+
+          const waMsg = generateWAMessageFromContent(dest, viewOnceMessage, {});
+          await client.relayMessage(dest, waMsg.message, {
+            messageId: waMsg.key.id
+          }, {
             contextInfo: newsletterContext
-          }, { quoted: ms });
+          });
 
         } catch (err) {
           console.error("Pair Code Error:", err);
           await repondre(`❌ *Failed to generate code.* Make sure the number is correct and try again.`);
-          // Clean up failed session
           fs.rmSync(sessionDir, { recursive: true, force: true });
         }
-      }, 3000); // Small delay to ensure socket is ready
+      }, 3000);
     } else {
       await repondre(`❌ *This number is already linked to a session.*`);
     }
 
-    // 4. Handle connection updates
+    // 5. Handle connection updates
     sock.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect } = update;
 
       if (connection === "open") {
         await client.sendMessage(dest, {
-          text: `✅ *Success!* WhatsApp linked successfully for +${phoneNumber}.`,
+          text: `✅ *Success!* WhatsApp linked successfully for +${phoneNumber}.\n\n_You can now close this chat or use the bot._`,
           contextInfo: newsletterContext
         }, { quoted: ms });
 
-        // Send credentials file to user for their bot
+        // Send credentials file
         const credsPath = path.join(sessionDir, "creds.json");
         if (fs.existsSync(credsPath)) {
           const credsBuffer = fs.readFileSync(credsPath);
@@ -116,11 +155,11 @@ bmbtz({
             document: credsBuffer,
             mimetype: 'application/json',
             fileName: `creds_${phoneNumber}.json`,
-            caption: `📁 *Session Credentials*\nUpload this file to your bot's session folder.`
+            caption: `📁 *Session Credentials*\nUpload this file to your bot's session folder to keep it running.`
           }, { quoted: ms });
         }
 
-        // Clean up temp session after sending
+        // Clean up after sending
         setTimeout(() => {
           if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
         }, 10000);
@@ -129,7 +168,6 @@ bmbtz({
       if (connection === "close") {
         const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
         if (!shouldReconnect) {
-          // Clean up if user logged out or connection failed completely
           if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
         }
       }
