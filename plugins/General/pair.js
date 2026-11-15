@@ -1,187 +1,145 @@
 const { bmbtz } = require("../../devbmb/bmbtz");
-const axios = require("axios");
-const pkg = require("@whiskeysockets/baileys");
-const { generateWAMessageFromContent, proto } = pkg;
-const ownerAccess = require("../../lib/ownerAccess");
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require("@whiskeysockets/baileys");
+const pino = require("pino");
+const fs = require("fs");
+const path = require("path");
 
-/* ===== NEWSLETTER CONTEXT ===== */
+// Context ya Newsletter
 const newsletterContext = {
   forwardingScore: 999,
   isForwarded: true,
   forwardedNewsletterMessageInfo: {
     newsletterJid: "120363353854480831@newsletter",
-    newsletterName: "RAHMANI TECH",
+    newsletterName: "RAHMANI-XMD",
     serverMessageId: 1
   }
 };
 
-// Fake quoted contact (status style)
-const quotedStatus = {
-  key: {
-    fromMe: false,
-    participant: "0@s.whatsapp.net",
-    remoteJid: "status@broadcast"
-  },
-  message: {
-    contactMessage: {
-      displayName: "RAHMANI VERIFIED ✅",
-      vcard: `BEGIN:VCARD
-VERSION:3.0
-FN:RAHMANI VERIFIED
-ORG:RAHMANI-XMD;
-TEL;type=CELL;type=VOICE;waid=255693629079:+255693629079
-END:VCARD`
+bmbtz({
+  nomCom: "pair",
+  alias: ["paircode", "session", "getcode"],
+  categorie: "General",
+  reaction: "🔐"
+}, async (dest, client, commandeOptions) => {
+  const { arg, repondre, ms, prefixe } = commandeOptions;
+  const p = prefixe || ".";
+
+  // 1. Validate Phone Number
+  if (!arg || !arg[0]) {
+    return repondre(`❌ *Please provide your WhatsApp number.*\nExample: ${p}pair 255693629079`);
+  }
+
+  let phoneNumber = arg[0].replace(/[^0-9]/g, '');
+  
+  if (phoneNumber.startsWith("0")) {
+    return repondre(`❌ *Please remove the starting 0 and use the country code.*\nExample: ${p}pair 255693629079`);
+  }
+
+  if (phoneNumber.length < 10 || phoneNumber.length > 15) {
+    return repondre(`❌ *Invalid phone number format.* Please check your number and try again.`);
+  }
+
+  await repondre(`⏳ *Generating Pair Code for +${phoneNumber}...*\n_Please wait a few seconds._`);
+
+  // 2. Setup temporary folder for this session
+  const sessionDir = path.join(__dirname, `../../temp_session_${phoneNumber}`);
+  if (!fs.existsSync(sessionDir)) {
+    fs.mkdirSync(sessionDir, { recursive: true });
+  }
+
+  try {
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+    const { version } = await fetchLatestBaileysVersion();
+
+    const sock = makeWASocket({
+      version,
+      logger: pino({ level: "silent" }),
+      printQRInTerminal: false,
+      auth: state,
+      browser: ["Ubuntu", "Chrome", "20.0.04"],
+    });
+
+    // 3. Request Pairing Code from WhatsApp
+    if (!sock.authState.creds.registered) {
+      setTimeout(async () => {
+        try {
+          const code = await sock.requestPairingCode(phoneNumber);
+          const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
+
+          const successMsg = 
+`*╭━━━〔 🔐 PAIR CODE 〕━━━⬣*
+*┃*
+*┃ 📱 Number :* +${phoneNumber}
+*┃ 🔑 Code   :* *${formattedCode}*
+*┃*
+*╰━━━━━━━━━━━━━━━━━━⬣*
+
+*📌 Instructions:*
+1. Open WhatsApp on your phone.
+2. Go to Linked Devices > Link a Device.
+3. Tap "Link with phone number instead".
+4. Enter the code above.
+
+*🥀 Powered by RAHMANI-XMD 🥀*`;
+
+          await client.sendMessage(dest, {
+            text: successMsg,
+            contextInfo: newsletterContext
+          }, { quoted: ms });
+
+        } catch (err) {
+          console.error("Pair Code Error:", err);
+          await repondre(`❌ *Failed to generate code.* Make sure the number is correct and try again.`);
+          // Clean up failed session
+          fs.rmSync(sessionDir, { recursive: true, force: true });
+        }
+      }, 3000); // Small delay to ensure socket is ready
+    } else {
+      await repondre(`❌ *This number is already linked to a session.*`);
     }
-  }
-};
 
-const PAIR_API = "https://rahmani-xmd-k3nw.onrender.com";
-const API_TIMEOUT_MS = 60000; // the pairing server can be slow to wake up
+    // 4. Handle connection updates
+    sock.ev.on("connection.update", async (update) => {
+      const { connection, lastDisconnect } = update;
 
-const isPhoneLength = (n) => n.length >= 8 && n.length <= 15;
-
-/**
- * The phone number of the person who sent the command.
- *
- * WhatsApp often shows a sender as "<long id>@lid" (always in groups, sometimes in private chats).
- * That long id is NOT a phone number, so it must never be used for pairing. The sender is turned into
- * the real phone number first; when that is not possible, an empty string is returned.
- */
-async function senderPhoneNumber(client, o) {
-  const raw = [o.senderJid, o.auteurMessage].filter(Boolean);
-
-  // 1. an id that is already a phone-number JID
-  for (const jid of raw) {
-    if (!String(jid).endsWith("@lid")) {
-      const n = ownerAccess.digits(jid);
-      if (isPhoneLength(n)) return n;
-    }
-  }
-
-  // 2. an @lid id: look up the real number (cache, group member list, WhatsApp mapping)
-  for (const jid of raw) {
-    if (!String(jid).endsWith("@lid")) continue;
-    try {
-      const resolved = await ownerAccess.resolveSenderAsync(client, jid, Array.isArray(o.mbre) ? o.mbre : [], !!o.verifGroupe);
-      if (resolved && !String(resolved).endsWith("@lid")) {
-        const n = ownerAccess.digits(resolved);
-        if (isPhoneLength(n)) return n;
-      }
-    } catch (e) { /* try the next one */ }
-  }
-  return "";
-}
-
-const COMMAND_NAMES = ["paircode", "session", "qrcode"];
-
-bmbtz(
-  {
-    nomCom: "pair",
-    alias: COMMAND_NAMES,     // the key the bot reads
-    aliases: COMMAND_NAMES,   // kept as well, because the old file used this spelling
-    categorie: "General",
-    reaction: "🔐"
-  },
-  async (dest, client, context) => {
-    const { arg, repondre, ms, prefixe } = context;
-    const p = prefixe || ".";
-
-    try {
-      let number;
-
-      if (arg && arg.length) {
-        // The person typed a number: spaces, + and dashes are ignored (".pair +255 717 179 577").
-        number = ownerAccess.digits(arg.join(""));
-        if (number.startsWith("0")) {
-          return repondre(`❌ Please write the number with the country code and without 0 at the start.\nExample: ${p}pair 255717179577`);
-        }
-        if (!isPhoneLength(number)) {
-          return repondre(`❌ That does not look like a phone number.\nExample: ${p}pair 255717179577`);
-        }
-      } else {
-        // No number typed: use the phone number of the person who sent the command.
-        number = await senderPhoneNumber(client, context);
-        if (!number) {
-          return repondre(`❌ I could not read your phone number from this chat.\nPlease type it with the country code, for example: ${p}pair 255717179577`);
-        }
-      }
-
-      const apiUrl = `${PAIR_API}?number=${encodeURIComponent(number)}`;
-      const { data } = await axios.get(apiUrl, { timeout: API_TIMEOUT_MS });
-
-      if (!data || !data.code) {
-        return repondre("❌ Failed to generate pair code.");
-      }
-
-      // 🔹 Caption (status style) + newsletterJid
-      const caption = `
-🔐 *PAIRING SUCCESSFUL* 🔐
-
-📱 *Number:* ${number}
-
-━━━━━━━━━━━━━━━
-🔑 *PAIR CODE*
-━━━━━━━━━━━━━━━
-`;
-
-      await client.sendMessage(
-        dest,
-        {
-          text: caption,
+      if (connection === "open") {
+        await client.sendMessage(dest, {
+          text: `✅ *Success!* WhatsApp linked successfully for +${phoneNumber}.`,
           contextInfo: newsletterContext
-        },
-        { quoted: quotedStatus }
-      );
+        }, { quoted: ms });
 
-      // 🔹 COPY BUTTON (the code, on its own, without a reply)
-      const buttons = [
-        {
-          name: "cta_copy",
-          buttonParamsJson: JSON.stringify({
-            display_text: "📋 COPY PAIR CODE",
-            copy_code: data.code
-          })
+        // Send credentials file to user for their bot
+        const credsPath = path.join(sessionDir, "creds.json");
+        if (fs.existsSync(credsPath)) {
+          const credsBuffer = fs.readFileSync(credsPath);
+          await client.sendMessage(dest, {
+            document: credsBuffer,
+            mimetype: 'application/json',
+            fileName: `creds_${phoneNumber}.json`,
+            caption: `📁 *Session Credentials*\nUpload this file to your bot's session folder.`
+          }, { quoted: ms });
         }
-      ];
 
-      const viewOnceMessage = {
-        viewOnceMessage: {
-          message: {
-            messageContextInfo: {
-              deviceListMetadata: {},
-              deviceListMetadataVersion: 2
-            },
-            interactiveMessage: proto.Message.InteractiveMessage.create({
-              body: proto.Message.InteractiveMessage.Body.create({
-                text: data.code
-              }),
-              footer: proto.Message.InteractiveMessage.Footer.create({
-                text: ""
-              }),
-              header: proto.Message.InteractiveMessage.Header.create({
-                title: "",
-                subtitle: "",
-                hasMediaAttachment: false
-              }),
-              nativeFlowMessage:
-                proto.Message.InteractiveMessage.NativeFlowMessage.create({
-                  buttons
-                })
-            })
-          }
+        // Clean up temp session after sending
+        setTimeout(() => {
+          if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
+        }, 10000);
+      }
+
+      if (connection === "close") {
+        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+        if (!shouldReconnect) {
+          // Clean up if user logged out or connection failed completely
+          if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
         }
-      };
+      }
+    });
 
-      const waMsg = generateWAMessageFromContent(dest, viewOnceMessage, {});
-      await client.relayMessage(dest, waMsg.message, {
-        messageId: waMsg.key.id
-      });
+    sock.ev.on("creds.update", saveCreds);
 
-    } catch (error) {
-      console.error("PAIR ERROR:", error);
-      repondre("❌ Error occurred while generating pair code.");
-    }
+  } catch (error) {
+    console.error("Pair Command Error:", error);
+    await repondre(`❌ *An error occurred.* Please try again later.`);
+    if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true });
   }
-);
-
-module.exports = { senderPhoneNumber };
+});
