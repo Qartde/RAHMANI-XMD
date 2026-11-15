@@ -2,9 +2,10 @@ const { bmbtz } = require("../../devbmb/bmbtz");
 const axios = require('axios');
 const yts = require('yt-search');
 
-const BOT_NAME = 'BMB-TECH'; // Change as you want
-const NEWSLETTER_JID = '120363382023564830@newsletter';
-const NEWSLETTER_NAME = 'Bmb Tech Info';
+// ====== VITU VYAKO HAPA ======
+const BOT_NAME = 'RAHMANI-XMD'; 
+const NEWSLETTER_JID = '120363353854480831@newsletter';
+const NEWSLETTER_NAME = 'Rahmani xmd Info';
 
 const API_BASE = 'https://apiziaul.vercel.app/api/downloader';
 const API_TIMEOUT_MS = 30000;
@@ -13,9 +14,6 @@ const API_TIMEOUT_MS = 30000;
  * What the user sees (2 messages, nothing else):
  *   1. the picture with the details, sent as soon as the YouTube search is done
  *   2. the song / video itself
- *
- * To make it fast, the request that fetches the download link is started at the same time as
- * the search (audio) or at the same time as the caption is sent (video), instead of one after another.
  */
 
 const buildCaption = (type, video) => {
