@@ -1,23 +1,17 @@
 const { bmbtz } = require('../../devbmb/bmbtz');
-let { Sticker, StickerTypes } = require('wa-sticker-formatter');
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 
 bmbtz({
     nomCom: "vv",
     alias: ["view", "keep", "grab"],
-    categorie: "General"
+    categorie: "General",
+    reaction: "👁️"
 }, async (dest, client, commandeOptions) => {
-    const { repondre, msgRepondu, superUser } = commandeOptions;
+    const { repondre, msgRepondu } = commandeOptions;
 
-    // Check kama ni superUser
-    if (!superUser) {
-        await repondre('❌ Only mods can use this command');
-        return;
-    }
-
-    // Check kama kuna message iliyoreply
     if (!msgRepondu) {
-        await repondre('📥 Reply to the message you want to save');
-        return;
+        return await repondre('📥 Reply to the View Once message you want to save.');
     }
 
     let msg;
@@ -25,85 +19,76 @@ bmbtz({
         forwardingScore: 999,
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
-            newsletterJid: "120363382023564830@newsletter",
-            newsletterName: "𝙱.𝙼.𝙱-𝚇𝙼𝙳",
+            newsletterJid: "120363353854480831@newsletter",
+            newsletterName: "RAHMANI-XMD",
             serverMessageId: 1
         }
     };
 
-    // quoted contact kama ile ya awali
-    const quotedContact = {
-        key: {
-            fromMe: false,
-            participant: `0@s.whatsapp.net`,
-            remoteJid: "status@broadcast"
-        },
-        message: {
-            contactMessage: {
-                displayName: "B.M.B VERIFIED ✅",
-                vcard: "BEGIN:VCARD\nVERSION:3.0\nFN:B.M.B VERIFIED ✅\nORG:BMB-TECH BOT;\nTEL;type=CELL;type=VOICE;waid=255767862457:+255767862457\nEND:VCARD"
-            }
-        }
-    };
-
     try {
-        // Handle image message
-        if (msgRepondu.imageMessage) {
-            let media = await client.downloadAndSaveMediaMessage(msgRepondu.imageMessage);
-            msg = {
-                image: { url: media },
-                caption: msgRepondu.imageMessage.caption || "",
-                contextInfo
-            };
-
-        // Handle video message
-        } else if (msgRepondu.videoMessage) {
-            let media = await client.downloadAndSaveMediaMessage(msgRepondu.videoMessage);
-            msg = {
-                video: { url: media },
-                caption: msgRepondu.videoMessage.caption || "",
-                gifPlayback: true,
-                contextInfo
-            };
-
-        // Handle audio message
-        } else if (msgRepondu.audioMessage) {
-            let media = await client.downloadAndSaveMediaMessage(msgRepondu.audioMessage);
-            msg = {
-                audio: { url: media },
-                mimetype: 'audio/mp4',
-                contextInfo
-            };
-
-        // Handle sticker message
-        } else if (msgRepondu.stickerMessage) {
-            let media = await client.downloadAndSaveMediaMessage(msgRepondu.stickerMessage, '', true, 'sticker');
-            let stickerMess = new Sticker(media, {
-                pack: 'BMB-TECH',
-                type: StickerTypes.CROPPED,
-                categories: ["🤩", "🎉"],
-                id: "12345",
-                quality: 70,
-                background: "transparent"
-            });
-            const stickerBuffer2 = await stickerMess.toBuffer();
-            msg = { sticker: stickerBuffer2 };
-
-        // Handle text message
-        } else {
-            msg = { 
-                text: msgRepondu.conversation || "📝 Message copied",
-                contextInfo 
-            };
+        // 1. Unwrap View Once messages
+        let innerMsg = msgRepondu;
+        
+        if (msgRepondu.viewOnceMessage?.message) {
+            innerMsg = msgRepondu.viewOnceMessage.message;
+        } else if (msgRepondu.viewOnceMessageV2?.message) {
+            innerMsg = msgRepondu.viewOnceMessageV2.message;
+        } else if (msgRepondu.viewOnceMessageV2Extension?.message) {
+            innerMsg = msgRepondu.viewOnceMessageV2Extension.message;
+        } else if (msgRepondu.documentWithCaptionMessage?.message) {
+            innerMsg = msgRepondu.documentWithCaptionMessage.message;
         }
 
-        // Tuma hapo hapo kwenye dest (group au chat) kama vv ya awali
-        await client.sendMessage(dest, msg, { quoted: quotedContact });
-        
+        // 2. Detect media type
+        let mediaType = '';
+        if (innerMsg.imageMessage) mediaType = 'image';
+        else if (innerMsg.videoMessage) mediaType = 'video';
+        else if (innerMsg.audioMessage) mediaType = 'audio';
+        else if (innerMsg.stickerMessage) mediaType = 'sticker';
+
+        if (!mediaType) {
+            return await repondre('❌ Not a view once media or unsupported type!');
+        }
+
+        // 3. Download media using official Baileys downloader with reupload request
+        // This handles missing media keys by requesting a re-upload from WhatsApp servers.
+        const buffer = await downloadMediaMessage(
+            { message: innerMsg },
+            'buffer',
+            {},
+            { 
+                logger: console, 
+                reuploadRequest: client.updateMediaMessage 
+            }
+        );
+
+        if (!buffer || buffer.length === 0) {
+            return await repondre('❌ Failed to download media. The media might have expired.');
+        }
+
+        // 4. Prepare the message object
+        if (mediaType === 'image') {
+            msg = { image: buffer, caption: innerMsg.imageMessage.caption || "👁️ View Once Image", contextInfo };
+        } else if (mediaType === 'video') {
+            msg = { video: buffer, caption: innerMsg.videoMessage.caption || "👁️ View Once Video", contextInfo };
+        } else if (mediaType === 'audio') {
+            msg = { audio: buffer, mimetype: 'audio/mp4', ptt: true, contextInfo };
+        } else if (mediaType === 'sticker') {
+            let stickerMess = new Sticker(buffer, {
+                pack: 'RAHMANI-XMD',
+                type: StickerTypes.CROPPED,
+                quality: 70
+            });
+            const stickerBuffer = await stickerMess.toBuffer();
+            msg = { sticker: stickerBuffer, contextInfo };
+        }
+
+        // 5. Send the message to the chat
+        await client.sendMessage(dest, msg);
         await repondre('✅ Message saved successfully!');
 
     } catch (error) {
-        console.error("Error processing the message:", error);
-        await repondre("❌ Failed to process the message. Try again.");
+        console.error("VV Error:", error);
+        await repondre("❌ Failed to process the message. Please ensure you reply quickly before the media expires.");
     }
 });
