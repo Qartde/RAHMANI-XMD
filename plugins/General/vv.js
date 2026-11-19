@@ -26,7 +26,7 @@ bmbtz({
     };
 
     try {
-        // 1. Unwrap View Once messages
+        // 1. Unwrap ALL possible View Once wrappers (including associatedChildMessage)
         let innerMsg = msgRepondu;
         
         if (msgRepondu.viewOnceMessage?.message) {
@@ -35,6 +35,8 @@ bmbtz({
             innerMsg = msgRepondu.viewOnceMessageV2.message;
         } else if (msgRepondu.viewOnceMessageV2Extension?.message) {
             innerMsg = msgRepondu.viewOnceMessageV2Extension.message;
+        } else if (msgRepondu.associatedChildMessage?.message) { // <-- Kifuniko kipya
+            innerMsg = msgRepondu.associatedChildMessage.message;
         } else if (msgRepondu.documentWithCaptionMessage?.message) {
             innerMsg = msgRepondu.documentWithCaptionMessage.message;
         }
@@ -50,17 +52,21 @@ bmbtz({
             return await repondre('❌ Not a view once media or unsupported type!');
         }
 
-        // 3. Download media using official Baileys downloader with reupload request
-        // This handles missing media keys by requesting a re-upload from WhatsApp servers.
-        const buffer = await downloadMediaMessage(
-            { message: innerMsg },
-            'buffer',
+        // 3. Download media using stream mode (more reliable than buffer in some versions)
+        const stream = await downloadMediaMessage(
+            { message: innerMsg, key: msgRepondu.key }, // Pass the full key to help re-upload
+            'stream',
             {},
             { 
                 logger: console, 
                 reuploadRequest: client.updateMediaMessage 
             }
         );
+
+        let buffer = Buffer.from([]);
+        for await (const chunk of stream) {
+            buffer = Buffer.concat([buffer, chunk]);
+        }
 
         if (!buffer || buffer.length === 0) {
             return await repondre('❌ Failed to download media. The media might have expired.');
